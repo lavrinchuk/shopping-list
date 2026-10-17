@@ -2,7 +2,7 @@
     <string name="app_name">Список покупок</string>
     <string name="name_hint">Назва товару</string>
     <string name="quantity_hint">Кількість</string>
-    <string name="add">Додати</string>
+    <string name="add_item">Додати товар</string>
     <string name="delete_item">Видалити: %1$s</string>
     <string name="name_required">Введіть назву товару</string>
     <string name="write_error">Не вдалося зберегти зміну. Спробуйте ще раз.</string>

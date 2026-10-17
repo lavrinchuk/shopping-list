@@ -96,6 +96,12 @@ public class ShoppingScreenTest {
             idle.attach(activity);
             assertEquals("Хліб", ((android.widget.EditText) activity.findViewById(R.id.name)).getText().toString());
             assertFalse(activity.findViewById(R.id.add).isEnabled());
+            com.google.android.material.button.MaterialButton button = activity.findViewById(R.id.add);
+            assertEquals(activity.getString(R.string.add_item), button.getContentDescription());
+            assertEquals(Math.round(56 * activity.getResources().getDisplayMetrics().density), button.getWidth());
+            assertEquals(button.getWidth(), button.getHeight());
+            assertNotEquals(button.getIconTint().getColorForState(new int[]{android.R.attr.state_enabled}, 0),
+                    button.getIconTint().getColorForState(new int[]{-android.R.attr.state_enabled}, 0));
         });
         app.database.allowWrite.countDown();
         onView(withText("Молоко")).check(matches(isDisplayed()));
@@ -194,6 +200,16 @@ public class ShoppingScreenTest {
         assertEquals(app.testDatabaseName, app.database.getDatabaseName());
         add("Ізольований товар");
     }
+    @Test public void launcherIconHasAdaptiveAndThemedLayers() {
+        android.graphics.drawable.Drawable drawable = app.getDrawable(R.mipmap.ic_launcher);
+        assertTrue(drawable instanceof android.graphics.drawable.AdaptiveIconDrawable);
+        android.graphics.drawable.AdaptiveIconDrawable icon = (android.graphics.drawable.AdaptiveIconDrawable) drawable;
+        assertNotNull(icon.getBackground());
+        assertNotNull(icon.getForeground());
+        if (android.os.Build.VERSION.SDK_INT >= 33) assertNotNull(icon.getMonochrome());
+        assertTrue(app.getDrawable(R.mipmap.ic_launcher_round)
+                instanceof android.graphics.drawable.AdaptiveIconDrawable);
+    }
     @Test public void materialAppearanceAndKeyboard() throws Exception {
         setNightMode(androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO);
         onView(withText(R.string.empty_title)).check(matches(isDisplayed()));
@@ -209,8 +225,9 @@ public class ShoppingScreenTest {
         onView(withText("Молоко")).check(matches(isDisplayed()));
         screen.onActivity(activity -> {
             assertTrue(activity.findViewById(R.id.items).getHeight() > 0);
-            assertTrue(activity.findViewById(R.id.add).getHeight()
-                    >= 48 * activity.getResources().getDisplayMetrics().density);
+            android.view.View add = activity.findViewById(R.id.add);
+            assertEquals(Math.round(56 * activity.getResources().getDisplayMetrics().density), add.getWidth());
+            assertEquals(add.getWidth(), add.getHeight());
         });
         screenshot("list-light");
         setNightMode(androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES);

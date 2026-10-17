@@ -136,7 +136,8 @@ public class MainActivity extends AppCompatActivity {
             if (actions.getOrientation() != orientation) {
                 actions.setOrientation(orientation);
                 quantity.setLayoutParams(new LinearLayout.LayoutParams(stacked ? -1 : 0, -2, stacked ? 0 : 1));
-                LinearLayout.LayoutParams button = new LinearLayout.LayoutParams(stacked ? -1 : -2, -2);
+                int diameter = Math.round(56 * density);
+                LinearLayout.LayoutParams button = new LinearLayout.LayoutParams(diameter, diameter);
                 button.setMarginStart(stacked ? 0 : Math.round(12 * density));
                 button.topMargin = stacked ? Math.round(8 * density) : 0;
                 add.setLayoutParams(button);
