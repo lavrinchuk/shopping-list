@@ -1,13 +1,14 @@
 <resources>
     <string name="app_name">Список покупок</string>
     <string name="name_hint">Назва товару</string>
-    <string name="quantity_hint">Кількість (необов’язково, наприклад 2 кг)</string>
+    <string name="quantity_hint">Кількість</string>
     <string name="add">Додати</string>
-    <string name="delete">Видалити</string>
     <string name="delete_item">Видалити: %1$s</string>
     <string name="name_required">Введіть назву товару</string>
-    <string name="empty_list">Список порожній. Додайте перший товар.</string>
     <string name="write_error">Не вдалося зберегти зміну. Спробуйте ще раз.</string>
     <string name="read_error">Не вдалося оновити список.</string>
     <string name="retry">Повторити</string>
+    <string name="quantity_example">Необов’язково</string>
+    <string name="empty_title">Список порожній</string>
+    <string name="empty_message">Додайте перший товар у формі вище.</string>
 </resources>

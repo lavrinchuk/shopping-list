@@ -1,15 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent" android:layout_height="wrap_content"
-    android:paddingHorizontal="16dp" android:gravity="center_vertical" android:orientation="horizontal">
-    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
-        android:layout_weight="1" android:orientation="vertical">
-        <CheckBox android:id="@+id/item_name" android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:minHeight="48dp" android:textSize="18sp" />
-        <TextView android:id="@+id/item_quantity" android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:paddingStart="32dp" android:paddingEnd="8dp"
-            android:paddingBottom="8dp" />
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:minHeight="64dp" android:paddingVertical="8dp" android:gravity="center_vertical">
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical">
+            <com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/item_name"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:minHeight="48dp" android:paddingStart="0dp" android:paddingEnd="8dp" android:textSize="16sp"
+                android:gravity="center_vertical" android:breakStrategy="simple"
+                app:useMaterialThemeColors="true" />
+            <TextView android:id="@+id/item_quantity" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:paddingStart="32dp" android:paddingEnd="8dp"
+                android:textAppearance="?attr/textAppearanceBodyMedium" android:textColor="?attr/colorOnSurfaceVariant" />
+        </LinearLayout>
+        <com.google.android.material.button.MaterialButton android:id="@+id/delete_item"
+            style="@style/Widget.Material3.Button.TextButton" android:layout_width="48dp"
+            android:layout_height="48dp" android:minWidth="0dp" android:minHeight="48dp"
+            android:padding="12dp" android:insetTop="0dp" android:insetBottom="0dp"
+            app:icon="@drawable/ic_delete" app:iconPadding="0dp" app:iconSize="24dp"
+            app:iconGravity="textStart" app:iconTint="?attr/colorOnSurfaceVariant" />
     </LinearLayout>
-    <Button android:id="@+id/delete_item" android:layout_width="wrap_content"
-        android:layout_height="wrap_content" android:minHeight="48dp" android:text="@string/delete" />
+    <com.google.android.material.divider.MaterialDivider android:layout_width="match_parent"
+        android:layout_height="1dp" app:dividerColor="?attr/colorOutlineVariant" />
 </LinearLayout>

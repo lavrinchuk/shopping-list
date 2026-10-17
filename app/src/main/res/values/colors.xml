@@ -1,5 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <color name="app_primary">#356A47</color><color name="app_on_primary">#FFFFFF</color>
+    <color name="app_background">#F8FAF7</color><color name="app_surface">#FFFFFF</color>
+    <color name="app_on_surface">#191D19</color><color name="app_secondary_text">#414941</color>
+    <color name="app_outline">#717B71</color><color name="app_divider">#D8DFD6</color>
 </resources>

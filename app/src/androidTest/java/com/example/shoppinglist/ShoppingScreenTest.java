@@ -28,7 +28,7 @@ public class ShoppingScreenTest {
     }
     private void open() {
         screen = ActivityScenario.launch(MainActivity.class);
-        screen.onActivity(activity -> idle.adapter = activity.adapter);
+        screen.onActivity(activity -> idle.attach(activity));
     }
     @Before public void setup() {
         app = (TestShoppingApplication) InstrumentationRegistry.getInstrumentation().getTargetContext().getApplicationContext();
@@ -65,7 +65,8 @@ public class ShoppingScreenTest {
     }
     @Test public void addCheckReopenAndDelete() {
         onView(withId(R.id.add)).perform(click());
-        onView(withId(R.id.name)).check(matches(hasErrorText(app.getString(R.string.name_required))));
+        screen.onActivity(activity -> assertEquals(app.getString(R.string.name_required),
+                ((com.google.android.material.textfield.TextInputLayout) activity.findViewById(R.id.name_layout)).getError()));
         onView(withId(R.id.name)).perform(replaceText("Яблука"));
         onView(withId(R.id.quantity)).perform(replaceText("2 кг"), closeSoftKeyboard());
         onView(withId(R.id.add)).perform(click());
@@ -76,7 +77,7 @@ public class ShoppingScreenTest {
         open();
         onView(withId(R.id.item_name)).check(matches(isChecked()));
         onView(withId(R.id.delete_item)).perform(click());
-        onView(withText(R.string.empty_list)).check(matches(isDisplayed()));
+        onView(withText(R.string.empty_title)).check(matches(isDisplayed()));
     }
     @Test public void rotationDuringWriteKeepsOperationAndNewDraft() throws Exception {
         app.database.pauseNextWrite();
@@ -92,7 +93,7 @@ public class ShoppingScreenTest {
         assertTrue(app.database.writeStarted.await(5, TimeUnit.SECONDS));
         screen.recreate();
         screen.onActivity(activity -> {
-            idle.adapter = activity.adapter;
+            idle.attach(activity);
             assertEquals("Хліб", ((android.widget.EditText) activity.findViewById(R.id.name)).getText().toString());
             assertFalse(activity.findViewById(R.id.add).isEnabled());
         });
@@ -145,7 +146,7 @@ public class ShoppingScreenTest {
         });
         assertTrue(app.database.writeStarted.await(5, TimeUnit.SECONDS));
         screen.recreate();
-        screen.onActivity(activity -> idle.adapter = activity.adapter);
+        screen.onActivity(activity -> idle.attach(activity));
         app.database.allowWrite.countDown();
         onView(withText("Олія")).check(matches(isDisplayed()));
         onView(withId(R.id.name)).check(matches(withText("")));
@@ -193,15 +194,91 @@ public class ShoppingScreenTest {
         assertEquals(app.testDatabaseName, app.database.getDatabaseName());
         add("Ізольований товар");
     }
+    @Test public void materialAppearanceAndKeyboard() throws Exception {
+        setNightMode(androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO);
+        onView(withText(R.string.empty_title)).check(matches(isDisplayed()));
+        screenshot("empty-light");
+        main(() -> repository.execute(() -> {
+            app.database.add("Молоко", "2 л");
+            app.database.add("Яблука", "1 кг");
+            app.database.add("Цільнозерновий хліб із насінням соняшника та гарбуза", "1 шт");
+            app.database.add("Натуральний йогурт", "");
+            app.database.setPurchased(app.database.getItems().get(1).id, true);
+        }, noResult()));
+        screen.onActivity(activity -> activity.model.reload());
+        onView(withText("Молоко")).check(matches(isDisplayed()));
+        screen.onActivity(activity -> {
+            assertTrue(activity.findViewById(R.id.items).getHeight() > 0);
+            assertTrue(activity.findViewById(R.id.add).getHeight()
+                    >= 48 * activity.getResources().getDisplayMetrics().density);
+        });
+        screenshot("list-light");
+        setNightMode(androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES);
+        onView(withText("Молоко")).check(matches(isDisplayed()));
+        screenshot("list-dark");
+        setNightMode(androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO);
+        onView(withId(R.id.name)).perform(scrollTo(), click(), replaceText("Чернетка товару"));
+        onView(withId(R.id.quantity)).perform(scrollTo(), click(), replaceText("2 кг"));
+        screenshot("keyboard");
+        screen.recreate();
+        screen.onActivity(activity -> idle.attach(activity));
+        onView(withId(R.id.name)).check(matches(withText("Чернетка товару")));
+        onView(withId(R.id.quantity)).check(matches(withText("2 кг")));
+        onView(withId(R.id.quantity)).perform(scrollTo(), pressImeActionButton());
+        onView(withId(R.id.name)).check(matches(withText("")));
+        screen.onActivity(activity -> assertEquals(5, activity.adapter.getItemCount()));
+    }
+    private void setNightMode(int mode) {
+        screen.onActivity(activity -> activity.getDelegate().setLocalNightMode(mode));
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+        screen.onActivity(activity -> idle.attach(activity));
+        onView(withId(R.id.items)).check(matches(isDisplayed()));
+    }
+    private void screenshot(String name) throws Exception {
+        // Capture a fully drawn frame, including completion of RecyclerView item animations.
+        java.util.concurrent.CountDownLatch drawn = new java.util.concurrent.CountDownLatch(1);
+        screen.onActivity(activity -> {
+            android.view.View root = activity.findViewById(R.id.main);
+            root.postOnAnimation(() -> root.postOnAnimation(() -> {
+                Runnable finished = () -> root.postOnAnimation(() -> root.postOnAnimation(drawn::countDown));
+                androidx.recyclerview.widget.RecyclerView list = activity.findViewById(R.id.items);
+                if (list.getItemAnimator() != null && list.getItemAnimator().isRunning()) {
+                    list.getItemAnimator().isRunning(finished::run);
+                } else finished.run();
+            }));
+        });
+        assertTrue("Screenshot frame did not finish", drawn.await(10, java.util.concurrent.TimeUnit.SECONDS));
+        InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+        String prefix = InstrumentationRegistry.getArguments().getString("previewPrefix", "default");
+        java.io.File directory = new java.io.File(app.getFilesDir(), "ui-previews");
+        assertTrue(directory.isDirectory() || directory.mkdirs());
+        android.graphics.Bitmap bitmap = InstrumentationRegistry.getInstrumentation().getUiAutomation().takeScreenshot();
+        assertNotNull(bitmap);
+        try (java.io.FileOutputStream output = new java.io.FileOutputStream(
+                new java.io.File(directory, prefix.replaceAll("[^a-zA-Z0-9_-]", "") + "-" + name + ".png"))) {
+            assertTrue(bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, output));
+        } finally { bitmap.recycle(); }
+    }
     private final class ScreenIdle implements IdlingResource {
         final ShoppingRepository repository;
         ShoppingAdapter adapter;
         ResourceCallback callback;
+        androidx.recyclerview.widget.RecyclerView list;
+        void attach(MainActivity activity) {
+            adapter = activity.adapter;
+            list = activity.findViewById(R.id.items);
+        }
         ScreenIdle(ShoppingRepository repository) { this.repository = repository; }
         @Override public String getName() { return "Shopping database and list diff"; }
         @Override public boolean isIdleNow() {
             if (adapter != null) adapter.setIdleListener(this::changed);
-            return repository.isIdle() && (adapter == null || adapter.isIdle());
+            if (!repository.isIdle() || (adapter != null && !adapter.isIdle())) return false;
+            androidx.recyclerview.widget.RecyclerView.ItemAnimator animator = list == null ? null : list.getItemAnimator();
+            if (animator != null && animator.isRunning()) {
+                animator.isRunning(this::changed);
+                return false;
+            }
+            return true;
         }
         void changed() { if (isIdleNow() && callback != null) callback.onTransitionToIdle(); }
         @Override public void registerIdleTransitionCallback(ResourceCallback callback) { this.callback = callback; }

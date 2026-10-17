@@ -1,6 +1,7 @@
 package com.example.shoppinglist;
 
 import android.graphics.Paint;
+import com.google.android.material.color.MaterialColors;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -47,6 +48,9 @@ final class ShoppingAdapter extends ListAdapter<ShoppingItem, ShoppingAdapter.Ho
         holder.name.setOnCheckedChangeListener(null);
         holder.name.setText(item.name);
         holder.name.setChecked(item.purchased);
+        holder.name.setTextColor(MaterialColors.getColor(holder.name, item.purchased
+                ? com.google.android.material.R.attr.colorOnSurfaceVariant
+                : com.google.android.material.R.attr.colorOnSurface));
         holder.name.setPaintFlags(item.purchased ? holder.name.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG
                 : holder.name.getPaintFlags() & ~Paint.STRIKE_THRU_TEXT_FLAG);
         holder.name.setOnCheckedChangeListener((button, checked) -> actions.purchased(item, checked));
