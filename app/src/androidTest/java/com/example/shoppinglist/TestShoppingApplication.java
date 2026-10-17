@@ -8,9 +8,11 @@ import java.util.concurrent.TimeUnit;
 public class TestShoppingApplication extends ShoppingApplication {
     final String testDatabaseName = "instrumentation-" + java.util.UUID.randomUUID() + ".db";
     ControlledDatabase database;
+    long listId;
 
     @Override ShoppingRepository createRepository() {
         database = new ControlledDatabase(this, testDatabaseName);
+        listId = database.createList("Тестовий список");
         return new ShoppingRepository(database);
     }
     static final class ControlledDatabase extends ShoppingDatabase {
@@ -24,7 +26,7 @@ public class TestShoppingApplication extends ShoppingApplication {
             writeStarted = new CountDownLatch(1);
             allowWrite = new CountDownLatch(1);
         }
-        @Override void add(String name, String quantity) {
+        @Override void add(long listId, String name, String quantity) {
             CountDownLatch gate = allowWrite;
             if (gate != null) {
                 writeStarted.countDown();
@@ -40,14 +42,14 @@ public class TestShoppingApplication extends ShoppingApplication {
                 failNextWrite = false;
                 throw new SQLiteException("Injected write failure");
             }
-            super.add(name, quantity);
+            super.add(listId, name, quantity);
         }
-        @Override List<ShoppingItem> getItems() {
+        @Override List<ShoppingItem> getItems(long listId) {
             if (failNextRead) {
                 failNextRead = false;
                 throw new SQLiteException("Injected read failure");
             }
-            return super.getItems();
+            return super.getItems(listId);
         }
     }
 }

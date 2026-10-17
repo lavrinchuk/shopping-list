@@ -46,11 +46,17 @@ public class MainActivity extends AppCompatActivity {
             view.setPadding(bars.left, bars.top, bars.right, bars.bottom);
             return insets;
         });
+        long listId = getIntent().getLongExtra("listId", -1);
+        if (listId <= 0) {
+            startActivity(new android.content.Intent(this, ListsActivity.class)); finish(); return;
+        }
+        com.google.android.material.appbar.MaterialToolbar toolbar = findViewById(R.id.heading);
+        toolbar.setNavigationOnClickListener(view -> finish());
         ShoppingRepository repository = ((ShoppingApplication) getApplication()).repository();
         model = new ViewModelProvider(this, new AbstractSavedStateViewModelFactory(this, savedInstanceState) {
             @NonNull @Override protected <T extends ViewModel> T create(@NonNull String key,
                     @NonNull Class<T> type, @NonNull SavedStateHandle state) {
-                return type.cast(new ShoppingViewModel(repository, state));
+                return type.cast(new ShoppingViewModel(repository, state, listId));
             }
         }).get(ShoppingViewModel.class);
         adapter = new ShoppingAdapter(new ShoppingAdapter.Actions() {
@@ -102,6 +108,13 @@ public class MainActivity extends AppCompatActivity {
             if (!quantity.getText().toString().equals(model.quantity)) quantity.setText(model.quantity);
             rendering = false;
             add.setEnabled(!model.adding);
+            if (model.list != null) {
+                toolbar.setTitle(model.list.name);
+                boolean readOnly = model.list.archivedAt != null;
+                toolbar.setSubtitle(readOnly ? getString(R.string.archive) : null);
+                findViewById(R.id.form_scroll).setVisibility(readOnly ? View.GONE : View.VISIBLE);
+                adapter.setReadOnly(readOnly);
+            }
             adapter.submitList(model.items);
             findViewById(R.id.empty).setVisibility(model.items.isEmpty() && !model.readFailed ? View.VISIBLE : View.GONE);
             int error = model.error;
@@ -154,6 +167,10 @@ public class MainActivity extends AppCompatActivity {
                 scroll.setLayoutParams(params);
             }
         });
+    }
+    @Override protected void onResume() {
+        super.onResume();
+        if (model != null) model.reload();
     }
     @Override protected void onDestroy() {
         if (retry != null) retry.dismiss();

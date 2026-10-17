@@ -20,6 +20,10 @@ final class ShoppingAdapter extends ListAdapter<ShoppingItem, ShoppingAdapter.Ho
     }
     private final Actions actions;
     private boolean updating;
+    private boolean readOnly;
+    void setReadOnly(boolean readOnly) {
+        if (this.readOnly != readOnly) { this.readOnly = readOnly; notifyItemRangeChanged(0, getItemCount()); }
+    }
     private Runnable idleListener;
     private static final DiffUtil.ItemCallback<ShoppingItem> DIFF = new DiffUtil.ItemCallback<ShoppingItem>() {
         @Override public boolean areItemsTheSame(@NonNull ShoppingItem a, @NonNull ShoppingItem b) {
@@ -48,6 +52,8 @@ final class ShoppingAdapter extends ListAdapter<ShoppingItem, ShoppingAdapter.Ho
         holder.name.setOnCheckedChangeListener(null);
         holder.name.setText(item.name);
         holder.name.setChecked(item.purchased);
+        holder.name.setEnabled(!readOnly);
+        holder.delete.setVisibility(readOnly ? View.GONE : View.VISIBLE);
         holder.name.setTextColor(MaterialColors.getColor(holder.name, item.purchased
                 ? com.google.android.material.R.attr.colorOnSurfaceVariant
                 : com.google.android.material.R.attr.colorOnSurface));

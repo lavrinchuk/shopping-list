@@ -27,7 +27,7 @@ public class ShoppingScreenTest {
         InstrumentationRegistry.getInstrumentation().runOnMainSync(task);
     }
     private void open() {
-        screen = ActivityScenario.launch(MainActivity.class);
+        screen = ActivityScenario.launch(new android.content.Intent(app, MainActivity.class).putExtra("listId", app.listId));
         screen.onActivity(activity -> idle.attach(activity));
     }
     @Before public void setup() {
@@ -36,7 +36,7 @@ public class ShoppingScreenTest {
             repository = app.repository();
             // Enqueue cleanup before the new ViewModel's first load.
             repository.execute(() -> {
-                for (ShoppingItem item : app.database.getItems()) app.database.delete(item.id);
+                for (ShoppingItem item : app.database.getItems(app.listId)) app.database.delete(app.listId, item.id);
             }, noResult());
         });
         idle = new ScreenIdle(repository);
@@ -160,7 +160,7 @@ public class ShoppingScreenTest {
     }
     @Test public void largeListDiffKeepsOrderAndUpdatesStatusAndDeletion() {
         main(() -> repository.execute(() -> {
-            for (int index = 0; index < 500; index++) app.database.add("Товар " + index, "");
+            for (int index = 0; index < 500; index++) app.database.add(app.listId, "Товар " + index, "");
         }, noResult()));
         screen.onActivity(activity -> activity.model.reload());
         onView(withId(R.id.items)).check(matches(isDisplayed()));
@@ -215,11 +215,11 @@ public class ShoppingScreenTest {
         onView(withText(R.string.empty_title)).check(matches(isDisplayed()));
         screenshot("empty-light");
         main(() -> repository.execute(() -> {
-            app.database.add("Молоко", "2 л");
-            app.database.add("Яблука", "1 кг");
-            app.database.add("Цільнозерновий хліб із насінням соняшника та гарбуза", "1 шт");
-            app.database.add("Натуральний йогурт", "");
-            app.database.setPurchased(app.database.getItems().get(1).id, true);
+            app.database.add(app.listId, "Молоко", "2 л");
+            app.database.add(app.listId, "Яблука", "1 кг");
+            app.database.add(app.listId, "Цільнозерновий хліб із насінням соняшника та гарбуза", "1 шт");
+            app.database.add(app.listId, "Натуральний йогурт", "");
+            app.database.setPurchased(app.listId, app.database.getItems(app.listId).get(1).id, true);
         }, noResult()));
         screen.onActivity(activity -> activity.model.reload());
         onView(withText("Молоко")).check(matches(isDisplayed()));

@@ -11,4 +11,22 @@
     <string name="quantity_example">Необов’язково</string>
     <string name="empty_title">Список порожній</string>
     <string name="empty_message">Додайте перший товар у формі вище.</string>
+    <string name="all_lists">Списки покупок</string>
+    <string name="archive">Архів</string>
+    <string name="new_list">Новий список</string>
+    <string name="rename_list">Перейменувати</string>
+    <string name="finish_shopping">Завершити покупки</string>
+    <string name="restore_list">Відновити</string>
+    <string name="cancel">Скасувати</string>
+    <string name="save">Зберегти</string>
+    <string name="back">Назад</string>
+    <string name="list_name_hint">Назва списку</string>
+    <string name="list_name_required">Введіть назву списку</string>
+    <string name="incomplete_confirmation">У списку залишилися непридбані товари. Завершити покупки та перемістити список до архіву?</string>
+    <string name="no_lists">Поки немає списків. Створіть перший список покупок.</string>
+    <string name="no_archive">Архів порожній</string>
+    <string name="updated_date">Оновлено: %1$s</string>
+    <string name="archived_date">Завершено: %1$s</string>
+    <string name="item_counts">%1$d / %2$d придбано</string>
+    <string name="list_actions">Дії зі списком: %1$s</string>
 </resources>

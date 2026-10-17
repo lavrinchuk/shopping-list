@@ -10,6 +10,8 @@ public final class ShoppingViewModel extends ViewModel {
     final MutableLiveData<Integer> changes = new MutableLiveData<>(0);
     private final ShoppingRepository repository;
     private final SavedStateHandle saved;
+    final long listId;
+    ShoppingList list;
     List<ShoppingItem> items = new ArrayList<>();
     String name = "";
     String quantity = "";
@@ -19,8 +21,9 @@ public final class ShoppingViewModel extends ViewModel {
     private long draftRevision;
     private boolean cleared;
 
-    ShoppingViewModel(ShoppingRepository repository, SavedStateHandle saved) {
+    ShoppingViewModel(ShoppingRepository repository, SavedStateHandle saved, long listId) {
         this.repository = repository;
+        this.listId = listId;
         this.saved = saved;
         name = saved.contains("name") ? saved.get("name") : "";
         quantity = saved.contains("quantity") ? saved.get("quantity") : "";
@@ -34,18 +37,18 @@ public final class ShoppingViewModel extends ViewModel {
         saved.set("quantity", quantity);
     }
     void add() {
-        if (adding) return;
+        if (adding || list == null || list.archivedAt != null) return;
         String clean = ShoppingItem.cleanName(name);
         long submittedRevision = draftRevision;
         adding = true;
         publish();
-        repository.add(clean, quantity, result(true, submittedRevision));
+        repository.add(listId, clean, quantity, result(true, submittedRevision));
     }
     void purchased(ShoppingItem item, boolean checked) {
-        repository.purchased(item.id, checked, result(false, 0));
+        repository.purchased(listId, item.id, checked, result(false, 0));
     }
-    void delete(ShoppingItem item) { repository.delete(item.id, result(false, 0)); }
-    void reload() { repository.load(result(false, 0)); }
+    void delete(ShoppingItem item) { repository.delete(listId, item.id, result(false, 0)); }
+    void reload() { repository.load(listId, result(false, 0)); }
     void consumeError() { error = 0; }
 
     private ShoppingRepository.Result result(boolean add, long revision) {
@@ -58,6 +61,7 @@ public final class ShoppingViewModel extends ViewModel {
                 }
                 publish();
             }
+            @Override public void listLoaded(ShoppingList updated) { list = updated; }
             @Override public void loaded(List<ShoppingItem> updated) {
                 if (cleared) return;
                 items = updated;
