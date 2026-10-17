@@ -15,7 +15,7 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.example.shoppinglist.ShoppingTestRunner"
     }
 
     buildTypes {
@@ -34,7 +34,10 @@ android {
 
 dependencies {
     implementation(libs.activity.ktx)
+    implementation(libs.recyclerview)
     implementation(libs.appcompat)
+    implementation(libs.lifecycle.viewmodel)
+    implementation(libs.lifecycle.livedata)
     implementation(libs.constraintlayout)
     implementation(libs.material)
     testImplementation(libs.junit)
