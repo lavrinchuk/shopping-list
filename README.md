@@ -93,3 +93,66 @@ IME-додавання й чернетку після відтворення Act
 Скриншоти цієї перевірки: `app/build/ui-previews/` (артефакти збірки).
 Префікси `default`, `narrow`, `narrow-large`; стани `empty-light`, `list-light`,
 `list-dark` та `keyboard`. Знімки зроблені з ізольованою тестовою базою.
+
+## Firebase App Distribution (debug APK)
+
+Ідентифікатор застосунку: `ua.lavrinchuk.shoppinglist`; Java namespace залишається
+`com.example.shoppinglist`. Android вважає це окремим застосунком від попереднього
+`com.example.shoppinglist`: стара SQLite-база залишається у старому застосунку,
+новий починає з порожніх даних. Автоматичного перенесення немає. Не видаляйте
+старий застосунок, якщо його локальні дані ще потрібні.
+
+Одноразово у Firebase Console створіть або виберіть проєкт, зареєструйте Android
+app з package name **`ua.lavrinchuk.shoppinglist`**, увімкніть App Distribution
+(Get started) і створіть групу з alias **`friends`**. Додавайте email тестувальників
+лише в Console. Обліковий запис публікатора повинен мати права на App Distribution.
+З Project settings → General → Your apps скопіюйте **Firebase App ID**: це не
+package name і не Firebase Project ID.
+
+Використовується офіційний App Distribution Gradle plugin 5.3.0 через Version
+Catalog. Firebase SDK, Google Services plugin, `google-services.json`, `firebase init`
+та `firebase.json` для цього способу розповсюдження не потрібні.
+
+Перша публікація з кореня проєкту (після налаштування JDK/Android SDK з розділу
+«Запуск»):
+
+```bash
+# Install Firebase CLI if it is not already installed.
+npm install -g firebase-tools
+firebase login
+# Paste the real Firebase App ID from the Console when prompted.
+read -r -p 'Firebase App ID: ' FIREBASE_APP_ID
+export FIREBASE_APP_ID
+export GRADLE_USER_HOME="$PWD/.gradle-user-home"
+./gradlew assembleDebug --no-daemon
+./gradlew appDistributionUploadDebug --no-daemon --no-configuration-cache
+```
+
+`appDistributionUploadDebug` залежить від `assembleDebug`, тому перед завантаженням
+завжди збирає актуальний APK і розповсюджує його групі `friends`. Замість змінної
+оточення можна передати `-PfirebaseAppId=...` (ця властивість має пріоритет).
+Без App ID звичайні збірки й тести працюють; публікація потребує реального App ID
+та авторизації. Upload запускайте окремою командою без configuration cache. `firebase login` зберігає авторизацію локально поза репозиторієм.
+Не додавайте до Git токени, приватні JSON-ключі, паролі, signing keystore чи списки
+email. Для автоматизації можна задати `GOOGLE_APPLICATION_CREDENTIALS` як шлях до
+service account JSON **поза проєктом**, з роллю Firebase App Distribution Admin.
+`.gitignore` додатково виключає типові локальні ключі, `.secrets/`, `.env*`,
+списки `testers.txt` / `*-testers.txt` та Firebase debug logs; не покладайтеся лише
+на назву файлу для захисту секретів.
+
+Перед кожною наступною тестовою версією збільшуйте `versionCode` у
+`app/build.gradle.kts` (зараз `2`, наступний `3`, далі `4` тощо). `versionName`
+є видимим номером версії та змінюється окремо. Повторіть команду upload.
+
+Debug APK автоматично підписується локальним Android debug key. Firebase
+App Distribution не перепідписує APK. Для оновлення зі збереженням локальних
+даних потрібні той самий applicationId, сумісний підпис і не нижчий versionCode
+(для нових публікацій завжди збільшуйте його). На іншому комп’ютері debug key
+зазвичай інший: використовуйте той самий захищений ключ для всіх тестових оновлень,
+не додаючи його до Git, і збережіть резервну копію. Перехід на release key також
+змінює підпис; звичайне оновлення з іншим ключем буде відхилено Android.
+Видалення застосунку перед перевстановленням видаляє його локальні дані.
+
+Документація: [Gradle plugin та авторизація](https://firebase.google.com/docs/app-distribution/android/distribute-gradle),
+[Firebase CLI](https://firebase.google.com/docs/cli),
+[підписи Android](https://developer.android.com/studio/publish/app-signing).

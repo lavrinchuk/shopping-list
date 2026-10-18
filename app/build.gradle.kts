@@ -1,5 +1,8 @@
+import com.google.firebase.appdistribution.gradle.firebaseAppDistribution
+
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.firebase.appdistribution)
 }
 
 android {
@@ -9,7 +12,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.shoppinglist"
+        applicationId = "ua.lavrinchuk.shoppinglist"
         minSdk = 26
         targetSdk = 37
         versionCode = 2
@@ -19,6 +22,15 @@ android {
     }
 
     buildTypes {
+        getByName("debug") {
+            firebaseAppDistribution {
+                appId = providers.gradleProperty("firebaseAppId")
+                    .orElse(providers.environmentVariable("FIREBASE_APP_ID"))
+                    .orElse("").get()
+                artifactType = "APK"
+                groups = "friends"
+            }
+        }
         release {
             optimization {
                 enable = true
@@ -43,4 +55,9 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(libs.ext.junit)
+}
+
+// Always build a fresh APK before uploading it.
+tasks.matching { it.name == "appDistributionUploadDebug" }.configureEach {
+    dependsOn("assembleDebug")
 }
