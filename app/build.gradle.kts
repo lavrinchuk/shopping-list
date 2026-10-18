@@ -15,8 +15,10 @@ android {
         applicationId = "ua.lavrinchuk.shoppinglist"
         minSdk = 26
         targetSdk = 37
-        versionCode = 2
-        versionName = "2.0"
+        // CI injects a monotonically increasing Firebase build version.
+        // Local Android Studio builds retain the original debug version.
+        versionCode = providers.gradleProperty("ciVersionCode").map(String::toInt).getOrElse(2)
+        versionName = providers.gradleProperty("ciVersionName").getOrElse("2.0")
 
         testInstrumentationRunner = "com.example.shoppinglist.ShoppingTestRunner"
     }
@@ -29,6 +31,10 @@ android {
                     .orElse("").get()
                 artifactType = "APK"
                 groups = "friends"
+                // Generated in GitHub Actions; optional for local Firebase uploads.
+                providers.environmentVariable("FIREBASE_RELEASE_NOTES_FILE").orNull
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let { releaseNotesFile = it }
             }
         }
         release {
