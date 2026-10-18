@@ -140,9 +140,32 @@ service account JSON **поза проєктом**, з роллю Firebase App D
 списки `testers.txt` / `*-testers.txt` та Firebase debug logs; не покладайтеся лише
 на назву файлу для захисту секретів.
 
-Перед кожною наступною тестовою версією збільшуйте `versionCode` у
-`app/build.gradle.kts` (зараз `2`, наступний `3`, далі `4` тощо). `versionName`
-є видимим номером версії та змінюється окремо. Повторіть команду upload.
+Для **локальної** збірки залишаються резервні значення versionCode=2 і versionName=2.0.
+Публікація через GitHub Actions автоматично встановлює versionCode=1000+github.run_number,
+а versionName=2.0.<номер запуску> (або номер із тега vX.Y.Z). Ручне редагування
+номерів для CI не потрібне. Не публікуйте локальний APK з кодом 2 поверх
+автоматично опублікованих версій: Android відхилить downgrade.
+
+## Автоматична публікація через GitHub Actions
+
+Workflow: `.github/workflows/firebase-distribution.yml`.
+
+- Кожен push у `master` запускає перевірки та доставку Firebase-групі `friends`.
+- Можна запустити вручну у GitHub Actions або через push тега `vX.Y.Z`.
+- Unit-тести й lint виконуються перед завантаженням; instrumented-тести потребують окремого емулятора.
+- Release notes генеруються з останніх п’яти non-merge комітів.
+- Для CI потрібно задати variable `FIREBASE_APP_ID`, secrets
+  `ANDROID_DEBUG_KEYSTORE_B64` та `FIREBASE_SERVICE_ACCOUNT_JSON`.
+- Додатково варто задати variable `ANDROID_DEBUG_CERT_SHA256`: точний SHA-256
+  сертифіката поточного ключа підпису; тоді workflow перерветься за невідповідності.
+- Повторний запуск того самого GitHub run **не збільшує** `versionCode`; для нової
+  версії запускайте новий workflow.
+- Публікації з master і тега можуть випускати одну й ту ж ревізію двічі з різними
+  versionCode. Для офіційної семантичної версії використовуйте тег, для звичайних
+  тестових оновлень достатньо push у master.
+- Не переписуйте історію та не змінюйте ключ підпису без плану міграції; для
+  сумісності оновлень важливий незмінний applicationId і той самий сертифікат.
+
 
 Debug APK автоматично підписується локальним Android debug key. Firebase
 App Distribution не перепідписує APK. Для оновлення зі збереженням локальних
