@@ -3,6 +3,8 @@ name: Distribute ShoppingList to Firebase
 on:
   workflow_dispatch:
   push:
+    branches:
+      - master
     tags:
       - 'v*'
 
@@ -61,6 +63,45 @@ jobs:
           printf '%s' "$FIREBASE_SERVICE_ACCOUNT_JSON" > "$credentials_file"
           chmod 600 "$credentials_file"
           echo "GOOGLE_APPLICATION_CREDENTIALS=$credentials_file" >> "$GITHUB_ENV"
+
+      - name: Prepare CI version and release notes
+        shell: bash
+        env:
+          RUN_NUMBER: ${{ github.run_number }}
+          GIT_REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          code=$((1000 + RUN_NUMBER))
+          test "$code" -le 2100000000 || { echo "versionCode overflow" >&2; exit 1; }
+          if [[ "$GIT_REF" == refs/tags/v* ]]; then
+            name="${GIT_REF#refs/tags/v}"
+          else
+            name="2.0.${RUN_NUMBER}"
+          fi
+          echo "ORG_GRADLE_PROJECT_ciVersionCode=$code" >> "$GITHUB_ENV"
+          echo "ORG_GRADLE_PROJECT_ciVersionName=$name" >> "$GITHUB_ENV"
+          {
+            printf 'ShoppingList %s (build %s)\n\n' "$name" "$code"
+            printf 'Changes in this revision:\n'
+            git log -5 --pretty=format:'- %s' --no-merges
+            printf '\n'
+          } > "$RUNNER_TEMP/firebase-release-notes.txt"
+          echo "FIREBASE_RELEASE_NOTES_FILE=$RUNNER_TEMP/firebase-release-notes.txt" >> "$GITHUB_ENV"
+          echo "Prepared version $name ($code)"
+
+      - name: Verify signing certificate
+        shell: bash
+        env:
+          EXPECTED_SIGNING_SHA256: ${{ vars.ANDROID_DEBUG_CERT_SHA256 }}
+        run: |
+          set -euo pipefail
+          actual="$(keytool -list -v -keystore "$HOME/.android/debug.keystore" -alias androiddebugkey -storepass android -keypass android | sed -n 's/^[[:space:]]*SHA256: //p' | head -1)"
+          test -n "$actual" || { echo "Unable to read signing certificate" >&2; exit 1; }
+          if [[ -n "${EXPECTED_SIGNING_SHA256:-}" && "${actual^^}" != "${EXPECTED_SIGNING_SHA256^^}" ]]; then
+            echo "Signing certificate differs from expected certificate!" >&2
+            exit 1
+          fi
+          echo "Signing certificate SHA-256: $actual"
 
       - name: Build and run JVM tests and lint
         run: |
