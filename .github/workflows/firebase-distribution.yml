@@ -36,8 +36,8 @@ jobs:
         with:
           packages: 'platform-tools'
 
-      - name: Install Android API 37
-        run: sdkmanager 'platforms;android-37'
+      - name: Install Android API 37.0
+        run: sdkmanager 'platforms;android-37.0'
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
