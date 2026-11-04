@@ -79,7 +79,9 @@ val spotbugsDebug = tasks.register<SpotBugsTask>("spotbugsDebug") {
     dependsOn("compileDebugJavaWithJavac")
     sourceDirs.from("src/main/java")
     auxClassPaths.from(configurations.named("debugCompileClasspath"))
-    auxClassPaths.from(android.bootClasspath)
+    // AGP 9+ exposes the Android boot classpath through sdkComponents.
+    // Keep the Provider lazy: its value is available only during task execution.
+    auxClassPaths.from(androidComponents.sdkComponents.bootClasspath)
     // Report existing findings without blocking adoption.
     ignoreFailures = true
     reports.create("html") {
