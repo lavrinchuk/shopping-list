@@ -75,6 +75,9 @@ final class ListsViewModel extends ViewModel {
             }
         };
     }
-    void publish() { changes.setValue(changes.getValue() + 1); }
+    void publish() {
+        Integer current = changes.getValue();
+        changes.setValue(current == null ? 1 : current + 1);
+    }
     @Override protected void onCleared() { cleared = true; }
 }
