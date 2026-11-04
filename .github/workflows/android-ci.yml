@@ -49,14 +49,19 @@ jobs:
           chmod +x ./gradlew
           ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug --no-daemon --no-configuration-cache
 
-      - name: Upload diagnostic reports on failure
-        if: failure()
+      - name: JaCoCo coverage and SpotBugs static analysis
+        run: ./gradlew :app:createDebugUnitTestCoverageReport :app:spotbugsDebug --no-daemon --no-configuration-cache
+
+      - name: Upload test, lint, coverage and SpotBugs reports
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: android-pr-test-and-lint-reports
+          name: android-pr-quality-reports
           path: |
             app/build/reports/tests/testDebugUnitTest/
             app/build/test-results/testDebugUnitTest/
             app/build/reports/lint-results-debug.*
+            app/build/reports/coverage/test/debug/
+            app/build/reports/spotbugs/
           if-no-files-found: warn
           retention-days: 7
