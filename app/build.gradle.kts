@@ -1,6 +1,5 @@
 import com.github.spotbugs.snom.SpotBugsTask
 import com.google.firebase.appdistribution.gradle.firebaseAppDistribution
-import org.gradle.api.artifacts.type.ArtifactTypeDefinition
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.jvm.tasks.Jar
 
@@ -87,15 +86,12 @@ val spotbugsDebugClassesJar = tasks.register<Jar>("spotbugsDebugClassesJar") {
     destinationDirectory.set(layout.buildDirectory.dir("intermediates/spotbugs"))
 }
 
-// Resolve Android AAR libraries to classes JARs using AGP's artifact transform.
-// Passing raw AARs makes SpotBugs miss AndroidX and third-party classes.
-val spotbugsDebugDependencyJars = configurations.named("debugCompileClasspath").get()
-    .incoming.artifactView {
-        attributes.attribute(
-            ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE,
-            "android-classes-jar"
-        )
-    }.files
+// Reuse AGP's actual Javac classpath: Android dependencies have already been
+// transformed to consumable JARs. Avoid eagerly resolving variant configurations;
+// AGP may create them after this build script is evaluated.
+val debugJavaCompileClasspath = providers.provider {
+    tasks.named<JavaCompile>("compileDebugJavaWithJavac").get().classpath
+}
 
 tasks.register<SpotBugsTask>("spotbugsDebug") {
     group = "verification"
@@ -106,7 +102,7 @@ tasks.register<SpotBugsTask>("spotbugsDebug") {
     // Explicit input: the default classes FileTree scans only loose .class files.
     classes = files(appJar)
     sourceDirs.from("src/main/java")
-    auxClassPaths.from(spotbugsDebugDependencyJars)
+    auxClassPaths.from(debugJavaCompileClasspath)
     auxClassPaths.from(androidComponents.sdkComponents.bootClasspath)
     // Report existing findings without blocking adoption.
     ignoreFailures = true
