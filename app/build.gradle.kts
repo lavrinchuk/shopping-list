@@ -77,6 +77,13 @@ val spotbugsDebug = tasks.register<SpotBugsTask>("spotbugsDebug") {
     group = "verification"
     description = "Analyze ShoppingList debug Java bytecode with SpotBugs."
     dependsOn("compileDebugJavaWithJavac")
+    // Resolve the Java compilation output only when SpotBugs reads its inputs.
+    // Do not configure the SpotBugs task from inside JavaCompile.configureEach:
+    // Gradle 9 forbids nested task configuration in that context.
+    classDirs.from(providers.provider {
+        tasks.named<JavaCompile>("compileDebugJavaWithJavac")
+            .get().destinationDirectory.get().asFile
+    })
     sourceDirs.from("src/main/java")
     auxClassPaths.from(configurations.named("debugCompileClasspath"))
     // AGP 9+ exposes the Android boot classpath through sdkComponents.
@@ -94,11 +101,3 @@ val spotbugsDebug = tasks.register<SpotBugsTask>("spotbugsDebug") {
     }
 }
 
-tasks.withType<JavaCompile>()
-    .matching { it.name == "compileDebugJavaWithJavac" }
-    .configureEach {
-        val debugCompile = this
-        spotbugsDebug.configure {
-            classDirs.from(debugCompile.destinationDirectory)
-        }
-    }
