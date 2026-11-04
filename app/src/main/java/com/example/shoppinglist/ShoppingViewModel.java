@@ -16,6 +16,8 @@ public final class ShoppingViewModel extends ViewModel {
     String name = "";
     String quantity = "";
     boolean adding;
+    boolean sharing;
+    String shareText;
     boolean readFailed;
     int error;
     private long draftRevision;
@@ -49,6 +51,34 @@ public final class ShoppingViewModel extends ViewModel {
     }
     void delete(ShoppingItem item) { repository.delete(listId, item.id, result(false, 0)); }
     void reload() { repository.load(listId, result(false, 0)); }
+    // A fresh read on the same queue follows all writes submitted before this action.
+    void share() {
+        if (sharing || shareText != null) return;
+        sharing = true;
+        publish();
+        repository.load(listId, new ShoppingRepository.Result() {
+            private ShoppingList snapshot;
+            @Override public void written() { }
+            @Override public void listLoaded(ShoppingList updated) { snapshot = updated; }
+            @Override public void loaded(List<ShoppingItem> updated) {
+                if (cleared) return;
+                shareText = ShoppingListTextFormatter.format(snapshot.name, updated);
+                sharing = false;
+                publish();
+            }
+            @Override public void failed(boolean reading) {
+                if (cleared) return;
+                sharing = false;
+                error = R.string.share_error;
+                publish();
+            }
+        });
+    }
+    String consumeShareText() {
+        String text = shareText;
+        shareText = null;
+        return text;
+    }
     void consumeError() { error = 0; }
 
     private ShoppingRepository.Result result(boolean add, long revision) {

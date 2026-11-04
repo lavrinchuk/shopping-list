@@ -52,6 +52,12 @@ public class MainActivity extends AppCompatActivity {
         }
         com.google.android.material.appbar.MaterialToolbar toolbar = findViewById(R.id.heading);
         toolbar.setNavigationOnClickListener(view -> finish());
+        toolbar.inflateMenu(R.menu.shopping_list);
+        toolbar.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() != R.id.share_list) return false;
+            model.share();
+            return true;
+        });
         ShoppingRepository repository = ((ShoppingApplication) getApplication()).repository();
         model = new ViewModelProvider(this, new AbstractSavedStateViewModelFactory(this, savedInstanceState) {
             @NonNull @Override protected <T extends ViewModel> T create(@NonNull String key,
@@ -59,6 +65,9 @@ public class MainActivity extends AppCompatActivity {
                 return type.cast(new ShoppingViewModel(repository, state, listId));
             }
         }).get(ShoppingViewModel.class);
+        getLifecycle().addObserver((androidx.lifecycle.LifecycleEventObserver) (source, event) -> {
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) dispatchShare();
+        });
         adapter = new ShoppingAdapter(new ShoppingAdapter.Actions() {
             @Override public void purchased(ShoppingItem item, boolean checked) { model.purchased(item, checked); }
             @Override public void delete(ShoppingItem item) { model.delete(item); }
@@ -115,10 +124,13 @@ public class MainActivity extends AppCompatActivity {
                 findViewById(R.id.form_scroll).setVisibility(readOnly ? View.GONE : View.VISIBLE);
                 adapter.setReadOnly(readOnly);
             }
+            toolbar.getMenu().findItem(R.id.share_list).setEnabled(!model.sharing);
+            dispatchShare();
             adapter.submitList(model.items);
             findViewById(R.id.empty).setVisibility(model.items.isEmpty() && !model.readFailed ? View.VISIBLE : View.GONE);
             int error = model.error;
             model.consumeError();
+            if (error == R.string.share_error) Toast.makeText(this, error, Toast.LENGTH_LONG).show();
             if (error == R.string.write_error) {
                 adapter.restoreChecks();
                 Toast.makeText(this, error, Toast.LENGTH_LONG).show();
@@ -167,6 +179,18 @@ public class MainActivity extends AppCompatActivity {
                 scroll.setLayoutParams(params);
             }
         });
+    }
+    private void dispatchShare() {
+        if (!getLifecycle().getCurrentState().isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) return;
+        String text = model.consumeShareText();
+        if (text == null) return;
+        android.content.Intent send = new android.content.Intent(android.content.Intent.ACTION_SEND)
+                .setType("text/plain").putExtra(android.content.Intent.EXTRA_TEXT, text);
+        try {
+            startActivity(android.content.Intent.createChooser(send, getString(R.string.share_list)));
+        } catch (android.content.ActivityNotFoundException error) {
+            Toast.makeText(this, R.string.share_unavailable, Toast.LENGTH_LONG).show();
+        }
     }
     @Override protected void onResume() {
         super.onResume();

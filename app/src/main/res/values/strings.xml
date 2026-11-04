@@ -29,4 +29,7 @@
     <string name="archived_date">Завершено: %1$s</string>
     <string name="item_counts">%1$d / %2$d придбано</string>
     <string name="list_actions">Дії зі списком: %1$s</string>
+    <string name="share_list">Поділитися</string>
+    <string name="share_error">Не вдалося підготувати список для надсилання. Спробуйте ще раз.</string>
+    <string name="share_unavailable">Немає застосунку для надсилання тексту.</string>
 </resources>
