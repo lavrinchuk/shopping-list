@@ -52,6 +52,23 @@ jobs:
       - name: JaCoCo coverage and SpotBugs static analysis
         run: ./gradlew :app:createDebugUnitTestCoverageReport :app:spotbugsDebug --no-daemon --no-configuration-cache
 
+      - name: Verify SpotBugs analyzed classes
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+          p = Path("app/build/reports/spotbugs/debug.xml")
+          root = ET.parse(p).getroot()
+          summary = root.find("FindBugsSummary")
+          analyzed = int(summary.get("total_classes", "0")) if summary is not None else 0
+          errors = root.find("Errors")
+          missing = int(errors.get("missingClasses", "0")) if errors is not None else 0
+          print(f"SpotBugs analyzed {analyzed} classes; missing dependency classes: {missing}")
+          if analyzed == 0:
+              raise SystemExit("SpotBugs scanned zero classes: check the input JAR/classDirs configuration")
+          PY
+
       - name: Upload test, lint, coverage and SpotBugs reports
         if: always()
         uses: actions/upload-artifact@v4
