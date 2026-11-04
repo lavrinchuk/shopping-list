@@ -9,14 +9,14 @@ PR CI runs `assembleDebug`, `testDebugUnitTest` and `lintDebug`, followed by:
 ```
 
 - **JaCoCo** is enabled with Android Gradle Plugin's `enableUnitTestCoverage = true` for the debug build. The unit-test report is expected at `app/build/reports/coverage/test/debug/index.html`. It covers **local JVM unit tests only**, not device/UI tests.
-- **SpotBugs** is configured using `com.github.spotbugs-base` and an explicit Android `spotbugsDebug` task. It packages compiled debug Java classes into a JAR (SpotBugs must analyze a real class root, not individual `.class` files) and resolves Android dependency AARs to classes JARs through Gradle's artifact view, plus the Android boot classpath. Reports are expected at `app/build/reports/spotbugs/debug.html` and `debug.xml`.
+- **SpotBugs** is configured using `com.github.spotbugs-base` and an explicit Android `spotbugsDebug` task. It packages compiled debug Java classes into a JAR (SpotBugs must analyze a real class root, not individual `.class` files) and uses the Android JavaCompile classpath (already transformed by AGP), plus the Android boot classpath. Reports are expected at `app/build/reports/spotbugs/debug.html` and `debug.xml`.
 - GitHub Actions uploads available reports as the `android-pr-quality-reports` artifact, even on failure. Reports are not committed to Git.
 
 ## Initial policy
 
 JaCoCo has **no minimum percentage requirement** yet. SpotBugs findings are reported with `ignoreFailures = true` during the baseline phase, but tool crashes and build failures should still fail the CI.
 
-The CI also checks that SpotBugs reports a nonzero analyzed class count; zero findings with zero analyzed classes is NOT a successful scan. Inspect `missingClasses` in the SpotBugs XML to identify incomplete Android dependency classpaths.\n\nFirst inspect the reports and determine whether exclusions and rules are appropriate. Then consider a threshold for meaningful business logic coverage and blocking *new* high-confidence defects. Avoid superficial tests that only increase coverage.
+The CI checks that the app's analysis JAR contains classes, that the XML references this JAR, and that SpotBugs findings refer to app classes. Its `FindBugsSummary.total_classes` can be zero even with concrete findings, so it is not used alone to judge scan completeness. `MissingClass` entries are printed as warnings; missing dependencies can make analysis incomplete and should be investigated.\n\nIn the initial report, SpotBugs found three potential null dereferences in `ListsActivity`, `ListsViewModel`, and `ShoppingViewModel`. It also could not resolve `androidx.customview.poolingcontainer.PoolingContainer`, `androidx.tracing.Trace`, and `java.rmi.Remote`. The findings require review rather than automatic fixes.\n\nFirst inspect the reports and determine whether exclusions and rules are appropriate. Then consider a threshold for meaningful business logic coverage and blocking *new* high-confidence defects. Avoid superficial tests that only increase coverage.
 
 ## Notes
 
