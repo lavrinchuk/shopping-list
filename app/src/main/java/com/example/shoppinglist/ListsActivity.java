@@ -118,7 +118,10 @@ public class ListsActivity extends AppCompatActivity {
         nameDialog.setOnCancelListener(dialog -> model.saved.set("editing", false));
         nameDialog.setOnDismissListener(dialog -> nameDialog = null);
         nameDialog.setOnShowListener(dialog -> nameDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(view -> {
-            try { model.saveName(editId == null ? 0 : editId, input.getText().toString()); }
+            try {
+                Editable text = input.getText();
+                model.saveName(editId == null ? 0 : editId, text == null ? "" : text.toString());
+            }
             catch (IllegalArgumentException error) { field.setError(getString(R.string.list_name_required)); }
         }));
         nameDialog.show();
