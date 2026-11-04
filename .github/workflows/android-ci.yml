@@ -52,21 +52,49 @@ jobs:
       - name: JaCoCo coverage and SpotBugs static analysis
         run: ./gradlew :app:createDebugUnitTestCoverageReport :app:spotbugsDebug --no-daemon --no-configuration-cache
 
-      - name: Verify SpotBugs analyzed classes
+      - name: Verify SpotBugs inputs and report
         shell: bash
         run: |
           python3 - <<'PY'
+          import sys
+          import zipfile
           import xml.etree.ElementTree as ET
           from pathlib import Path
-          p = Path("app/build/reports/spotbugs/debug.xml")
-          root = ET.parse(p).getroot()
-          summary = root.find("FindBugsSummary")
-          analyzed = int(summary.get("total_classes", "0")) if summary is not None else 0
+
+          jar = Path("app/build/intermediates/spotbugs/spotbugs-debug-classes.jar").resolve()
+          report = Path("app/build/reports/spotbugs/debug.xml")
+          with zipfile.ZipFile(jar) as archive:
+              compiled = {name.removesuffix(".class").replace("/", ".")
+                          for name in archive.namelist() if name.endswith(".class")}
+          if not compiled:
+              sys.exit("SpotBugs input JAR contains no compiled classes")
+
+          root = ET.parse(report).getroot()
+          if root.tag != "BugCollection":
+              sys.exit("Unexpected SpotBugs XML report structure")
+          project_jars = {Path(node.text).resolve() for node in root.findall("./Project/Jar")
+                          if node.text}
+          if jar not in project_jars:
+              sys.exit("SpotBugs report does not reference the compiled app JAR")
+
           errors = root.find("Errors")
-          missing = int(errors.get("missingClasses", "0")) if errors is not None else 0
-          print(f"SpotBugs analyzed {analyzed} classes; missing dependency classes: {missing}")
-          if analyzed == 0:
-              raise SystemExit("SpotBugs scanned zero classes: check the input JAR/classDirs configuration")
+          if errors is None or int(errors.get("errors", "-1")) != 0:
+              sys.exit("SpotBugs reported internal analysis errors")
+
+          bugs = root.findall("BugInstance")
+          bug_classes = {node.get("classname") for bug in bugs
+                         for node in bug.findall("./Class")}
+          unexpected = bug_classes - compiled
+          if unexpected:
+              sys.exit(f"SpotBugs findings refer to non-app classes: {sorted(unexpected)}")
+
+          missing = [node.text for node in root.findall("./Errors/MissingClass") if node.text]
+          summary = root.find("FindBugsSummary")
+          reported_classes = summary.get("total_classes", "n/a") if summary is not None else "n/a"
+          print(f"App JAR: {len(compiled)} compiled classes; SpotBugs findings: {len(bugs)}")
+          print(f"SpotBugs reported total_classes: {reported_classes} (not a reliable scan-completeness metric)")
+          if missing:
+              print("Warning: unresolved analysis dependencies: " + ", ".join(sorted(missing)))
           PY
 
       - name: Upload test, lint, coverage and SpotBugs reports
