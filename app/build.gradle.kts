@@ -1,8 +1,11 @@
+import com.github.spotbugs.snom.SpotBugsTask
 import com.google.firebase.appdistribution.gradle.firebaseAppDistribution
+import org.gradle.api.tasks.compile.JavaCompile
 
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.firebase.appdistribution)
+    alias(libs.plugins.spotbugs.base)
 }
 
 android {
@@ -25,6 +28,7 @@ android {
 
     buildTypes {
         getByName("debug") {
+            enableUnitTestCoverage = true
             firebaseAppDistribution {
                 appId = providers.gradleProperty("firebaseAppId")
                     .orElse(providers.environmentVariable("FIREBASE_APP_ID"))
@@ -67,3 +71,32 @@ dependencies {
 tasks.matching { it.name == "appDistributionUploadDebug" }.configureEach {
     dependsOn("assembleDebug")
 }
+
+// SpotBugs does not automatically create Android variant tasks.
+val spotbugsDebug = tasks.register<SpotBugsTask>("spotbugsDebug") {
+    group = "verification"
+    description = "Analyze ShoppingList debug Java bytecode with SpotBugs."
+    dependsOn("compileDebugJavaWithJavac")
+    sourceDirs.from("src/main/java")
+    auxClassPaths.from(configurations.named("debugCompileClasspath"))
+    auxClassPaths.from(android.bootClasspath)
+    // Report existing findings without blocking adoption.
+    ignoreFailures = true
+    reports.create("html") {
+        required = true
+        outputLocation = layout.buildDirectory.file("reports/spotbugs/debug.html")
+    }
+    reports.create("xml") {
+        required = true
+        outputLocation = layout.buildDirectory.file("reports/spotbugs/debug.xml")
+    }
+}
+
+tasks.withType<JavaCompile>()
+    .matching { it.name == "compileDebugJavaWithJavac" }
+    .configureEach {
+        val debugCompile = this
+        spotbugsDebug.configure {
+            classDirs.from(debugCompile.destinationDirectory)
+        }
+    }
