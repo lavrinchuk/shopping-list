@@ -1,6 +1,8 @@
 import com.github.spotbugs.snom.SpotBugsTask
 import com.google.firebase.appdistribution.gradle.firebaseAppDistribution
+import org.gradle.api.artifacts.type.ArtifactTypeDefinition
 import org.gradle.api.tasks.compile.JavaCompile
+import org.gradle.jvm.tasks.Jar
 
 plugins {
     alias(libs.plugins.android.application)
@@ -72,22 +74,39 @@ tasks.matching { it.name == "appDistributionUploadDebug" }.configureEach {
     dependsOn("assembleDebug")
 }
 
-// SpotBugs does not automatically create Android variant tasks.
-val spotbugsDebug = tasks.register<SpotBugsTask>("spotbugsDebug") {
+// SpotBugs needs JARs/class roots rather than individual .class entries.
+// Package our Android Java compilation output as an analyzable JAR.
+val spotbugsDebugClassesJar = tasks.register<Jar>("spotbugsDebugClassesJar") {
     group = "verification"
-    description = "Analyze ShoppingList debug Java bytecode with SpotBugs."
     dependsOn("compileDebugJavaWithJavac")
-    // Resolve the Java compilation output only when SpotBugs reads its inputs.
-    // Do not configure the SpotBugs task from inside JavaCompile.configureEach:
-    // Gradle 9 forbids nested task configuration in that context.
-    classDirs.from(providers.provider {
+    from(providers.provider {
         tasks.named<JavaCompile>("compileDebugJavaWithJavac")
             .get().destinationDirectory.get().asFile
     })
+    archiveFileName.set("spotbugs-debug-classes.jar")
+    destinationDirectory.set(layout.buildDirectory.dir("intermediates/spotbugs"))
+}
+
+// Resolve Android AAR libraries to classes JARs using AGP's artifact transform.
+// Passing raw AARs makes SpotBugs miss AndroidX and third-party classes.
+val spotbugsDebugDependencyJars = configurations.named("debugCompileClasspath").get()
+    .incoming.artifactView {
+        attributes.attribute(
+            ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE,
+            "android-classes-jar"
+        )
+    }.files
+
+tasks.register<SpotBugsTask>("spotbugsDebug") {
+    group = "verification"
+    description = "Analyze ShoppingList debug Java bytecode with SpotBugs."
+    dependsOn(spotbugsDebugClassesJar)
+    val appJar = spotbugsDebugClassesJar.flatMap { it.archiveFile }
+    classDirs.from(appJar)
+    // Explicit input: the default classes FileTree scans only loose .class files.
+    classes = files(appJar)
     sourceDirs.from("src/main/java")
-    auxClassPaths.from(configurations.named("debugCompileClasspath"))
-    // AGP 9+ exposes the Android boot classpath through sdkComponents.
-    // Keep the Provider lazy: its value is available only during task execution.
+    auxClassPaths.from(spotbugsDebugDependencyJars)
     auxClassPaths.from(androidComponents.sdkComponents.bootClasspath)
     // Report existing findings without blocking adoption.
     ignoreFailures = true
@@ -100,4 +119,3 @@ val spotbugsDebug = tasks.register<SpotBugsTask>("spotbugsDebug") {
         outputLocation = layout.buildDirectory.file("reports/spotbugs/debug.xml")
     }
 }
-
