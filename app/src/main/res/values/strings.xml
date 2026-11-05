@@ -3,6 +3,8 @@
     <string name="name_hint">Назва товару</string>
     <string name="quantity_hint">Кількість</string>
     <string name="add_item">Додати товар</string>
+    <string name="search_item">Пошукати в інтернеті: %1$s</string>
+    <string name="search_unavailable">Не вдалося відкрити пошук у браузері.</string>
     <string name="delete_item">Видалити: %1$s</string>
     <string name="name_required">Введіть назву товару</string>
     <string name="write_error">Не вдалося зберегти зміну. Спробуйте ще раз.</string>
