@@ -1,5 +1,9 @@
 package com.example.shoppinglist;
 
+import com.example.shoppinglist.data.ShoppingDatabase;
+import com.example.shoppinglist.model.ShoppingItem;
+import com.example.shoppinglist.model.ShoppingList;
+
 import static org.junit.Assert.*;
 
 import android.content.Context;

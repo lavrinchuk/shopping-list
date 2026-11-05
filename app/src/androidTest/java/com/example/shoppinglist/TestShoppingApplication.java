@@ -1,5 +1,9 @@
 package com.example.shoppinglist;
 
+import com.example.shoppinglist.data.ShoppingDatabase;
+import com.example.shoppinglist.data.ShoppingRepository;
+import com.example.shoppinglist.model.ShoppingItem;
+
 import android.database.sqlite.SQLiteException;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -33,7 +37,7 @@ public class TestShoppingApplication extends ShoppingApplication {
         }
 
         @Override
-        void add(long listId, String name, String quantity) {
+        public void add(long listId, String name, String quantity) {
             CountDownLatch gate = allowWrite;
             if (gate != null) {
                 writeStarted.countDown();
@@ -55,7 +59,7 @@ public class TestShoppingApplication extends ShoppingApplication {
         }
 
         @Override
-        List<ShoppingItem> getItems(long listId) {
+        public List<ShoppingItem> getItems(long listId) {
             if (failNextRead) {
                 failNextRead = false;
                 throw new SQLiteException("Injected read failure");

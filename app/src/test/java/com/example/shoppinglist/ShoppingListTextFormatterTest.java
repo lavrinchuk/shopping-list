@@ -1,5 +1,9 @@
 package com.example.shoppinglist;
 
+import com.example.shoppinglist.model.ShoppingItem;
+import com.example.shoppinglist.model.ShoppingList;
+import com.example.shoppinglist.share.ShoppingListTextFormatter;
+
 import static org.junit.Assert.*;
 
 import java.util.ArrayList;

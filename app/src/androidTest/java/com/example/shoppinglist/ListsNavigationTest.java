@@ -1,5 +1,9 @@
 package com.example.shoppinglist;
 
+import com.example.shoppinglist.data.ShoppingRepository;
+import com.example.shoppinglist.viewModel.ShoppingItem;
+import com.example.shoppinglist.viewModel.ShoppingList;
+
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.*;
 import static androidx.test.espresso.assertion.ViewAssertions.*;
@@ -118,7 +122,7 @@ public class ListsNavigationTest {
         back();
         home.onActivity(activity -> {
             ShoppingList list =
-                    activity.model.lists.stream()
+                    activity.viewModel.lists.stream()
                             .filter(value -> value.name.equals("Сільпо"))
                             .findFirst()
                             .get();
@@ -266,8 +270,8 @@ public class ListsNavigationTest {
             ListAdapter<?, ?> adapter = (ListAdapter<?, ?>) list.getAdapter();
             java.util.List<?> desired =
                     current instanceof ListsActivity
-                            ? ((ListsActivity) current).model.lists
-                            : ((MainActivity) current).model.items;
+                            ? ((ListsActivity) current).viewModel.lists
+                            : ((MainActivity) current).viewModel.items;
             if (!adapter.getCurrentList().equals(desired)) {
                 return false;
             }
