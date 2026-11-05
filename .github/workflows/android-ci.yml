@@ -44,24 +44,6 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
 
-      # TEMPORARY, PR-only diagnostic: generate the canonical formatter output
-      # so it can be committed; this step is removed before merging.
-      - name: Generate canonical Java formatting for PR
-        run: |
-          ./gradlew spotlessApply --no-daemon --no-configuration-cache
-          python3 - <<'PY'
-          import base64
-          import pathlib
-          import subprocess
-          changed = subprocess.check_output(
-              ["git", "diff", "--name-only", "--", "app/src"], text=True
-          ).splitlines()
-          for name in changed:
-              if name.endswith(".java"):
-                  encoded = base64.b64encode(pathlib.Path(name).read_bytes()).decode("ascii")
-                  print(f"FORMATTED_JAVA {name} {encoded}")
-          PY
-
       - name: Check Java code style
         run: ./gradlew spotlessCheck --no-daemon --no-configuration-cache
 
