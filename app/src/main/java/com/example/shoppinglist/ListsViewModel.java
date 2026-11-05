@@ -150,6 +150,37 @@ final class ListsViewModel extends ViewModel {
                 });
     }
 
+    void deleteEmptyShoppingList(long id) {
+        if (busy) {
+            return;
+        }
+        busy = true;
+        notifyStateChanged();
+        repository.deleteEmptyShoppingList(
+                id,
+                new ShoppingRepository.Result() {
+                    @Override
+                    public void written() {
+                        if (!cleared) {
+                            busy = false;
+                            reload();
+                        }
+                    }
+
+                    @Override
+                    public void loaded(List<ShoppingItem> ignored) {}
+
+                    @Override
+                    public void failed(boolean reading) {
+                        if (!cleared) {
+                            busy = false;
+                            error = R.string.write_error;
+                            notifyStateChanged();
+                        }
+                    }
+                });
+    }
+
     void restore(long id) {
         if (busy) {
             return;
