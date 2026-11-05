@@ -11,16 +11,29 @@ public class VoiceRecognitionResultTest {
     @Test
     public void usesFirstNonBlankCandidate() {
         assertEquals(
-                "молоко",
+                "Молоко",
                 VoiceRecognitionResult.firstNonBlank(Arrays.asList(" ", " молоко ", "хліб")));
     }
 
     @Test
     public void preservesUkrainianText() {
         assertEquals(
-                "олія соняшникова",
+                "Олія соняшникова",
                 VoiceRecognitionResult.firstNonBlank(
                         Collections.singletonList("олія соняшникова")));
+    }
+
+    @Test
+    public void keepsOtherLettersAndUppercasesUkrainianLetters() {
+        assertEquals(
+                "Сік ABC",
+                VoiceRecognitionResult.firstNonBlank(Collections.singletonList("сік ABC")));
+        assertEquals(
+                "Ґудзики",
+                VoiceRecognitionResult.firstNonBlank(Collections.singletonList("Ґудзики")));
+        assertEquals(
+                "Їжа",
+                VoiceRecognitionResult.firstNonBlank(Collections.singletonList("їжа")));
     }
 
     @Test
