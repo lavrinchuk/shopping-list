@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- First item is a deliberate opt-out: the search includes no region. -->
+    <string-array name="purchase_search_regions">
+        <item>@string/search_region_anywhere</item>
+        <item>м. Київ</item>
+        <item>Київська область</item>
+        <item>Вінницька область</item>
+        <item>Волинська область</item>
+        <item>Дніпропетровська область</item>
+        <item>Донецька область</item>
+        <item>Житомирська область</item>
+        <item>Закарпатська область</item>
+        <item>Запорізька область</item>
+        <item>Івано-Франківська область</item>
+        <item>Кіровоградська область</item>
+        <item>Луганська область</item>
+        <item>Львівська область</item>
+        <item>Миколаївська область</item>
+        <item>Одеська область</item>
+        <item>Полтавська область</item>
+        <item>Рівненська область</item>
+        <item>Сумська область</item>
+        <item>Тернопільська область</item>
+        <item>Харківська область</item>
+        <item>Херсонська область</item>
+        <item>Хмельницька область</item>
+        <item>Черкаська область</item>
+        <item>Чернівецька область</item>
+        <item>Чернігівська область</item>
+        <item>Автономна Республіка Крим</item>
+        <item>м. Севастополь</item>
+    </string-array>
+</resources>
