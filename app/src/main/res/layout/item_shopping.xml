@@ -15,6 +15,12 @@
                 android:layout_height="wrap_content" android:paddingStart="32dp" android:paddingEnd="8dp"
                 android:textAppearance="?attr/textAppearanceBodyMedium" android:textColor="?attr/colorOnSurfaceVariant" />
         </LinearLayout>
+        <com.google.android.material.button.MaterialButton android:id="@+id/search_item"
+            style="@style/Widget.Material3.Button.TextButton" android:layout_width="48dp"
+            android:layout_height="48dp" android:minWidth="0dp" android:minHeight="48dp"
+            android:padding="12dp" android:insetTop="0dp" android:insetBottom="0dp"
+            app:icon="@drawable/ic_search" app:iconPadding="0dp" app:iconSize="24dp"
+            app:iconGravity="textStart" app:iconTint="?attr/colorOnSurfaceVariant" />
         <com.google.android.material.button.MaterialButton android:id="@+id/delete_item"
             style="@style/Widget.Material3.Button.TextButton" android:layout_width="48dp"
             android:layout_height="48dp" android:minWidth="0dp" android:minHeight="48dp"
