@@ -43,7 +43,7 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
         db.execSQL(
                 "CREATE TABLE "
                         + table
-                        + " (id INTEGER PRIMARY KEY AUTOINCREMENT, listId INTEGER NOT NULL REFERENCES shopping_lists(id) ON DELETE RESTRICT, name TEXT NOT NULL, quantity TEXT NOT NULL, purchased INTEGER NOT NULL DEFAULT 0 CHECK(purchased IN (0,1)))");
+                        + " (id INTEGER PRIMARY KEY AUTOINCREMENT, listId INTEGER NOT NULL REFERENCES shopping_lists(id) ON DELETE RESTRICT, name TEXT NOT NULL, quantity TEXT NOT NULL, purchased INTEGER NOT NULL DEFAULT 0 CHECK(purchased IN (0,1)), url TEXT)");
     }
 
     @Override
@@ -61,8 +61,9 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
         // SQLiteOpenHelper wraps onUpgrade and user_version in a single transaction.
         if (oldVersion == 1) {
             upgradeFromV1(db);
+        } else {
+            db.execSQL("ALTER TABLE items ADD COLUMN url TEXT");
         }
-        db.execSQL("ALTER TABLE items ADD COLUMN url TEXT");
     }
 
     private void upgradeFromV1(SQLiteDatabase db) {
