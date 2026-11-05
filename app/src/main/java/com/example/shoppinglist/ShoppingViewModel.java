@@ -14,6 +14,7 @@ import java.util.List;
 public final class ShoppingViewModel extends ViewModel {
     private static final String STATE_ITEM_NAME = "name";
     private static final String STATE_ITEM_QUANTITY = "quantity";
+    private static final String STATE_RECEIPT_OFFER = "receiptOffer";
     final MutableLiveData<Integer> changes = new MutableLiveData<>(0);
     private final ShoppingRepository repository;
     private final SavedStateHandle saved;
@@ -27,6 +28,7 @@ public final class ShoppingViewModel extends ViewModel {
     boolean receiptBusy;
     boolean finishing;
     boolean closeAfterFinish;
+    boolean receiptOfferPending;
     String shareText;
     boolean readFailed;
     int error;
@@ -39,6 +41,7 @@ public final class ShoppingViewModel extends ViewModel {
         this.saved = saved;
         name = saved.contains(STATE_ITEM_NAME) ? saved.get(STATE_ITEM_NAME) : "";
         quantity = saved.contains(STATE_ITEM_QUANTITY) ? saved.get(STATE_ITEM_QUANTITY) : "";
+        receiptOfferPending = Boolean.TRUE.equals(saved.get(STATE_RECEIPT_OFFER));
         reload();
     }
 
@@ -76,6 +79,17 @@ public final class ShoppingViewModel extends ViewModel {
         repository.setItemUrl(listId, item.id, url, createRepositoryCallback(false, 0));
     }
 
+    void requestReceiptOffer() {
+        receiptOfferPending = true;
+        saved.set(STATE_RECEIPT_OFFER, true);
+        notifyStateChanged();
+    }
+
+    void consumeReceiptOffer() {
+        receiptOfferPending = false;
+        saved.set(STATE_RECEIPT_OFFER, false);
+    }
+
     void finishShopping(boolean confirmed, boolean deleteEmpty) {
         if (finishing || list == null || list.archivedAt != null || list.isWish()) {
             return;
@@ -87,7 +101,13 @@ public final class ShoppingViewModel extends ViewModel {
                     @Override
                     public void written() {
                         if (!cleared) {
-                            closeAfterFinish = true;
+                            if (deleteEmpty) {
+                                closeAfterFinish = true;
+                            } else {
+                                finishing = false;
+                                requestReceiptOffer();
+                                reload();
+                            }
                             notifyStateChanged();
                         }
                     }

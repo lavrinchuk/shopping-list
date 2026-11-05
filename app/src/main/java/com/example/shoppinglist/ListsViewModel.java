@@ -26,6 +26,7 @@ final class ListsViewModel extends ViewModel {
     boolean cleared;
     Long confirmation;
     private static final String STATE_OPEN_CREATED_ID = "openCreatedId";
+    private static final String STATE_OFFER_RECEIPT_ID = "offerReceiptId";
 
     ListsViewModel(ShoppingRepository repository, SavedStateHandle saved, boolean archived) {
         this.repository = repository;
@@ -37,6 +38,14 @@ final class ListsViewModel extends ViewModel {
         Long id = saved.get(STATE_OPEN_CREATED_ID);
         if (id != null) {
             saved.remove(STATE_OPEN_CREATED_ID);
+        }
+        return id;
+    }
+
+    Long consumeReceiptOffer() {
+        Long id = saved.get(STATE_OFFER_RECEIPT_ID);
+        if (id != null) {
+            saved.remove(STATE_OFFER_RECEIPT_ID);
         }
         return id;
     }
@@ -111,6 +120,9 @@ final class ListsViewModel extends ViewModel {
         if (busy) {
             return;
         }
+        boolean offerReceipt =
+                lists.stream()
+                        .anyMatch(list -> list.id == id && !list.isWish() && list.total > 0);
         confirmation = null;
         busy = true;
         notifyStateChanged();
@@ -123,6 +135,10 @@ final class ListsViewModel extends ViewModel {
                     @Override
                     public void written() {
                         delegate.written();
+                        if (!cleared && offerReceipt) {
+                            saved.set(STATE_OFFER_RECEIPT_ID, id);
+                            notifyStateChanged();
+                        }
                     }
 
                     @Override

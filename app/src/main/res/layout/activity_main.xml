@@ -68,6 +68,11 @@
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
     </FrameLayout>
+    <com.google.android.material.button.MaterialButton android:id="@+id/receipt_bottom_action"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:minHeight="56dp" android:layout_marginHorizontal="16dp"
+        android:layout_marginVertical="8dp" android:text="@string/receipt_attach"
+        android:visibility="gone" />
     <com.google.android.material.button.MaterialButton android:id="@+id/finish_list"
         android:layout_width="match_parent" android:layout_height="wrap_content"
         android:minHeight="56dp" android:layout_marginHorizontal="16dp"
