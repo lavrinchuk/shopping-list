@@ -121,8 +121,7 @@ final class ListsViewModel extends ViewModel {
             return;
         }
         boolean offerReceipt =
-                lists.stream()
-                        .anyMatch(list -> list.id == id && !list.isWish() && list.total > 0);
+                lists.stream().anyMatch(list -> list.id == id && !list.isWish() && list.total > 0);
         confirmation = null;
         busy = true;
         notifyStateChanged();
