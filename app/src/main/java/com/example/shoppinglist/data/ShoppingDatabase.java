@@ -298,9 +298,7 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
             String[] args =
                     normalized == null
                             ? new String[] {String.valueOf(listId), String.valueOf(id)}
-                            : new String[] {
-                                String.valueOf(listId), String.valueOf(id), normalized
-                            };
+                            : new String[] {String.valueOf(listId), String.valueOf(id), normalized};
             int changed = db.update("items", values, where, args);
             if (changed > 0) {
                 touch(db, list);
