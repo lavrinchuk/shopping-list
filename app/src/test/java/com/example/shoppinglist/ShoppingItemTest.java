@@ -29,4 +29,18 @@ public class ShoppingItemTest {
     public void rejectsNullName() {
         ShoppingItem.cleanName(null);
     }
+    @Test
+    public void constructorPreservesIdentityAndPurchaseState() {
+        ShoppingItem item = new ShoppingItem(42, 7, "Кава", "250 г", true);
+        assertEquals(42, item.id);
+        assertEquals(7, item.listId);
+        assertTrue(item.purchased);
+    }
+
+    @Test
+    public void cleanNamePreservesInternalSpacesAndUnicode() {
+        assertEquals("Їжа для сім’ї", ShoppingItem.cleanName("  Їжа для сім’ї  "));
+        assertEquals("Хліб  і  масло", ShoppingItem.cleanName("Хліб  і  масло"));
+    }
+
 }
