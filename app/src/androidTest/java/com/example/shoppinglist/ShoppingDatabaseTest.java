@@ -320,6 +320,78 @@ public class ShoppingDatabaseTest {
         assertEquals(1, db.getList(listId).purchased);
     }
 
+    @Test
+    public void itemLinkPersistsAcrossReopenAndCanBeCleared() {
+        long listId = db.createList("Покупки");
+        db.add(listId, "Кава", "");
+        long itemId = db.getItems(listId).get(0).id;
+        assertNull(db.getItems(listId).get(0).url);
+
+        db.setItemUrl(listId, itemId, " https://shop.example.ua/coffee ");
+        long updated = db.getList(listId).updatedAt;
+        assertEquals("https://shop.example.ua/coffee", db.getItems(listId).get(0).url);
+        db.setItemUrl(listId, itemId, "https://shop.example.ua/coffee");
+        assertEquals(updated, db.getList(listId).updatedAt);
+
+        db.close();
+        db = new ShoppingDatabase(context, file);
+        assertEquals("https://shop.example.ua/coffee", db.getItems(listId).get(0).url);
+        db.setItemUrl(listId, itemId, "");
+        assertNull(db.getItems(listId).get(0).url);
+        assertTrue(db.getList(listId).updatedAt > updated);
+    }
+
+    @Test
+    public void archiveKeepsUrlReadableButRejectsEditing() {
+        long listId = db.createList("Покупки");
+        db.add(listId, "Лампа", "2");
+        long itemId = db.getItems(listId).get(0).id;
+        db.setItemUrl(listId, itemId, "https://example.com/lamp");
+        db.archive(listId, true);
+        assertEquals("https://example.com/lamp", db.getItems(listId).get(0).url);
+        assertRejected(() -> db.setItemUrl(listId, itemId, "https://example.com/other"));
+        assertEquals("https://example.com/lamp", db.getItems(listId).get(0).url);
+    }
+
+    @Test
+    public void upgradeFromVersionTwoPreservesItemsAndArchivedLists() {
+        db.close();
+        try (SQLiteDatabase old = context.openOrCreateDatabase(file, 0, null)) {
+            old.execSQL(
+                    "CREATE TABLE shopping_lists (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL, archivedAt INTEGER)");
+            old.execSQL(
+                    "CREATE TABLE items (id INTEGER PRIMARY KEY AUTOINCREMENT, listId INTEGER NOT NULL REFERENCES shopping_lists(id), name TEXT NOT NULL, quantity TEXT NOT NULL, purchased INTEGER NOT NULL)");
+            old.execSQL("INSERT INTO shopping_lists VALUES (12, 'Архів', 100, 120, 120)");
+            old.execSQL("INSERT INTO items VALUES (42, 12, 'Молоко', '2 л', 1)");
+            old.setVersion(2);
+        }
+        db = new ShoppingDatabase(context, file);
+        ShoppingList list = db.getList(12);
+        assertEquals(Long.valueOf(120), list.archivedAt);
+        assertEquals(1, list.total);
+        assertEquals(1, list.purchased);
+        ShoppingItem item = db.getItems(12).get(0);
+        assertEquals(42, item.id);
+        assertEquals("Молоко", item.name);
+        assertEquals("2 л", item.quantity);
+        assertNull(item.url);
+        assertEquals(3, db.getReadableDatabase().getVersion());
+    }
+
+    @Test
+    public void legacyVersionOneMigrationAddsOptionalUrl() {
+        createLegacy(false);
+        db = new ShoppingDatabase(context, file);
+        ShoppingList list = db.getLists(false).get(0);
+        assertEquals(2, list.total);
+        assertEquals(1, list.purchased);
+        assertNull(db.getItems(list.id).get(0).url);
+        long itemId = db.getItems(list.id).get(0).id;
+        db.setItemUrl(list.id, itemId, "https://example.com/bread");
+        assertEquals("https://example.com/bread", db.getItems(list.id).get(0).url);
+        assertEquals(3, db.getReadableDatabase().getVersion());
+    }
+
     private void assertRejected(Runnable action) {
         try {
             action.run();
