@@ -177,6 +177,45 @@ public class ListsNavigationTest {
     }
 
     @Test
+    public void bottomActionDeletesEmptyShoppingListButNotWishList() {
+        onView(withId(R.id.create_list)).perform(click());
+        onView(withId(R.id.list_name_input))
+                .perform(replaceText("Тимчасовий"), closeSoftKeyboard());
+        onView(withText(R.string.save)).perform(click());
+        onView(withId(R.id.finish_list)).check(matches(withText(R.string.delete_empty_list)));
+        onView(withId(R.id.finish_list)).perform(click());
+        onView(withText(R.string.delete_empty_list_confirmation)).check(matches(isDisplayed()));
+        onView(withText(R.string.cancel)).perform(click());
+        onView(withId(R.id.finish_list)).perform(click());
+        onView(withText(R.string.delete_empty_list)).perform(click());
+        onView(withText("Тимчасовий")).check(doesNotExist());
+        onView(withId(R.id.open_archive)).perform(click());
+        onView(withText("Тимчасовий")).check(doesNotExist());
+        back();
+    }
+
+    @Test
+    public void bottomActionArchivesNonEmptyShoppingListWithConfirmation() {
+        onView(withId(R.id.create_list)).perform(click());
+        onView(withId(R.id.list_name_input))
+                .perform(replaceText("На вихідні"), closeSoftKeyboard());
+        onView(withText(R.string.save)).perform(click());
+        onView(withId(R.id.name)).perform(replaceText("Хліб"), closeSoftKeyboard());
+        onView(withId(R.id.add)).perform(click());
+        onView(withId(R.id.finish_list)).check(matches(withText(R.string.finish_shopping)));
+        onView(withId(R.id.finish_list)).perform(click());
+        onView(withText(R.string.incomplete_confirmation)).check(matches(isDisplayed()));
+        onView(withText(R.string.cancel)).perform(click());
+        onView(withText("Хліб")).check(matches(isDisplayed()));
+        onView(withId(R.id.finish_list)).perform(click());
+        onView(withId(android.R.id.button1)).perform(click());
+        onView(withText("На вихідні")).check(doesNotExist());
+        onView(withId(R.id.open_archive)).perform(click());
+        onView(withText("На вихідні")).check(matches(isDisplayed()));
+        back();
+    }
+
+    @Test
     public void archiveConfirmationReadOnlyAndRestoreNavigation() throws Exception {
         create("Покупки");
         onView(withText("Покупки")).perform(click());
