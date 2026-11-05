@@ -19,6 +19,8 @@ final class ShoppingAdapter extends ListAdapter<ShoppingItem, ShoppingAdapter.Ho
         void purchased(ShoppingItem item, boolean checked);
 
         void delete(ShoppingItem item);
+
+        void search(ShoppingItem item);
     }
 
     private final Actions actions;
@@ -95,6 +97,9 @@ final class ShoppingAdapter extends ListAdapter<ShoppingItem, ShoppingAdapter.Ho
         holder.name.setChecked(item.purchased);
         holder.name.setEnabled(!readOnly);
         holder.delete.setVisibility(readOnly ? View.GONE : View.VISIBLE);
+        holder.search.setContentDescription(
+                holder.itemView.getContext().getString(R.string.search_item, item.name));
+        holder.search.setOnClickListener(view -> actions.search(item));
         holder.name.setTextColor(
                 MaterialColors.getColor(
                         holder.name,
@@ -118,12 +123,14 @@ final class ShoppingAdapter extends ListAdapter<ShoppingItem, ShoppingAdapter.Ho
         final CheckBox name;
         final TextView quantity;
         final View delete;
+        final View search;
 
         Holder(View view) {
             super(view);
             name = view.findViewById(R.id.item_name);
             quantity = view.findViewById(R.id.item_quantity);
             delete = view.findViewById(R.id.delete_item);
+            search = view.findViewById(R.id.search_item);
         }
     }
 }
