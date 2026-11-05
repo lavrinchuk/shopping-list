@@ -98,8 +98,7 @@ public class MainActivity extends AppCompatActivity {
         }
         configureToolbar();
         initializeViewModel(savedInstanceState, listId);
-        if (getIntent().getBooleanExtra(EXTRA_OFFER_RECEIPT, false)
-                && savedInstanceState == null) {
+        if (getIntent().getBooleanExtra(EXTRA_OFFER_RECEIPT, false) && savedInstanceState == null) {
             getIntent().removeExtra(EXTRA_OFFER_RECEIPT);
             viewModel.requestReceiptOffer();
         }
@@ -149,14 +148,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void openReceiptPicker() {
-        if (viewModel.list == null || viewModel.list.archivedAt == null
-                || viewModel.receiptBusy) {
+        if (viewModel.list == null || viewModel.list.archivedAt == null || viewModel.receiptBusy) {
             return;
         }
         receiptPicker.launch(
                 new PickVisualMediaRequest.Builder()
-                        .setMediaType(
-                                ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
+                        .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
                         .build());
     }
 
