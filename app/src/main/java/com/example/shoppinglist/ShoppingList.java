@@ -9,7 +9,14 @@ final class ShoppingList {
     final int total;
     final int purchased;
 
-    ShoppingList(long id, String name, long createdAt, long updatedAt, Long archivedAt, int total, int purchased) {
+    ShoppingList(
+            long id,
+            String name,
+            long createdAt,
+            long updatedAt,
+            Long archivedAt,
+            int total,
+            int purchased) {
         this.id = id;
         this.name = name;
         this.createdAt = createdAt;
@@ -18,8 +25,11 @@ final class ShoppingList {
         this.total = total;
         this.purchased = purchased;
     }
+
     static String cleanName(String name) {
-        if (name == null || name.trim().isEmpty()) throw new IllegalArgumentException("List name is required");
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("List name is required");
+        }
         return name.trim();
     }
 }

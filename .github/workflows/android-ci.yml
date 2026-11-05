@@ -44,6 +44,9 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
 
+      - name: Check Java code style
+        run: ./gradlew spotlessCheck --no-daemon --no-configuration-cache
+
       - name: Build, run unit tests and lint
         run: |
           chmod +x ./gradlew

@@ -12,6 +12,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.firebase.appdistribution)
     alias(libs.plugins.spotbugs.base)
+    alias(libs.plugins.spotless)
 }
 
 android {
@@ -164,5 +165,15 @@ tasks.register<SpotBugsTask>("spotbugsDebug") {
     reports.create("xml") {
         required = true
         outputLocation = layout.buildDirectory.file("reports/spotbugs/debug.xml")
+    }
+}
+
+// Format only maintained Java sources, including unit and instrumentation tests.
+spotless {
+    java {
+        target("src/**/*.java")
+        googleJavaFormat("2.0.0").aosp().cleanup(false)
+        trimTrailingWhitespace()
+        endWithNewline()
     }
 }
