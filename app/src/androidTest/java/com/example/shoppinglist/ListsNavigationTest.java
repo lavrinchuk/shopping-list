@@ -209,6 +209,7 @@ public class ListsNavigationTest {
         onView(withText("Хліб")).check(matches(isDisplayed()));
         onView(withId(R.id.finish_list)).perform(click());
         onView(withId(android.R.id.button1)).perform(click());
+        onView(withText(R.string.receipt_offer_skip)).perform(click());
         onView(withText("На вихідні")).check(doesNotExist());
         onView(withId(R.id.open_archive)).perform(click());
         onView(withText("На вихідні")).check(matches(isDisplayed()));
@@ -268,6 +269,7 @@ public class ListsNavigationTest {
         home.recreate();
         onView(withText(R.string.incomplete_confirmation)).check(matches(isDisplayed()));
         onView(withId(android.R.id.button1)).perform(click());
+        onView(withText(R.string.receipt_offer_skip)).perform(click());
         onView(withText("Покупки")).check(doesNotExist());
         onView(withId(R.id.open_archive)).perform(click());
         capture("archive");
