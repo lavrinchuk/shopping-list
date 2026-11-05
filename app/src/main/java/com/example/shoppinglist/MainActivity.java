@@ -168,7 +168,7 @@ public class MainActivity extends AppCompatActivity {
                                         new PickVisualMediaRequest.Builder()
                                                 .setMediaType(
                                                         ActivityResultContracts.PickVisualMedia.ImageOnly
-                                                                .getInstance())
+                                                                .INSTANCE)
                                                 .build());
                             } else if (which == 0) {
                                 showReceiptPreview();
