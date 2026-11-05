@@ -216,6 +216,43 @@ public class ListsNavigationTest {
     }
 
     @Test
+    public void finishingShoppingOffersReceiptAndSkipKeepsArchive() {
+        onView(withId(R.id.create_list)).perform(click());
+        onView(withId(R.id.list_name_input))
+                .perform(replaceText("Чеки на тиждень"), closeSoftKeyboard());
+        onView(withText(R.string.save)).perform(click());
+        onView(withId(R.id.name)).perform(replaceText("Яблука"), closeSoftKeyboard());
+        onView(withId(R.id.add)).perform(click());
+        onView(withId(R.id.finish_list)).perform(click());
+        onView(withText(R.string.incomplete_confirmation)).check(matches(isDisplayed()));
+        onView(withId(android.R.id.button1)).perform(click());
+        onView(withText(R.string.receipt_offer_message)).check(matches(isDisplayed()));
+        onView(withText(R.string.receipt_offer_skip)).perform(click());
+        onView(withId(R.id.open_archive)).perform(click());
+        onView(withText("Чеки на тиждень")).perform(click());
+        onView(withId(R.id.receipt_bottom_action))
+                .check(matches(withText(R.string.receipt_attach)));
+        onView(withId(R.id.form_scroll))
+                .check(matches(withEffectiveVisibility(Visibility.GONE)));
+        back();
+    }
+
+    @Test
+    public void archivingFromListMenuOffersReceiptOnlyForShopping() {
+        create("Покупки з меню");
+        onView(withText("Покупки з меню")).perform(click());
+        onView(withId(R.id.name)).perform(replaceText("Сіль"), closeSoftKeyboard());
+        onView(withId(R.id.add)).perform(click());
+        back();
+        menu("Покупки з меню", R.string.finish_shopping);
+        onView(withText(R.string.incomplete_confirmation)).check(matches(isDisplayed()));
+        onView(withId(android.R.id.button1)).perform(click());
+        onView(withText(R.string.receipt_offer_message)).check(matches(isDisplayed()));
+        onView(withText(R.string.receipt_offer_skip)).perform(click());
+        onView(withText("Покупки з меню")).check(doesNotExist());
+    }
+
+    @Test
     public void archiveConfirmationReadOnlyAndRestoreNavigation() throws Exception {
         create("Покупки");
         onView(withText("Покупки")).perform(click());
