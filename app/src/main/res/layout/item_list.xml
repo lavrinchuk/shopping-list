@@ -9,6 +9,9 @@
                 android:layout_width="48dp" android:layout_height="48dp" android:minWidth="0dp" android:minHeight="48dp" android:padding="12dp"
                 android:insetTop="0dp" android:insetBottom="0dp" app:icon="@drawable/ic_more" app:iconPadding="0dp" app:iconGravity="textStart" />
         </LinearLayout>
+        <TextView android:id="@+id/list_type" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:textAppearance="?attr/textAppearanceLabelMedium"
+            android:textColor="?attr/colorPrimary" />
         <TextView android:id="@+id/list_date" android:layout_width="match_parent" android:layout_height="wrap_content"
             android:textAppearance="?attr/textAppearanceBodySmall" android:textColor="?attr/colorOnSurfaceVariant" />
         <TextView android:id="@+id/list_counts" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp"

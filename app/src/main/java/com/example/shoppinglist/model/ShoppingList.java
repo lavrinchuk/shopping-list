@@ -1,8 +1,22 @@
 package com.example.shoppinglist.model;
 
 public final class ShoppingList {
+    public static final String TYPE_SHOPPING = "shopping";
+    public static final String TYPE_WISH = "wish";
+
+    public static String requireType(String type) {
+        if (!TYPE_SHOPPING.equals(type) && !TYPE_WISH.equals(type)) {
+            throw new IllegalArgumentException("Unsupported list type");
+        }
+        return type;
+    }
+
+    public boolean isWish() {
+        return TYPE_WISH.equals(type);
+    }
     public final long id;
     public final String name;
+    public final String type;
     public final long createdAt;
     public final long updatedAt;
     public final Long archivedAt;
@@ -17,7 +31,20 @@ public final class ShoppingList {
             Long archivedAt,
             int total,
             int purchased) {
+        this(id, name, createdAt, updatedAt, archivedAt, total, purchased, TYPE_SHOPPING);
+    }
+
+    public ShoppingList(
+            long id,
+            String name,
+            long createdAt,
+            long updatedAt,
+            Long archivedAt,
+            int total,
+            int purchased,
+            String type) {
         this.id = id;
+        this.type = requireType(type);
         this.name = name;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;

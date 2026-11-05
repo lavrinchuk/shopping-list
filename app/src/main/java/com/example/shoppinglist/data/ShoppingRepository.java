@@ -75,7 +75,11 @@ public class ShoppingRepository {
     }
 
     public void create(String name, Result result) {
-        run(() -> database.createList(name), () -> readLists(false, result), result);
+        create(name, ShoppingList.TYPE_SHOPPING, result);
+    }
+
+    public void create(String name, String type, Result result) {
+        run(() -> database.createList(name, type), () -> readLists(false, result), result);
     }
 
     public void rename(long id, String name, Result result) {

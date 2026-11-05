@@ -14,7 +14,7 @@ import java.util.List;
 
 public class ShoppingDatabase extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "shopping.db";
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 4;
     private static final String LEGACY_DEFAULT_LIST_NAME = "Мій список";
 
     public static final class IncompleteListException extends SQLiteException {}
@@ -34,7 +34,7 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
 
     private void createLists(SQLiteDatabase db) {
         db.execSQL(
-                "CREATE TABLE shopping_lists (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL CHECK(length(trim(name)) > 0), createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL, archivedAt INTEGER)");
+                "CREATE TABLE shopping_lists (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL CHECK(length(trim(name)) > 0), createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL, archivedAt INTEGER, type TEXT NOT NULL DEFAULT 'shopping' CHECK(type IN ('shopping','wish')))");
         db.execSQL(
                 "CREATE INDEX lists_updated ON shopping_lists(archivedAt, updatedAt DESC, id DESC)");
     }
@@ -55,14 +55,19 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        if ((oldVersion != 1 && oldVersion != 2) || newVersion != 3) {
+        if (oldVersion < 1 || oldVersion > 3 || newVersion != DATABASE_VERSION) {
             throw new SQLiteException("Unsupported database upgrade");
         }
-        // SQLiteOpenHelper wraps onUpgrade and user_version in a single transaction.
+        // SQLiteOpenHelper wraps schema migration and user_version in a transaction.
         if (oldVersion == 1) {
             upgradeFromV1(db);
-        } else {
+        } else if (oldVersion == 2) {
             db.execSQL("ALTER TABLE items ADD COLUMN url TEXT");
+        }
+        // Version-one migration creates the latest shopping_lists table.
+        if (oldVersion >= 2) {
+            db.execSQL(
+                    "ALTER TABLE shopping_lists ADD COLUMN type TEXT NOT NULL DEFAULT 'shopping' CHECK(type IN ('shopping','wish'))");
         }
     }
 
@@ -94,16 +99,28 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
     }
 
     private long insertList(SQLiteDatabase db, String name, long now) {
+        return insertList(db, name, now, ShoppingList.TYPE_SHOPPING);
+    }
+
+    private long insertList(SQLiteDatabase db, String name, long now, String type) {
         ContentValues values = new ContentValues();
         values.put("name", name);
+        values.put("type", ShoppingList.requireType(type));
         values.put("createdAt", now);
         values.put("updatedAt", now);
         return db.insertOrThrow("shopping_lists", null, values);
     }
 
     public long createList(String name) {
+        return createList(name, ShoppingList.TYPE_SHOPPING);
+    }
+
+    public long createList(String name, String type) {
         return insertList(
-                getWritableDatabase(), ShoppingList.cleanName(name), System.currentTimeMillis());
+                getWritableDatabase(),
+                ShoppingList.cleanName(name),
+                System.currentTimeMillis(),
+                ShoppingList.requireType(type));
     }
 
     public List<ShoppingList> getLists(boolean archived) {
@@ -127,7 +144,7 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
         try (Cursor c =
                 getReadableDatabase()
                         .rawQuery(
-                                "SELECT l.id, l.name, l.createdAt, l.updatedAt, l.archivedAt, COUNT(i.id), COALESCE(SUM(i.purchased),0) FROM shopping_lists l LEFT JOIN items i ON i.listId = l.id WHERE "
+                                "SELECT l.id, l.name, l.createdAt, l.updatedAt, l.archivedAt, COUNT(i.id), COALESCE(SUM(i.purchased),0), l.type FROM shopping_lists l LEFT JOIN items i ON i.listId = l.id WHERE "
                                         + where
                                         + " GROUP BY l.id ORDER BY "
                                         + order,
@@ -141,7 +158,8 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
                                 c.getLong(3),
                                 c.isNull(4) ? null : c.getLong(4),
                                 c.getInt(5),
-                                c.getInt(6)));
+                                c.getInt(6),
+                                c.getString(7)));
             }
         }
         return lists;
@@ -188,7 +206,7 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
         db.beginTransaction();
         try {
             ShoppingList list = requireActive(id);
-            if (!confirmed && list.purchased != list.total) {
+            if (!list.isWish() && !confirmed && list.purchased != list.total) {
                 throw new IncompleteListException();
             }
             ContentValues values = new ContentValues();

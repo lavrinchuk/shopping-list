@@ -137,6 +137,9 @@ public class ListsActivity extends AppCompatActivity {
         }
         viewModel.saved.set(ListsViewModel.STATE_EDIT_ID, list == null ? 0L : list.id);
         viewModel.saved.set(ListsViewModel.STATE_EDIT_NAME, list == null ? "" : list.name);
+        viewModel.saved.set(
+                ListsViewModel.STATE_EDIT_TYPE,
+                list == null ? ShoppingList.TYPE_SHOPPING : list.type);
         viewModel.saved.set(ListsViewModel.STATE_EDITING, true);
         viewModel.notifyStateChanged();
     }
@@ -158,7 +161,7 @@ public class ListsActivity extends AppCompatActivity {
                         return true;
                     });
             menu.getMenu()
-                    .add(R.string.finish_shopping)
+                    .add(list.isWish() ? R.string.finish_wish_list : R.string.finish_shopping)
                     .setOnMenuItemClickListener(item -> {
                         viewModel.archive(list);
                         return true;
