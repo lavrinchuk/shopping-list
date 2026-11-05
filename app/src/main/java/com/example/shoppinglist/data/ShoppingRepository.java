@@ -66,7 +66,10 @@ public class ShoppingRepository {
     }
 
     public void attachReceipt(long listId, Uri photo, Result result) {
-        run(() -> receipts.attach(database, listId, photo), () -> readItems(listId, result), result);
+        run(
+                () -> receipts.attach(database, listId, photo),
+                () -> readItems(listId, result),
+                result);
     }
 
     public void removeReceipt(long listId, Result result) {
