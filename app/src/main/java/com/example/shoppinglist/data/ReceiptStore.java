@@ -1,10 +1,10 @@
 package com.example.shoppinglist.data;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteException;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
-import android.database.sqlite.SQLiteException;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -40,7 +40,7 @@ public final class ReceiptStore {
                     throw new IOException("Image unavailable");
                 }
                 byte[] buffer = new byte[8192];
-                int total = 0;
+                long total = 0;
                 int count;
                 while ((count = input.read(buffer)) != -1) {
                     total += count;
