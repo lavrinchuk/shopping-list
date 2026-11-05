@@ -3,6 +3,7 @@ package com.example.shoppinglist;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
+import android.text.InputType;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -23,12 +24,14 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.shoppinglist.data.ShoppingRepository;
+import com.example.shoppinglist.model.ItemLink;
 import com.example.shoppinglist.model.ShoppingItem;
 import com.example.shoppinglist.ui.AdaptiveFormLayoutController;
 import com.example.shoppinglist.web.ProductSearchUrl;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.android.material.textfield.TextInputEditText;
 
 public class MainActivity extends AppCompatActivity {
     static final String EXTRA_LIST_ID = "listId";
@@ -147,10 +150,80 @@ public class MainActivity extends AppCompatActivity {
                             public void search(ShoppingItem item) {
                                 searchInBrowser(item);
                             }
+
+                            @Override
+                            public void editLink(ShoppingItem item) {
+                                showLinkEditor(item);
+                            }
+
+                            @Override
+                            public void openLink(ShoppingItem item) {
+                                openItemLink(item);
+                            }
                         });
         RecyclerView list = findViewById(R.id.items);
         list.setLayoutManager(new LinearLayoutManager(this));
         list.setAdapter(adapter);
+    }
+
+    private void showLinkEditor(ShoppingItem item) {
+        if (viewModel.list == null || viewModel.list.archivedAt != null) {
+            return;
+        }
+        TextInputLayout field = new TextInputLayout(this);
+        int pad = Math.round(24 * getResources().getDisplayMetrics().density);
+        field.setPadding(pad, 0, pad, 0);
+        field.setHint(R.string.item_link_hint);
+        TextInputEditText input = new TextInputEditText(field.getContext());
+        input.setSingleLine(true);
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
+        input.setText(item.url == null ? "" : item.url);
+        field.addView(input);
+        androidx.appcompat.app.AlertDialog dialog =
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle(getString(R.string.item_link_title, item.name))
+                        .setView(field)
+                        .setNegativeButton(R.string.cancel, null)
+                        .setNeutralButton(R.string.remove_item_link, null)
+                        .setPositiveButton(R.string.save, null)
+                        .create();
+        dialog.setOnShowListener(
+                ignored -> {
+                    dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
+                            .setOnClickListener(
+                                    button -> {
+                                        try {
+                                            String url =
+                                                    ItemLink.normalize(
+                                                            input.getText() == null
+                                                                    ? ""
+                                                                    : input.getText().toString());
+                                            viewModel.updateItemUrl(item, url);
+                                            dialog.dismiss();
+                                        } catch (IllegalArgumentException error) {
+                                            field.setError(getString(R.string.item_link_invalid));
+                                        }
+                                    });
+                    dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEUTRAL)
+                            .setOnClickListener(
+                                    button -> {
+                                        viewModel.updateItemUrl(item, null);
+                                        dialog.dismiss();
+                                    });
+                });
+        dialog.show();
+    }
+
+    private void openItemLink(ShoppingItem item) {
+        if (item.url == null) {
+            return;
+        }
+        Intent open = new Intent(Intent.ACTION_VIEW, Uri.parse(item.url));
+        try {
+            startActivity(open);
+        } catch (ActivityNotFoundException | SecurityException error) {
+            Toast.makeText(this, R.string.item_link_unavailable, Toast.LENGTH_LONG).show();
+        }
     }
 
     private void searchInBrowser(ShoppingItem item) {
