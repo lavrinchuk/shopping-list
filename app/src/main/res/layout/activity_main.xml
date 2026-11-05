@@ -67,4 +67,9 @@
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
     </FrameLayout>
+    <com.google.android.material.button.MaterialButton android:id="@+id/finish_list"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:minHeight="56dp" android:layout_marginHorizontal="16dp"
+        android:layout_marginVertical="8dp" android:text="@string/finish_shopping"
+        android:visibility="gone" />
 </LinearLayout>

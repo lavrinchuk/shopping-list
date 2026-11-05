@@ -25,11 +25,20 @@ final class ListsViewModel extends ViewModel {
     int error;
     boolean cleared;
     Long confirmation;
+    private static final String STATE_OPEN_CREATED_ID = "openCreatedId";
 
     ListsViewModel(ShoppingRepository repository, SavedStateHandle saved, boolean archived) {
         this.repository = repository;
         this.saved = saved;
         this.archived = archived;
+    }
+
+    Long consumeCreatedList() {
+        Long id = saved.get(STATE_OPEN_CREATED_ID);
+        if (id != null) {
+            saved.remove(STATE_OPEN_CREATED_ID);
+        }
+        return id;
     }
 
     void reload() {
@@ -47,10 +56,37 @@ final class ListsViewModel extends ViewModel {
         notifyStateChanged();
         if (id == 0) {
             String type = saved.get(STATE_EDIT_TYPE);
+            ShoppingRepository.Result delegate = createRepositoryCallback(true);
             repository.create(
                     clean,
                     ShoppingList.requireType(type == null ? ShoppingList.TYPE_SHOPPING : type),
-                    createRepositoryCallback(true));
+                    new ShoppingRepository.Result() {
+                        @Override
+                        public void created(long createdId) {
+                            if (!cleared) {
+                                saved.set(STATE_OPEN_CREATED_ID, createdId);
+                                notifyStateChanged();
+                            }
+                        }
+
+                        @Override
+                        public void written() {
+                            delegate.written();
+                        }
+
+                        @Override
+                        public void loaded(List<ShoppingItem> items) {}
+
+                        @Override
+                        public void listsLoaded(List<ShoppingList> updated) {
+                            delegate.listsLoaded(updated);
+                        }
+
+                        @Override
+                        public void failed(boolean reading) {
+                            delegate.failed(reading);
+                        }
+                    });
         } else {
             repository.rename(id, clean, createRepositoryCallback(true));
         }

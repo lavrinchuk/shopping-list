@@ -230,6 +230,29 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
         }
     }
 
+    /** Remove only a still-empty active shopping list. Never delete archived or wish lists. */
+    public void deleteEmptyShoppingList(long id) {
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            ShoppingList list = requireActive(id);
+            if (list.isWish() || list.total != 0 || list.receiptFile != null) {
+                throw new SQLiteException("Only empty active shopping lists may be deleted");
+            }
+            int removed =
+                    db.delete(
+                            "shopping_lists",
+                            "id = ? AND NOT EXISTS (SELECT 1 FROM items WHERE listId = ?)",
+                            new String[] {String.valueOf(id), String.valueOf(id)});
+            if (removed != 1) {
+                throw new SQLiteException("List is not empty");
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
     public void restore(long id) {
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();

@@ -23,6 +23,8 @@ public class ShoppingRepository {
 
         default void listLoaded(ShoppingList list) {}
 
+        default void created(long id) {}
+
         default void listsLoaded(List<ShoppingList> lists) {}
 
         default void confirmationRequired() {
@@ -112,7 +114,21 @@ public class ShoppingRepository {
     }
 
     public void create(String name, String type, Result result) {
-        run(() -> database.createList(name, type), () -> readLists(false, result), result);
+        run(
+                () -> {
+                    long id = database.createList(name, type);
+                    main.post(() -> result.created(id));
+                },
+                () -> readLists(false, result),
+                result);
+    }
+
+    public void deleteEmptyShoppingList(long id, Result result) {
+        run(() -> database.deleteEmptyShoppingList(id), () -> {}, result);
+    }
+
+    public void completeShoppingList(long id, boolean confirmed, Result result) {
+        run(() -> database.archive(id, confirmed), () -> {}, result);
     }
 
     public void rename(long id, String name, Result result) {

@@ -180,6 +180,12 @@ public class ListsActivity extends AppCompatActivity {
     }
 
     private void render() {
+        Long created = viewModel.consumeCreatedList();
+        if (created != null && !isFinishing()) {
+            startActivity(
+                    new Intent(this, MainActivity.class)
+                            .putExtra(MainActivity.EXTRA_LIST_ID, created));
+        }
         renderListState();
         showErrorIfNeeded();
         synchronizeNameDialog();
