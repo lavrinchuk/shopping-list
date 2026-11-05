@@ -92,9 +92,11 @@ public class ShoppingListTextFormatterTest {
         assertEquals(20, list.updatedAt);
         assertEquals(Long.valueOf(30), list.archivedAt);
     }
+
     @Test
     public void emptyListNameIsPreservedAsTitleForEmptyExport() {
-        assertEquals("\n\nСписок порожній",
+        assertEquals(
+                "\n\nСписок порожній",
                 ShoppingListTextFormatter.format("", Collections.emptyList()));
     }
 
@@ -110,5 +112,4 @@ public class ShoppingListTextFormatterTest {
                                 item(3, "Яблука", "", true),
                                 item(4, "Вода", "", false))));
     }
-
 }
