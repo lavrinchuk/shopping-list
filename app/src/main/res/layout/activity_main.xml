@@ -15,6 +15,7 @@
                 android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:hint="@string/name_hint" app:boxBackgroundColor="?attr/colorSurface"
                 app:endIconMode="custom" app:endIconDrawable="@drawable/ic_mic"
+                app:endIconTint="?attr/colorOnSurfaceVariant"
                 app:endIconContentDescription="@string/voice_add_item">
                 <com.google.android.material.textfield.TextInputEditText android:id="@+id/name"
                     android:layout_width="match_parent" android:layout_height="wrap_content"
