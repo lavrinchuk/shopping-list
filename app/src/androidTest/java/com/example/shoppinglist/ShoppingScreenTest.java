@@ -1,7 +1,7 @@
 package com.example.shoppinglist;
 
 import com.example.shoppinglist.data.ShoppingRepository;
-import com.example.shoppinglist.viewModel.ShoppingItem;
+import com.example.shoppinglist.model.ShoppingItem;
 
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.*;
