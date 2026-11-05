@@ -1,13 +1,12 @@
 package com.example.shoppinglist;
 
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.SavedStateHandle;
+import androidx.lifecycle.ViewModel;
 import com.example.shoppinglist.data.ShoppingRepository;
 import com.example.shoppinglist.model.ShoppingItem;
 import com.example.shoppinglist.model.ShoppingList;
 import com.example.shoppinglist.share.ShoppingListTextFormatter;
-
-import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.SavedStateHandle;
-import androidx.lifecycle.ViewModel;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,7 +56,8 @@ public final class ShoppingViewModel extends ViewModel {
         long submittedDraftRevision = draftEditRevision;
         adding = true;
         notifyStateChanged();
-        repository.add(listId, clean, quantity, createRepositoryCallback(true, submittedDraftRevision));
+        repository.add(
+                listId, clean, quantity, createRepositoryCallback(true, submittedDraftRevision));
     }
 
     void purchased(ShoppingItem item, boolean checked) {

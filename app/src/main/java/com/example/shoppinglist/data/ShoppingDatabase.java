@@ -15,6 +15,7 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "shopping.db";
     private static final int DATABASE_VERSION = 2;
     private static final String LEGACY_DEFAULT_LIST_NAME = "Мій список";
+
     public static final class IncompleteListException extends SQLiteException {}
 
     public ShoppingDatabase(Context context) {

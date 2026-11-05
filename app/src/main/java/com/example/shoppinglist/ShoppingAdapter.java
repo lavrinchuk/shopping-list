@@ -1,7 +1,5 @@
 package com.example.shoppinglist;
 
-import com.example.shoppinglist.model.ShoppingItem;
-
 import android.graphics.Paint;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,6 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
+import com.example.shoppinglist.model.ShoppingItem;
 import com.google.android.material.color.MaterialColors;
 import java.util.List;
 

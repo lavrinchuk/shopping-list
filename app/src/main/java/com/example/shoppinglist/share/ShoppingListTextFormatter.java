@@ -9,6 +9,7 @@ public final class ShoppingListTextFormatter {
     private static final String UNPURCHASED_MARKER = "☐ ";
     private static final String PURCHASED_MARKER = "☑ ";
     private static final String QUANTITY_SEPARATOR = " — ";
+
     private ShoppingListTextFormatter() {}
 
     public static String format(String title, List<ShoppingItem> items) {
