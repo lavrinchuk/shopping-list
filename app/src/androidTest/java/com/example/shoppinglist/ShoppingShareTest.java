@@ -1,5 +1,9 @@
 package com.example.shoppinglist;
 
+import com.example.shoppinglist.data.ShoppingRepository;
+import com.example.shoppinglist.viewModel.ShoppingItem;
+import com.example.shoppinglist.viewModel.ShoppingList;
+
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
@@ -180,8 +184,8 @@ public class ShoppingShareTest {
         open();
         app.database.pauseNextWrite();
         screen.onActivity(activity -> {
-            activity.model.draft("Кава", "");
-            activity.model.add();
+            activity.viewModel.draft("Кава", "");
+            activity.viewModel.add();
             MaterialToolbar toolbar = activity.findViewById(R.id.heading);
             toolbar.getMenu().performIdentifierAction(R.id.share_list, 0);
         });

@@ -1,5 +1,8 @@
 package com.example.shoppinglist;
 
+import com.example.shoppinglist.data.ShoppingRepository;
+import com.example.shoppinglist.viewModel.ShoppingItem;
+
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.*;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
@@ -196,7 +199,7 @@ public class ShoppingScreenTest {
         onView(withId(R.id.add)).perform(click());
         onView(withId(R.id.name)).check(matches(withText("Груші")));
         onView(withId(R.id.add)).check(matches(isEnabled()));
-        screen.onActivity(activity -> assertTrue(activity.model.items.isEmpty()));
+        screen.onActivity(activity -> assertTrue(activity.viewModel.items.isEmpty()));
         onView(withId(R.id.add)).perform(click());
         onView(withId(R.id.name)).check(matches(withText("")));
         screen.onActivity(activity -> assertEquals(1, activity.adapter.getItemCount()));
@@ -228,13 +231,13 @@ public class ShoppingScreenTest {
                             }
                         },
                         noResult()));
-        screen.onActivity(activity -> activity.model.reload());
+        screen.onActivity(activity -> activity.viewModel.reload());
         onView(withId(R.id.items)).check(matches(isDisplayed()));
         screen.onActivity(activity -> {
             assertEquals(500, activity.adapter.getItemCount());
-            ShoppingItem first = activity.model.items.get(0);
-            activity.model.purchased(first, true);
-            activity.model.delete(activity.model.items.get(1));
+            ShoppingItem first = activity.viewModel.items.get(0);
+            activity.viewModel.purchased(first, true);
+            activity.viewModel.delete(activity.viewModel.items.get(1));
         });
         onView(withId(R.id.items)).check(matches(isDisplayed()));
         screen.onActivity(activity -> {
@@ -250,10 +253,10 @@ public class ShoppingScreenTest {
         add("Молоко");
         add("Хліб");
         screen.onActivity(activity -> {
-            ShoppingItem milk = activity.model.items.get(0);
-            activity.model.purchased(milk, true);
-            activity.model.purchased(milk, false);
-            activity.model.purchased(milk, true);
+            ShoppingItem milk = activity.viewModel.items.get(0);
+            activity.viewModel.purchased(milk, true);
+            activity.viewModel.purchased(milk, false);
+            activity.viewModel.purchased(milk, true);
         });
         onView(withText("Хліб")).check(matches(isDisplayed()));
         screen.onActivity(activity -> {
@@ -307,7 +310,7 @@ public class ShoppingScreenTest {
                                     app.listId, app.database.getItems(app.listId).get(1).id, true);
                         },
                         noResult()));
-        screen.onActivity(activity -> activity.model.reload());
+        screen.onActivity(activity -> activity.viewModel.reload());
         onView(withText("Молоко")).check(matches(isDisplayed()));
         screen.onActivity(activity -> {
             assertTrue(activity.findViewById(R.id.items).getHeight() > 0);

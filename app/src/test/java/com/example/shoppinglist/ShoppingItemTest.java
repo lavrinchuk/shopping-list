@@ -1,5 +1,7 @@
 package com.example.shoppinglist;
 
+import com.example.shoppinglist.model.ShoppingItem;
+
 import static org.junit.Assert.*;
 
 import org.junit.Test;
