@@ -167,9 +167,18 @@ public class ListsActivity extends AppCompatActivity {
                         return true;
                     });
             menu.getMenu()
-                    .add(list.isWish() ? R.string.finish_wish_list : R.string.finish_shopping)
+                    .add(
+                            !list.isWish() && list.total == 0
+                                    ? R.string.delete_empty_list
+                                    : (list.isWish()
+                                            ? R.string.finish_wish_list
+                                            : R.string.finish_shopping))
                     .setOnMenuItemClickListener(item -> {
-                        viewModel.archive(list);
+                        if (!list.isWish() && list.total == 0) {
+                            confirmEmptyListDeletion(list.id);
+                        } else {
+                            viewModel.archive(list);
+                        }
                         return true;
                     });
         }
@@ -177,6 +186,17 @@ public class ListsActivity extends AppCompatActivity {
             menu.getMenu().getItem(i).setEnabled(!viewModel.busy);
         }
         menu.show();
+    }
+
+    private void confirmEmptyListDeletion(long id) {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.delete_empty_list)
+                .setMessage(R.string.delete_empty_list_confirmation)
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(
+                        R.string.delete_empty_list,
+                        (dialog, which) -> viewModel.deleteEmptyShoppingList(id))
+                .show();
     }
 
     private void render() {
