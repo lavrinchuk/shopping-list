@@ -99,16 +99,12 @@ public final class ShoppingViewModel extends ViewModel {
     private ShoppingRepository.Result receiptCallback() {
         return new ShoppingRepository.Result() {
             @Override
-            public void written() {
-                if (!cleared) {
-                    receiptBusy = false;
-                    notifyStateChanged();
-                }
-            }
+            public void written() {}
 
             @Override
             public void loaded(List<ShoppingItem> updated) {
                 if (!cleared) {
+                    receiptBusy = false;
                     items = updated;
                     notifyStateChanged();
                 }
