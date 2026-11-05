@@ -5,6 +5,12 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
+import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
@@ -245,6 +251,51 @@ public class ListsActivity extends AppCompatActivity {
         input.setSingleLine(true);
         input.setId(R.id.list_name_input);
         field.addView(input);
+        Long editId = viewModel.saved.get(ListsViewModel.STATE_EDIT_ID);
+        LinearLayout form = new LinearLayout(this);
+        form.setOrientation(LinearLayout.VERTICAL);
+        form.addView(
+                field,
+                new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        if (editId == null || editId == 0L) {
+            TextView typeLabel = new TextView(this);
+            typeLabel.setText(R.string.list_type_hint);
+            typeLabel.setPadding(pad, pad / 2, pad, 0);
+            form.addView(typeLabel);
+            Spinner typeInput = new Spinner(this);
+            typeInput.setId(R.id.list_type_input);
+            ArrayAdapter<CharSequence> types =
+                    ArrayAdapter.createFromResource(
+                            this, R.array.list_types, android.R.layout.simple_spinner_item);
+            types.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            typeInput.setAdapter(types);
+            typeInput.setSelection(
+                    ShoppingList.TYPE_WISH.equals(
+                                    viewModel.saved.get(ListsViewModel.STATE_EDIT_TYPE))
+                            ? 1
+                            : 0);
+            typeInput.setOnItemSelectedListener(
+                    new AdapterView.OnItemSelectedListener() {
+                        @Override
+                        public void onItemSelected(
+                                AdapterView<?> parent, View selected, int position, long id) {
+                            viewModel.saved.set(
+                                    ListsViewModel.STATE_EDIT_TYPE,
+                                    position == 1
+                                            ? ShoppingList.TYPE_WISH
+                                            : ShoppingList.TYPE_SHOPPING);
+                        }
+
+                        @Override
+                        public void onNothingSelected(AdapterView<?> parent) {}
+                    });
+            LinearLayout.LayoutParams typeParams =
+                    new LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            typeParams.setMargins(pad, 0, pad, pad / 2);
+            form.addView(typeInput, typeParams);
+        }
         input.setText((String) viewModel.saved.get(ListsViewModel.STATE_EDIT_NAME));
         input.addTextChangedListener(
                 new TextWatcher() {
@@ -261,14 +312,13 @@ public class ListsActivity extends AppCompatActivity {
                     @Override
                     public void afterTextChanged(Editable s) {}
                 });
-        Long editId = viewModel.saved.get(ListsViewModel.STATE_EDIT_ID);
         nameDialog =
                 new MaterialAlertDialogBuilder(this)
                         .setTitle(
                                 editId != null && editId != 0
                                         ? R.string.rename_list
                                         : R.string.new_list)
-                        .setView(field)
+                        .setView(form)
                         .setNegativeButton(
                                 R.string.cancel,
                                 (dialog, which) ->
