@@ -6,6 +6,14 @@
     <string name="search_purchase">Шукати</string>
     <string name="search_region_title">Де шукати для купівлі: %1$s</string>
     <string name="search_region_anywhere">Без уточнення регіону</string>
+    <string name="edit_item_link">Посилання для товару: %1$s</string>
+    <string name="item_link_title">Посилання: %1$s</string>
+    <string name="item_link_hint">https://магазин.example/товар</string>
+    <string name="item_link_invalid">Введи повне посилання http:// або https://</string>
+    <string name="item_link_readonly">Посилання в архіві не можна редагувати.</string>
+    <string name="open_item_link">Відкрити посилання</string>
+    <string name="item_link_unavailable">Не вдалося відкрити посилання.</string>
+    <string name="remove_item_link">Очистити</string>
     <string name="search_item">Пошукати в інтернеті: %1$s</string>
     <string name="search_unavailable">Не вдалося відкрити пошук у браузері.</string>
     <string name="delete_item">Видалити: %1$s</string>
