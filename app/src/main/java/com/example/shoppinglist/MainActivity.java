@@ -37,6 +37,25 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
+        configureSystemBars();
+        setContentView(R.layout.activity_main);
+        ViewCompat.setAccessibilityHeading(findViewById(R.id.heading), true);
+        applyWindowInsets();
+        long listId = getIntent().getLongExtra(EXTRA_LIST_ID, -1);
+        if (listId <= 0) {
+            startActivity(new android.content.Intent(this, ListsActivity.class));
+            finish();
+            return;
+        }
+        configureToolbar();
+        initializeViewModel(savedInstanceState, listId);
+        observeLifecycleForSharing();
+        configureItemsList();
+        configureItemForm();
+        viewModel.changes.observe(this, ignored -> render());
+    }
+
+    private void configureSystemBars() {
         boolean dark =
                 (getResources().getConfiguration().uiMode
                                 & android.content.res.Configuration.UI_MODE_NIGHT_MASK)
@@ -46,8 +65,9 @@ public class MainActivity extends AppCompatActivity {
                         getWindow(), getWindow().getDecorView());
         systemBarController.setAppearanceLightStatusBars(!dark);
         systemBarController.setAppearanceLightNavigationBars(!dark);
-        setContentView(R.layout.activity_main);
-        ViewCompat.setAccessibilityHeading(findViewById(R.id.heading), true);
+    }
+
+    private void applyWindowInsets() {
         ViewCompat.setOnApplyWindowInsetsListener(
                 findViewById(R.id.main),
                 (view, insets) -> {
@@ -58,12 +78,9 @@ public class MainActivity extends AppCompatActivity {
                     view.setPadding(bars.left, bars.top, bars.right, bars.bottom);
                     return insets;
                 });
-        long listId = getIntent().getLongExtra(EXTRA_LIST_ID, -1);
-        if (listId <= 0) {
-            startActivity(new android.content.Intent(this, ListsActivity.class));
-            finish();
-            return;
-        }
+    }
+
+    private void configureToolbar() {
         com.google.android.material.appbar.MaterialToolbar toolbar = findViewById(R.id.heading);
         toolbar.setNavigationOnClickListener(view -> finish());
         toolbar.inflateMenu(R.menu.shopping_list);
@@ -74,6 +91,9 @@ public class MainActivity extends AppCompatActivity {
             viewModel.share();
             return true;
         });
+    }
+
+    private void initializeViewModel(Bundle savedInstanceState, long listId) {
         ShoppingRepository repository = ((ShoppingApplication) getApplication()).repository();
         viewModel =
                 new ViewModelProvider(
@@ -90,6 +110,9 @@ public class MainActivity extends AppCompatActivity {
                                     }
                                 })
                         .get(ShoppingViewModel.class);
+    }
+
+    private void observeLifecycleForSharing() {
         getLifecycle()
                 .addObserver(
                         (androidx.lifecycle.LifecycleEventObserver)
@@ -98,6 +121,9 @@ public class MainActivity extends AppCompatActivity {
                                         dispatchShare();
                                     }
                                 });
+    }
+
+    private void configureItemsList() {
         adapter =
                 new ShoppingAdapter(
                         new ShoppingAdapter.Actions() {
@@ -114,6 +140,9 @@ public class MainActivity extends AppCompatActivity {
         RecyclerView list = findViewById(R.id.items);
         list.setLayoutManager(new LinearLayoutManager(this));
         list.setAdapter(adapter);
+    }
+
+    private void configureItemForm() {
         EditText name = findViewById(R.id.name);
         EditText quantity = findViewById(R.id.quantity);
         TextInputLayout nameLayout = findViewById(R.id.name_layout);
@@ -121,6 +150,12 @@ public class MainActivity extends AppCompatActivity {
         // Restore the draft from the retained viewModel, not stale framework View state.
         name.setSaveEnabled(false);
         quantity.setSaveEnabled(false);
+        installDraftListeners(name, quantity, nameLayout);
+        installAddActions(name, quantity, nameLayout);
+    }
+
+    private void installDraftListeners(
+            EditText name, EditText quantity, TextInputLayout nameLayout) {
         TextWatcher watcher =
                 new TextWatcher() {
                     @Override
@@ -143,6 +178,10 @@ public class MainActivity extends AppCompatActivity {
                 };
         name.addTextChangedListener(watcher);
         quantity.addTextChangedListener(watcher);
+    }
+
+    private void installAddActions(
+            EditText name, EditText quantity, TextInputLayout nameLayout) {
         View add = findViewById(R.id.add);
         add.setOnClickListener(view -> {
             try {
@@ -161,9 +200,20 @@ public class MainActivity extends AppCompatActivity {
             }
             return true;
         });
-        viewModel.changes.observe(
-                this,
-                ignored -> {
+    }
+
+    private void render() {
+        EditText name = findViewById(R.id.name);
+        EditText quantity = findViewById(R.id.quantity);
+        renderDraft(name, quantity);
+        findViewById(R.id.add).setEnabled(!viewModel.adding);
+        renderCurrentList();
+        renderItems();
+        showPendingError();
+        synchronizeReadError();
+    }
+
+    private void renderDraft(EditText name, EditText quantity) {
                     rendering = true;
                     if (!name.getText().toString().equals(viewModel.name)) {
                         boolean cleared = viewModel.name.isEmpty() && !viewModel.adding;
@@ -176,7 +226,9 @@ public class MainActivity extends AppCompatActivity {
                         quantity.setText(viewModel.quantity);
                     }
                     rendering = false;
-                    add.setEnabled(!viewModel.adding);
+    }
+
+    private void renderCurrentList() {
                     if (viewModel.list != null) {
                         toolbar.setTitle(viewModel.list.name);
                         boolean readOnly = viewModel.list.archivedAt != null;
@@ -187,12 +239,18 @@ public class MainActivity extends AppCompatActivity {
                     }
                     toolbar.getMenu().findItem(R.id.share_list).setEnabled(!viewModel.sharing);
                     dispatchShare();
+    }
+
+    private void renderItems() {
                     adapter.submitList(viewModel.items);
                     findViewById(R.id.empty)
                             .setVisibility(
                                     viewModel.items.isEmpty() && !viewModel.readFailed
                                             ? View.VISIBLE
                                             : View.GONE);
+    }
+
+    private void showPendingError() {
                     int error = viewModel.error;
                     viewModel.consumeError();
                     if (error == R.string.share_error) {
@@ -202,6 +260,10 @@ public class MainActivity extends AppCompatActivity {
                         adapter.restoreChecks();
                         Toast.makeText(this, error, Toast.LENGTH_LONG).show();
                     }
+    }
+
+    private void synchronizeReadError() {
+        RecyclerView list = findViewById(R.id.items);
                     if (viewModel.readFailed && retry == null) {
                         retry =
                                 Snackbar.make(list, R.string.read_error, Snackbar.LENGTH_INDEFINITE)
@@ -216,7 +278,6 @@ public class MainActivity extends AppCompatActivity {
                         retry.dismiss();
                         retry = null;
                     }
-                });
     }
 
     /** Keep the form compact, but leave scrollable space for both inputs and the list. */
