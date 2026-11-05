@@ -233,8 +233,7 @@ public class ListsNavigationTest {
         onView(withText("Чеки на тиждень")).perform(click());
         onView(withId(R.id.receipt_bottom_action))
                 .check(matches(withText(R.string.receipt_attach)));
-        onView(withId(R.id.form_scroll))
-                .check(matches(withEffectiveVisibility(Visibility.GONE)));
+        onView(withId(R.id.form_scroll)).check(matches(withEffectiveVisibility(Visibility.GONE)));
         back();
     }
 
