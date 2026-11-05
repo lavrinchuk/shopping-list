@@ -1,11 +1,11 @@
 package com.example.shoppinglist;
 
+import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
-import android.app.Activity;
-import android.speech.RecognizerIntent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.speech.RecognizerIntent;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
@@ -324,7 +324,6 @@ public class MainActivity extends AppCompatActivity {
                 RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "uk-UA");
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "uk-UA");
         intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3);
         intent.putExtra(RecognizerIntent.EXTRA_PROMPT, getString(R.string.voice_prompt));
         try {
