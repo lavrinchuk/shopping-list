@@ -15,7 +15,7 @@ public class ShoppingRepository {
     public interface Result {
         void written();
 
-        public void loaded(List<ShoppingItem> items);
+        void loaded(List<ShoppingItem> items);
 
         void failed(boolean reading);
 
@@ -38,7 +38,7 @@ public class ShoppingRepository {
         this.database = database;
     }
 
-    void load(long listId, Result result) {
+    public void load(long listId, Result result) {
         run(null, () -> readItems(listId, result), result);
     }
 
@@ -91,7 +91,7 @@ public class ShoppingRepository {
         main.post(() -> result.listsLoaded(lists));
     }
 
-    // Package-visible for isolated instrumentation setup; production uses scoped methods above.
+    // Exposed for isolated instrumentation setup; production uses scoped methods above.
     public void execute(Runnable write, Result result) {
         run(write, () -> {}, result);
     }
