@@ -1,12 +1,11 @@
 package com.example.shoppinglist;
 
-import com.example.shoppinglist.data.ShoppingRepository;
-import com.example.shoppinglist.model.ShoppingItem;
-import com.example.shoppinglist.model.ShoppingList;
-
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
+import com.example.shoppinglist.data.ShoppingRepository;
+import com.example.shoppinglist.model.ShoppingItem;
+import com.example.shoppinglist.model.ShoppingList;
 import java.util.ArrayList;
 import java.util.List;
 

@@ -1,10 +1,9 @@
 package com.example.shoppinglist;
 
+import android.database.sqlite.SQLiteException;
 import com.example.shoppinglist.data.ShoppingDatabase;
 import com.example.shoppinglist.data.ShoppingRepository;
 import com.example.shoppinglist.model.ShoppingItem;
-
-import android.database.sqlite.SQLiteException;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;

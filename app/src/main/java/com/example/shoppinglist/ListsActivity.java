@@ -1,9 +1,5 @@
 package com.example.shoppinglist;
 
-import com.example.shoppinglist.data.ShoppingRepository;
-import com.example.shoppinglist.viewModel.ShoppingItem;
-import com.example.shoppinglist.viewModel.ShoppingList;
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
@@ -23,6 +19,8 @@ import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.example.shoppinglist.data.ShoppingRepository;
+import com.example.shoppinglist.model.ShoppingList;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
@@ -78,7 +76,8 @@ public class ListsActivity extends AppCompatActivity {
         findViewById(R.id.open_archive)
                 .setOnClickListener(view ->
                         startActivity(
-                                new Intent(this, ListsActivity.class).putExtra(EXTRA_ARCHIVED, true)));
+                                new Intent(this, ListsActivity.class)
+                                        .putExtra(EXTRA_ARCHIVED, true)));
         findViewById(R.id.create_list).setVisibility(archived ? View.GONE : View.VISIBLE);
         findViewById(R.id.create_list).setOnClickListener(view -> edit(null));
         findViewById(R.id.retry_lists).setOnClickListener(view -> viewModel.reload());
@@ -118,7 +117,7 @@ public class ListsActivity extends AppCompatActivity {
         viewModel.saved.set(ListsViewModel.STATE_EDIT_ID, list == null ? 0L : list.id);
         viewModel.saved.set(ListsViewModel.STATE_EDIT_NAME, list == null ? "" : list.name);
         viewModel.saved.set(ListsViewModel.STATE_EDITING, true);
-        viewModel.publish();
+        viewModel.notifyStateChanged();
     }
 
     private void showMenu(View anchor, ShoppingList list) {
@@ -153,8 +152,10 @@ public class ListsActivity extends AppCompatActivity {
     private void render() {
         adapter.submitList(viewModel.lists);
         findViewById(R.id.create_list).setEnabled(!viewModel.busy);
-        findViewById(R.id.lists_loading).setVisibility(viewModel.loading ? View.VISIBLE : View.GONE);
-        findViewById(R.id.retry_lists).setVisibility(viewModel.readFailed ? View.VISIBLE : View.GONE);
+        findViewById(R.id.lists_loading)
+                .setVisibility(viewModel.loading ? View.VISIBLE : View.GONE);
+        findViewById(R.id.retry_lists)
+                .setVisibility(viewModel.readFailed ? View.VISIBLE : View.GONE);
         android.widget.TextView empty = findViewById(R.id.lists_empty);
         empty.setText(viewModel.archived ? R.string.no_archive : R.string.no_lists);
         empty.setVisibility(
@@ -183,7 +184,8 @@ public class ListsActivity extends AppCompatActivity {
                             .setTitle(R.string.finish_shopping)
                             .setMessage(R.string.incomplete_confirmation)
                             .setNegativeButton(
-                                    R.string.cancel, (dialog, which) -> viewModel.confirmation = null)
+                                    R.string.cancel,
+                                    (dialog, which) -> viewModel.confirmation = null)
                             .setPositiveButton(
                                     R.string.finish_shopping,
                                     (dialog, which) -> viewModel.archive(id, true))
@@ -229,10 +231,12 @@ public class ListsActivity extends AppCompatActivity {
                         .setView(field)
                         .setNegativeButton(
                                 R.string.cancel,
-                                (dialog, which) -> viewModel.saved.set(ListsViewModel.STATE_EDITING, false))
+                                (dialog, which) ->
+                                        viewModel.saved.set(ListsViewModel.STATE_EDITING, false))
                         .setPositiveButton(R.string.save, null)
                         .create();
-        nameDialog.setOnCancelListener(dialog -> viewModel.saved.set(ListsViewModel.STATE_EDITING, false));
+        nameDialog.setOnCancelListener(
+                dialog -> viewModel.saved.set(ListsViewModel.STATE_EDITING, false));
         nameDialog.setOnDismissListener(dialog -> nameDialog = null);
         nameDialog.setOnShowListener(dialog ->
                 nameDialog
