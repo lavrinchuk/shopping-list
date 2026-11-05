@@ -44,21 +44,6 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
 
-      # Temporary formatting capture; restored before final PR review.
-      - name: Generate canonical formatting
-        run: |
-          ./gradlew spotlessApply --no-daemon --no-configuration-cache
-          python3 - <<'PY'
-          import base64
-          from pathlib import Path
-          files = [
-              Path("app/src/main/java/com/example/shoppinglist/MainActivity.java"),
-              Path("app/src/main/java/com/example/shoppinglist/ListsActivity.java")
-          ]
-          for path in files:
-              print(f"FORMATTED_ACTIVITY {path} {base64.b64encode(path.read_bytes()).decode('ascii')}")
-          PY
-
       - name: Check Java code style
         run: ./gradlew spotlessCheck --no-daemon --no-configuration-cache
 
