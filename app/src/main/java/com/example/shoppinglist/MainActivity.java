@@ -31,13 +31,13 @@ import com.example.shoppinglist.data.ShoppingRepository;
 import com.example.shoppinglist.model.ItemLink;
 import com.example.shoppinglist.model.ShoppingItem;
 import com.example.shoppinglist.ui.AdaptiveFormLayoutController;
+import com.example.shoppinglist.voice.VoiceRecognitionResult;
 import com.example.shoppinglist.web.ProductSearchUrl;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import java.util.ArrayList;
-import com.example.shoppinglist.voice.VoiceRecognitionResult;
 
 public class MainActivity extends AppCompatActivity {
     static final String EXTRA_LIST_ID = "listId";
