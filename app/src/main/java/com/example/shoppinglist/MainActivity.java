@@ -37,6 +37,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import java.util.ArrayList;
+import com.example.shoppinglist.voice.VoiceRecognitionResult;
 
 public class MainActivity extends AppCompatActivity {
     static final String EXTRA_LIST_ID = "listId";
@@ -61,13 +62,7 @@ public class MainActivity extends AppCompatActivity {
                             showVoiceError();
                             return;
                         }
-                        String recognized = null;
-                        for (String candidate : matches) {
-                            if (candidate != null && !candidate.trim().isEmpty()) {
-                                recognized = candidate.trim();
-                                break;
-                            }
-                        }
+                        String recognized = VoiceRecognitionResult.firstNonBlank(matches);
                         if (recognized == null) {
                             showVoiceError();
                             return;
