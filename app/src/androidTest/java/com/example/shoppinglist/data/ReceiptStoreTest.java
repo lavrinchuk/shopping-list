@@ -86,7 +86,7 @@ public class ReceiptStoreTest {
         try {
             receipts.attach(database, listId, Uri.fromFile(invalid));
             fail("Invalid image must be rejected");
-        } catch (IllegalStateException expected) {
+        } catch (android.database.sqlite.SQLiteException expected) {
             assertEquals(first, database.getList(listId).receiptFile);
         } finally {
             invalid.delete();
