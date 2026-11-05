@@ -180,8 +180,7 @@ public class MainActivity extends AppCompatActivity {
         quantity.addTextChangedListener(watcher);
     }
 
-    private void installAddActions(
-            EditText name, EditText quantity, TextInputLayout nameLayout) {
+    private void installAddActions(EditText name, EditText quantity, TextInputLayout nameLayout) {
         View add = findViewById(R.id.add);
         add.setOnClickListener(view -> {
             try {
@@ -214,71 +213,70 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void renderDraft(EditText name, EditText quantity) {
-                    rendering = true;
-                    if (!name.getText().toString().equals(viewModel.name)) {
-                        boolean cleared = viewModel.name.isEmpty() && !viewModel.adding;
-                        name.setText(viewModel.name);
-                        if (cleared) {
-                            name.requestFocus();
-                        }
-                    }
-                    if (!quantity.getText().toString().equals(viewModel.quantity)) {
-                        quantity.setText(viewModel.quantity);
-                    }
-                    rendering = false;
+        rendering = true;
+        if (!name.getText().toString().equals(viewModel.name)) {
+            boolean cleared = viewModel.name.isEmpty() && !viewModel.adding;
+            name.setText(viewModel.name);
+            if (cleared) {
+                name.requestFocus();
+            }
+        }
+        if (!quantity.getText().toString().equals(viewModel.quantity)) {
+            quantity.setText(viewModel.quantity);
+        }
+        rendering = false;
     }
 
     private void renderCurrentList() {
         com.google.android.material.appbar.MaterialToolbar toolbar = findViewById(R.id.heading);
-                    if (viewModel.list != null) {
-                        toolbar.setTitle(viewModel.list.name);
-                        boolean readOnly = viewModel.list.archivedAt != null;
-                        toolbar.setSubtitle(readOnly ? getString(R.string.archive) : null);
-                        findViewById(R.id.form_scroll)
-                                .setVisibility(readOnly ? View.GONE : View.VISIBLE);
-                        adapter.setReadOnly(readOnly);
-                    }
-                    toolbar.getMenu().findItem(R.id.share_list).setEnabled(!viewModel.sharing);
-                    dispatchShare();
+        if (viewModel.list != null) {
+            toolbar.setTitle(viewModel.list.name);
+            boolean readOnly = viewModel.list.archivedAt != null;
+            toolbar.setSubtitle(readOnly ? getString(R.string.archive) : null);
+            findViewById(R.id.form_scroll).setVisibility(readOnly ? View.GONE : View.VISIBLE);
+            adapter.setReadOnly(readOnly);
+        }
+        toolbar.getMenu().findItem(R.id.share_list).setEnabled(!viewModel.sharing);
+        dispatchShare();
     }
 
     private void renderItems() {
-                    adapter.submitList(viewModel.items);
-                    findViewById(R.id.empty)
-                            .setVisibility(
-                                    viewModel.items.isEmpty() && !viewModel.readFailed
-                                            ? View.VISIBLE
-                                            : View.GONE);
+        adapter.submitList(viewModel.items);
+        findViewById(R.id.empty)
+                .setVisibility(
+                        viewModel.items.isEmpty() && !viewModel.readFailed
+                                ? View.VISIBLE
+                                : View.GONE);
     }
 
     private void showPendingError() {
-                    int error = viewModel.error;
-                    viewModel.consumeError();
-                    if (error == R.string.share_error) {
-                        Toast.makeText(this, error, Toast.LENGTH_LONG).show();
-                    }
-                    if (error == R.string.write_error) {
-                        adapter.restoreChecks();
-                        Toast.makeText(this, error, Toast.LENGTH_LONG).show();
-                    }
+        int error = viewModel.error;
+        viewModel.consumeError();
+        if (error == R.string.share_error) {
+            Toast.makeText(this, error, Toast.LENGTH_LONG).show();
+        }
+        if (error == R.string.write_error) {
+            adapter.restoreChecks();
+            Toast.makeText(this, error, Toast.LENGTH_LONG).show();
+        }
     }
 
     private void synchronizeReadError() {
         RecyclerView list = findViewById(R.id.items);
-                    if (viewModel.readFailed && retry == null) {
-                        retry =
-                                Snackbar.make(list, R.string.read_error, Snackbar.LENGTH_INDEFINITE)
-                                        .setAction(
-                                                R.string.retry,
-                                                view -> {
-                                                    retry = null;
-                                                    viewModel.reload();
-                                                });
-                        retry.show();
-                    } else if (!viewModel.readFailed && retry != null) {
-                        retry.dismiss();
-                        retry = null;
-                    }
+        if (viewModel.readFailed && retry == null) {
+            retry =
+                    Snackbar.make(list, R.string.read_error, Snackbar.LENGTH_INDEFINITE)
+                            .setAction(
+                                    R.string.retry,
+                                    view -> {
+                                        retry = null;
+                                        viewModel.reload();
+                                    });
+            retry.show();
+        } else if (!viewModel.readFailed && retry != null) {
+            retry.dismiss();
+            retry = null;
+        }
     }
 
     /** Keep the form compact, but leave scrollable space for both inputs and the list. */
