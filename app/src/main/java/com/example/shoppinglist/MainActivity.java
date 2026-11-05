@@ -2,6 +2,8 @@ package com.example.shoppinglist;
 
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.app.Activity;
+import android.speech.RecognizerIntent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
@@ -12,6 +14,8 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
@@ -32,6 +36,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
     static final String EXTRA_LIST_ID = "listId";
@@ -41,6 +46,34 @@ public class MainActivity extends AppCompatActivity {
     ShoppingAdapter adapter;
     private Snackbar retry;
     private boolean rendering;
+    private final ActivityResultLauncher<Intent> speechRecognition =
+            registerForActivityResult(
+                    new ActivityResultContracts.StartActivityForResult(),
+                    result -> {
+                        if (result.getResultCode() != Activity.RESULT_OK
+                                || result.getData() == null) {
+                            return;
+                        }
+                        ArrayList<String> matches =
+                                result.getData()
+                                        .getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+                        if (matches == null || matches.isEmpty()) {
+                            showVoiceError();
+                            return;
+                        }
+                        String recognized = null;
+                        for (String candidate : matches) {
+                            if (candidate != null && !candidate.trim().isEmpty()) {
+                                recognized = candidate.trim();
+                                break;
+                            }
+                        }
+                        if (recognized == null) {
+                            showVoiceError();
+                            return;
+                        }
+                        confirmVoiceResult(recognized);
+                    });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -279,6 +312,49 @@ public class MainActivity extends AppCompatActivity {
         quantity.setSaveEnabled(false);
         installDraftListeners(name, quantity, nameLayout);
         installAddActions(name, quantity, nameLayout);
+        nameLayout.setEndIconOnClickListener(view -> startVoiceRecognition());
+    }
+
+    private void startVoiceRecognition() {
+        if (viewModel.list == null || viewModel.list.archivedAt != null) {
+            return;
+        }
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(
+                RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "uk-UA");
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "uk-UA");
+        intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3);
+        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, getString(R.string.voice_prompt));
+        try {
+            speechRecognition.launch(intent);
+        } catch (ActivityNotFoundException | SecurityException error) {
+            Toast.makeText(this, R.string.voice_unavailable, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void confirmVoiceResult(String recognized) {
+        if (viewModel.list == null || viewModel.list.archivedAt != null) {
+            return;
+        }
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.voice_confirmation_title)
+                .setMessage(recognized)
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(
+                        R.string.voice_use_result,
+                        (dialog, which) -> {
+                            EditText name = findViewById(R.id.name);
+                            name.setText(recognized);
+                            name.setSelection(name.length());
+                            name.requestFocus();
+                        })
+                .show();
+    }
+
+    private void showVoiceError() {
+        Toast.makeText(this, R.string.voice_no_result, Toast.LENGTH_LONG).show();
     }
 
     private void installDraftListeners(

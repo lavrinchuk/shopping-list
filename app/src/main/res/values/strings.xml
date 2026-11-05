@@ -3,6 +3,12 @@
     <string name="name_hint">Назва товару</string>
     <string name="quantity_hint">Кількість</string>
     <string name="add_item">Додати товар</string>
+    <string name="voice_add_item">Продиктувати назву товару</string>
+    <string name="voice_prompt">Назви один товар українською</string>
+    <string name="voice_confirmation_title">Розпізнано назву товару</string>
+    <string name="voice_use_result">Використати</string>
+    <string name="voice_unavailable">Розпізнавання мовлення недоступне. Перевір наявність мовного сервісу на пристрої.</string>
+    <string name="voice_no_result">Не вдалося розпізнати назву товару. Спробуй ще раз.</string>
     <string name="search_purchase">Шукати</string>
     <string name="search_region_title">Де шукати для купівлі: %1$s</string>
     <string name="search_region_anywhere">Без уточнення регіону</string>
