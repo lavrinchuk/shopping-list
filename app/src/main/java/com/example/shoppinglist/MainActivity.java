@@ -1,8 +1,6 @@
 package com.example.shoppinglist;
 
 import android.app.Activity;
-import android.widget.ImageView;
-import androidx.activity.result.PickVisualMediaRequest;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
@@ -14,9 +12,11 @@ import android.text.TextWatcher;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -166,8 +166,8 @@ public class MainActivity extends AppCompatActivity {
                                 receiptPicker.launch(
                                         new PickVisualMediaRequest.Builder()
                                                 .setMediaType(
-                                                        ActivityResultContracts.PickVisualMedia.ImageOnly
-                                                                .INSTANCE)
+                                                        ActivityResultContracts.PickVisualMedia
+                                                                .ImageOnly.INSTANCE)
                                                 .build());
                             } else if (which == 0) {
                                 showReceiptPreview();
@@ -197,21 +197,23 @@ public class MainActivity extends AppCompatActivity {
                         .setPositiveButton(R.string.back, null)
                         .create();
         dialog.show();
-        viewModel.previewReceipt(
-                bitmap -> {
-                    if (!dialog.isShowing()) {
-                        if (bitmap != null) {
-                            bitmap.recycle();
-                        }
-                        return;
-                    }
-                    if (bitmap != null) {
-                        image.setImageBitmap(bitmap);
-                    } else {
-                        Toast.makeText(this, R.string.receipt_unavailable, Toast.LENGTH_LONG).show();
-                        dialog.dismiss();
-                    }
-                });
+        viewModel.previewReceipt(bitmap -> displayReceiptPreview(dialog, image, bitmap));
+    }
+
+    private void displayReceiptPreview(
+            androidx.appcompat.app.AlertDialog dialog, ImageView image, android.graphics.Bitmap bitmap) {
+        if (!dialog.isShowing()) {
+            if (bitmap != null) {
+                bitmap.recycle();
+            }
+            return;
+        }
+        if (bitmap != null) {
+            image.setImageBitmap(bitmap);
+        } else {
+            Toast.makeText(this, R.string.receipt_unavailable, Toast.LENGTH_LONG).show();
+            dialog.dismiss();
+        }
     }
 
     private void initializeViewModel(Bundle savedInstanceState, long listId) {
