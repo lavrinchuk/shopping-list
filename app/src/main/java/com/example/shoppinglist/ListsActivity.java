@@ -200,6 +200,13 @@ public class ListsActivity extends AppCompatActivity {
     }
 
     private void render() {
+        Long offerReceiptId = viewModel.consumeReceiptOffer();
+        if (offerReceiptId != null && !isFinishing()) {
+            startActivity(
+                    new Intent(this, MainActivity.class)
+                            .putExtra(MainActivity.EXTRA_LIST_ID, offerReceiptId)
+                            .putExtra(MainActivity.EXTRA_OFFER_RECEIPT, true));
+        }
         Long created = viewModel.consumeCreatedList();
         if (created != null && !isFinishing()) {
             startActivity(

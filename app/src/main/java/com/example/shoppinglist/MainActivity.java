@@ -43,12 +43,14 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
     static final String EXTRA_LIST_ID = "listId";
+    static final String EXTRA_OFFER_RECEIPT = "offerReceipt";
     private static final String SEARCH_PREFERENCES = "purchase_search";
     private static final String SEARCH_REGION_KEY = "last_selected_region";
     ShoppingViewModel viewModel;
     ShoppingAdapter adapter;
     private Snackbar retry;
     private boolean rendering;
+    private androidx.appcompat.app.AlertDialog receiptOfferDialog;
     private final ActivityResultLauncher<PickVisualMediaRequest> receiptPicker =
             registerForActivityResult(
                     new ActivityResultContracts.PickVisualMedia(),
@@ -96,6 +98,11 @@ public class MainActivity extends AppCompatActivity {
         }
         configureToolbar();
         initializeViewModel(savedInstanceState, listId);
+        if (getIntent().getBooleanExtra(EXTRA_OFFER_RECEIPT, false)
+                && savedInstanceState == null) {
+            getIntent().removeExtra(EXTRA_OFFER_RECEIPT);
+            viewModel.requestReceiptOffer();
+        }
         observeLifecycleForSharing();
         configureItemsList();
         configureItemForm();
@@ -137,52 +144,61 @@ public class MainActivity extends AppCompatActivity {
                 viewModel.share();
                 return true;
             }
-            if (item.getItemId() == R.id.receipt_actions) {
-                showReceiptActions();
-                return true;
-            }
             return false;
         });
     }
 
-    private void showReceiptActions() {
-        if (viewModel.list == null || viewModel.list.archivedAt == null || viewModel.receiptBusy) {
+    private void openReceiptPicker() {
+        if (viewModel.list == null || viewModel.list.archivedAt == null
+                || viewModel.receiptBusy) {
             return;
         }
-        boolean attached = viewModel.list.receiptFile != null;
-        String[] options =
-                attached
-                        ? new String[] {
-                            getString(R.string.receipt_view),
-                            getString(R.string.receipt_replace),
-                            getString(R.string.receipt_remove)
-                        }
-                        : new String[] {getString(R.string.receipt_attach)};
+        receiptPicker.launch(
+                new PickVisualMediaRequest.Builder()
+                        .setMediaType(
+                                ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
+                        .build());
+    }
+
+    private void confirmReceiptRemoval() {
         new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.receipt_title)
-                .setItems(
-                        options,
-                        (dialog, which) -> {
-                            if (!attached || which == 1) {
-                                receiptPicker.launch(
-                                        new PickVisualMediaRequest.Builder()
-                                                .setMediaType(
-                                                        ActivityResultContracts.PickVisualMedia
-                                                                .ImageOnly.INSTANCE)
-                                                .build());
-                            } else if (which == 0) {
-                                showReceiptPreview();
-                            } else if (which == 2) {
-                                new MaterialAlertDialogBuilder(this)
-                                        .setMessage(R.string.receipt_remove_confirmation)
-                                        .setNegativeButton(R.string.cancel, null)
-                                        .setPositiveButton(
-                                                R.string.receipt_remove,
-                                                (confirm, button) -> viewModel.removeReceipt())
-                                        .show();
-                            }
-                        })
+                .setMessage(R.string.receipt_remove_confirmation)
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(
+                        R.string.receipt_remove,
+                        (dialog, which) -> viewModel.removeReceipt())
                 .show();
+    }
+
+    private void showReceiptOfferIfNeeded() {
+        if (!viewModel.receiptOfferPending || viewModel.list == null
+                || viewModel.list.archivedAt == null || receiptOfferDialog != null
+                || isFinishing()) {
+            return;
+        }
+        receiptOfferDialog =
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle(R.string.receipt_offer_title)
+                        .setMessage(R.string.receipt_offer_message)
+                        .setNegativeButton(
+                                R.string.receipt_offer_skip,
+                                (dialog, which) -> {
+                                    viewModel.consumeReceiptOffer();
+                                    finish();
+                                })
+                        .setPositiveButton(
+                                R.string.receipt_attach,
+                                (dialog, which) -> {
+                                    viewModel.consumeReceiptOffer();
+                                    openReceiptPicker();
+                                })
+                        .create();
+        receiptOfferDialog.setOnCancelListener(dialog -> {
+            viewModel.consumeReceiptOffer();
+            finish();
+        });
+        receiptOfferDialog.setOnDismissListener(dialog -> receiptOfferDialog = null);
+        receiptOfferDialog.show();
     }
 
     private void showReceiptPreview() {
@@ -196,6 +212,12 @@ public class MainActivity extends AppCompatActivity {
                         .setTitle(R.string.receipt_title)
                         .setView(image)
                         .setPositiveButton(R.string.back, null)
+                        .setNeutralButton(
+                                R.string.receipt_replace,
+                                (dialog, which) -> openReceiptPicker())
+                        .setNegativeButton(
+                                R.string.receipt_remove,
+                                (dialog, which) -> confirmReceiptRemoval())
                         .create();
         dialog.show();
         viewModel.previewReceipt(bitmap -> displayReceiptPreview(dialog, image, bitmap));
@@ -388,6 +410,16 @@ public class MainActivity extends AppCompatActivity {
 
     private void configureFinishAction() {
         findViewById(R.id.finish_list).setOnClickListener(view -> onFinishClicked());
+        findViewById(R.id.receipt_bottom_action).setOnClickListener(view -> {
+            if (viewModel.list == null || viewModel.receiptBusy) {
+                return;
+            }
+            if (viewModel.list.receiptFile == null) {
+                openReceiptPicker();
+            } else {
+                showReceiptPreview();
+            }
+        });
     }
 
     private void onFinishClicked() {
@@ -530,6 +562,7 @@ public class MainActivity extends AppCompatActivity {
         renderItems();
         showPendingError();
         synchronizeReadError();
+        showReceiptOfferIfNeeded();
     }
 
     private void renderDraft(EditText name, EditText quantity) {
@@ -569,10 +602,18 @@ public class MainActivity extends AppCompatActivity {
                             ? R.string.delete_empty_list
                             : R.string.finish_shopping);
             finishButton.setEnabled(!viewModel.finishing && !viewModel.adding);
+            com.google.android.material.button.MaterialButton receiptButton =
+                    findViewById(R.id.receipt_bottom_action);
+            receiptButton.setVisibility(readOnly ? View.VISIBLE : View.GONE);
+            receiptButton.setText(
+                    viewModel.list.receiptFile == null
+                            ? R.string.receipt_attach
+                            : R.string.receipt_view_button);
+            receiptButton.setEnabled(!viewModel.receiptBusy);
         }
         toolbar.getMenu().findItem(R.id.share_list).setEnabled(!viewModel.sharing);
         android.view.MenuItem receipt = toolbar.getMenu().findItem(R.id.receipt_actions);
-        receipt.setVisible(viewModel.list != null && viewModel.list.archivedAt != null);
+        receipt.setVisible(false);
         receipt.setEnabled(!viewModel.receiptBusy);
         dispatchShare();
     }
@@ -654,6 +695,12 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        if (receiptOfferDialog != null) {
+            receiptOfferDialog.setOnCancelListener(null);
+            receiptOfferDialog.setOnDismissListener(null);
+            receiptOfferDialog.dismiss();
+            receiptOfferDialog = null;
+        }
         if (retry != null) {
             retry.dismiss();
         }

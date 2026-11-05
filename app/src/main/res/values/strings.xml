@@ -38,6 +38,10 @@
     <string name="finish_wish_list">Завершити список бажань</string>
 
     <string name="receipt_title">Фото чека</string>
+    <string name="receipt_offer_title">Покупки завершено</string>
+    <string name="receipt_offer_message">Додати фото чека до завершеного списку?</string>
+    <string name="receipt_offer_skip">Не зараз</string>
+    <string name="receipt_view_button">Перегляд чека</string>
     <string name="receipt_actions">Фото чека</string>
     <string name="receipt_attach">Додати фото чека</string>
     <string name="receipt_view">Переглянути фото</string>
