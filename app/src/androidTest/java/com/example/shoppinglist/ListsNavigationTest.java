@@ -1,6 +1,8 @@
 package com.example.shoppinglist;
 
 import static androidx.test.espresso.Espresso.onView;
+import static androidx.test.espresso.Espresso.onData;
+import static org.hamcrest.Matchers.anything;
 import static androidx.test.espresso.action.ViewActions.*;
 import static androidx.test.espresso.assertion.ViewAssertions.*;
 import static androidx.test.espresso.matcher.ViewMatchers.*;
@@ -140,6 +142,35 @@ public class ListsNavigationTest {
         home.recreate();
         onView(withText("Епіцентр")).check(matches(isDisplayed()));
         capture("active-lists");
+    }
+
+    @Test
+    public void createWishArchiveWithoutAllCheckedAndRestore() {
+        onView(withId(R.id.create_list)).perform(click());
+        onView(withId(R.id.list_name_input)).perform(replaceText("Мої бажання"), closeSoftKeyboard());
+        onView(withId(R.id.list_type_input)).perform(click());
+        onData(anything()).atPosition(1).perform(click());
+        onView(withText(R.string.save)).perform(click());
+        onView(withText("Мої бажання")).check(matches(isDisplayed()));
+        home.onActivity(activity -> {
+            ShoppingList list =
+                    activity.viewModel.lists.stream()
+                            .filter(value -> value.name.equals("Мої бажання"))
+                            .findFirst()
+                            .get();
+            assertTrue(list.isWish());
+        });
+        onView(withText("Мої бажання")).perform(click());
+        onView(withId(R.id.name)).perform(replaceText("Книга"), closeSoftKeyboard());
+        onView(withId(R.id.add)).perform(click());
+        back();
+        menu("Мої бажання", R.string.finish_wish_list);
+        onView(withText("Мої бажання")).check(doesNotExist());
+        onView(withId(R.id.open_archive)).perform(click());
+        onView(withText("Мої бажання")).check(matches(isDisplayed()));
+        menu("Мої бажання", R.string.restore_list);
+        back();
+        onView(withText("Мої бажання")).check(matches(isDisplayed()));
     }
 
     @Test
