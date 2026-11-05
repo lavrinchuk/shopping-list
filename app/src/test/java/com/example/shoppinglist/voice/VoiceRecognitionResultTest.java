@@ -10,12 +10,17 @@ import org.junit.Test;
 public class VoiceRecognitionResultTest {
     @Test
     public void usesFirstNonBlankCandidate() {
-        assertEquals("молоко", VoiceRecognitionResult.firstNonBlank(Arrays.asList(" ", " молоко ", "хліб")));
+        assertEquals(
+                "молоко",
+                VoiceRecognitionResult.firstNonBlank(Arrays.asList(" ", " молоко ", "хліб")));
     }
 
     @Test
     public void preservesUkrainianText() {
-        assertEquals("олія соняшникова", VoiceRecognitionResult.firstNonBlank(Collections.singletonList("олія соняшникова")));
+        assertEquals(
+                "олія соняшникова",
+                VoiceRecognitionResult.firstNonBlank(
+                        Collections.singletonList("олія соняшникова")));
     }
 
     @Test
