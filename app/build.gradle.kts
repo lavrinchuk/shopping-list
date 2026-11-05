@@ -1,5 +1,6 @@
 import com.github.spotbugs.snom.SpotBugsTask
 import com.google.firebase.appdistribution.gradle.firebaseAppDistribution
+import org.gradle.api.artifacts.type.ArtifactTypeDefinition
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.jvm.tasks.Jar
 
@@ -93,16 +94,46 @@ val debugJavaCompileClasspath = providers.provider {
     tasks.named<JavaCompile>("compileDebugJavaWithJavac").get().classpath
 }
 
+// Include runtime-only AndroidX dependencies for SpotBugs. Some referenced
+// libraries (such as poolingcontainer and tracing) are implementation/runtime
+// dependencies and are absent from JavaCompile's compile classpath.
+// Use AGP's AAR-to-classes-JAR transform; never add these to the APK.
+val spotbugsRuntimeClasspath = providers.provider {
+    configurations.named("debugRuntimeClasspath").get().incoming.artifactView {
+        attributes.attribute(
+            ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE,
+            "android-classes-jar"
+        )
+    }.files
+}
+
+// The Android SDK doesn't contain java.rmi.Remote. SpotBugs may encounter
+// references to this JDK marker interface in dependency bytecode. Supply the
+// *real* class from the CI JDK's java.rmi module for analysis only.
+val spotbugsRmiJar = tasks.register<Jar>("spotbugsRmiJar") {
+    group = "verification"
+    description = "Extract java.rmi.Remote from the JDK for SpotBugs analysis only."
+    from(zipTree(file("${System.getProperty("java.home")}/jmods/java.rmi.jmod"))) {
+        include("classes/java/rmi/Remote.class")
+        eachFile { path = path.removePrefix("classes/") }
+        includeEmptyDirs = false
+    }
+    archiveFileName.set("spotbugs-java-rmi.jar")
+    destinationDirectory.set(layout.buildDirectory.dir("intermediates/spotbugs"))
+}
+
 tasks.register<SpotBugsTask>("spotbugsDebug") {
     group = "verification"
     description = "Analyze ShoppingList debug Java bytecode with SpotBugs."
-    dependsOn(spotbugsDebugClassesJar)
+    dependsOn(spotbugsDebugClassesJar, spotbugsRmiJar)
     val appJar = spotbugsDebugClassesJar.flatMap { it.archiveFile }
     classDirs.from(appJar)
     // Explicit input: the default classes FileTree scans only loose .class files.
     classes = files(appJar)
     sourceDirs.from("src/main/java")
     auxClassPaths.from(debugJavaCompileClasspath)
+    auxClassPaths.from(spotbugsRuntimeClasspath)
+    auxClassPaths.from(spotbugsRmiJar.flatMap { it.archiveFile })
     auxClassPaths.from(androidComponents.sdkComponents.bootClasspath)
     // Report existing findings without blocking adoption.
     ignoreFailures = true
