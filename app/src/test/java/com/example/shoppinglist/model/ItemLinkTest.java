@@ -15,7 +15,9 @@ public class ItemLinkTest {
 
     @Test
     public void trimsAndAcceptsHttpsOrHttp() {
-        assertEquals("https://shop.example.ua/p?q=1", ItemLink.normalize(" https://shop.example.ua/p?q=1 "));
+        assertEquals(
+                "https://shop.example.ua/p?q=1",
+                ItemLink.normalize(" https://shop.example.ua/p?q=1 "));
         assertEquals("http://example.com/item", ItemLink.normalize("http://example.com/item"));
     }
 
