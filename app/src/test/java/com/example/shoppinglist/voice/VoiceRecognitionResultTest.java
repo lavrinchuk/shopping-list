@@ -31,9 +31,7 @@ public class VoiceRecognitionResultTest {
         assertEquals(
                 "Ґудзики",
                 VoiceRecognitionResult.firstNonBlank(Collections.singletonList("Ґудзики")));
-        assertEquals(
-                "Їжа",
-                VoiceRecognitionResult.firstNonBlank(Collections.singletonList("їжа")));
+        assertEquals("Їжа", VoiceRecognitionResult.firstNonBlank(Collections.singletonList("їжа")));
     }
 
     @Test
