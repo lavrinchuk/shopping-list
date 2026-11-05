@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
+import com.example.shoppinglist.model.ItemLink;
 import com.example.shoppinglist.model.ShoppingItem;
 import com.example.shoppinglist.model.ShoppingList;
 import java.util.ArrayList;
@@ -13,7 +14,7 @@ import java.util.List;
 
 public class ShoppingDatabase extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "shopping.db";
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 3;
     private static final String LEGACY_DEFAULT_LIST_NAME = "Мій список";
 
     public static final class IncompleteListException extends SQLiteException {}
@@ -54,10 +55,17 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        if (oldVersion != 1 || newVersion != 2) {
+        if ((oldVersion != 1 && oldVersion != 2) || newVersion != 3) {
             throw new SQLiteException("Unsupported database upgrade");
         }
         // SQLiteOpenHelper wraps onUpgrade and user_version in a single transaction.
+        if (oldVersion == 1) {
+            upgradeFromV1(db);
+        }
+        db.execSQL("ALTER TABLE items ADD COLUMN url TEXT");
+    }
+
+    private void upgradeFromV1(SQLiteDatabase db) {
         long previousSequence = 0;
         try (Cursor cursor =
                 db.rawQuery("SELECT seq FROM sqlite_sequence WHERE name = 'items'", null)) {
@@ -270,6 +278,33 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
         }
     }
 
+    public void setItemUrl(long listId, long id, String url) {
+        String normalized = ItemLink.normalize(url);
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            ShoppingList list = requireActive(listId);
+            ContentValues values = new ContentValues();
+            if (normalized == null) {
+                values.putNull("url");
+            } else {
+                values.put("url", normalized);
+            }
+            int changed =
+                    db.update(
+                            "items",
+                            values,
+                            "listId = ? AND id = ? AND NOT (url IS ?)",
+                            new String[] {String.valueOf(listId), String.valueOf(id), normalized});
+            if (changed > 0) {
+                touch(db, list);
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
     public List<ShoppingItem> getItems(long listId) {
         List<ShoppingItem> items = new ArrayList<>();
         try (Cursor c =
@@ -289,7 +324,8 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
                                 listId,
                                 c.getString(c.getColumnIndexOrThrow("name")),
                                 c.getString(c.getColumnIndexOrThrow("quantity")),
-                                c.getInt(c.getColumnIndexOrThrow("purchased")) != 0));
+                                c.getInt(c.getColumnIndexOrThrow("purchased")) != 0,
+                                c.getString(c.getColumnIndexOrThrow("url"))));
             }
         }
         return items;
