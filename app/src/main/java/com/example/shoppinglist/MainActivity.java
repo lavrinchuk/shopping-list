@@ -162,14 +162,15 @@ public class MainActivity extends AppCompatActivity {
                 .setMessage(R.string.receipt_remove_confirmation)
                 .setNegativeButton(R.string.cancel, null)
                 .setPositiveButton(
-                        R.string.receipt_remove,
-                        (dialog, which) -> viewModel.removeReceipt())
+                        R.string.receipt_remove, (dialog, which) -> viewModel.removeReceipt())
                 .show();
     }
 
     private void showReceiptOfferIfNeeded() {
-        if (!viewModel.receiptOfferPending || viewModel.list == null
-                || viewModel.list.archivedAt == null || receiptOfferDialog != null
+        if (!viewModel.receiptOfferPending
+                || viewModel.list == null
+                || viewModel.list.archivedAt == null
+                || receiptOfferDialog != null
                 || isFinishing()) {
             return;
         }
@@ -210,11 +211,9 @@ public class MainActivity extends AppCompatActivity {
                         .setView(image)
                         .setPositiveButton(R.string.back, null)
                         .setNeutralButton(
-                                R.string.receipt_replace,
-                                (dialog, which) -> openReceiptPicker())
+                                R.string.receipt_replace, (dialog, which) -> openReceiptPicker())
                         .setNegativeButton(
-                                R.string.receipt_remove,
-                                (dialog, which) -> confirmReceiptRemoval())
+                                R.string.receipt_remove, (dialog, which) -> confirmReceiptRemoval())
                         .create();
         dialog.show();
         viewModel.previewReceipt(bitmap -> displayReceiptPreview(dialog, image, bitmap));
@@ -407,16 +406,18 @@ public class MainActivity extends AppCompatActivity {
 
     private void configureFinishAction() {
         findViewById(R.id.finish_list).setOnClickListener(view -> onFinishClicked());
-        findViewById(R.id.receipt_bottom_action).setOnClickListener(view -> {
-            if (viewModel.list == null || viewModel.receiptBusy) {
-                return;
-            }
-            if (viewModel.list.receiptFile == null) {
-                openReceiptPicker();
-            } else {
-                showReceiptPreview();
-            }
-        });
+        findViewById(R.id.receipt_bottom_action).setOnClickListener(view -> onReceiptClicked());
+    }
+
+    private void onReceiptClicked() {
+        if (viewModel.list == null || viewModel.receiptBusy) {
+            return;
+        }
+        if (viewModel.list.receiptFile == null) {
+            openReceiptPicker();
+        } else {
+            showReceiptPreview();
+        }
     }
 
     private void onFinishClicked() {
