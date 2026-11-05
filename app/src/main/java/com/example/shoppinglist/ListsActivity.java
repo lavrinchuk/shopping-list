@@ -38,6 +38,17 @@ public class ListsActivity extends AppCompatActivity {
         super.onCreate(state);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_lists);
+        applyWindowInsets();
+
+        boolean archived = getIntent().getBooleanExtra(EXTRA_ARCHIVED, false);
+        initializeViewModel(state, archived);
+        configureToolbar(archived);
+        configureActions(archived);
+        configureLists();
+        viewModel.changes.observe(this, ignored -> render());
+    }
+
+    private void applyWindowInsets() {
         ViewCompat.setOnApplyWindowInsetsListener(
                 findViewById(R.id.lists_root),
                 (view, insets) -> {
@@ -48,7 +59,9 @@ public class ListsActivity extends AppCompatActivity {
                     view.setPadding(bars.left, bars.top, bars.right, bars.bottom);
                     return insets;
                 });
-        boolean archived = getIntent().getBooleanExtra(EXTRA_ARCHIVED, false);
+    }
+
+    private void initializeViewModel(Bundle state, boolean archived) {
         ShoppingRepository repository = ((ShoppingApplication) getApplication()).repository();
         viewModel =
                 new ViewModelProvider(
@@ -65,6 +78,9 @@ public class ListsActivity extends AppCompatActivity {
                                     }
                                 })
                         .get(ListsViewModel.class);
+    }
+
+    private void configureToolbar(boolean archived) {
         MaterialToolbar toolbar = findViewById(R.id.lists_toolbar);
         toolbar.setTitle(archived ? R.string.archive : R.string.all_lists);
         if (archived) {
@@ -72,6 +88,9 @@ public class ListsActivity extends AppCompatActivity {
             toolbar.setNavigationContentDescription(R.string.back);
             toolbar.setNavigationOnClickListener(view -> finish());
         }
+    }
+
+    private void configureActions(boolean archived) {
         findViewById(R.id.open_archive).setVisibility(archived ? View.GONE : View.VISIBLE);
         findViewById(R.id.open_archive)
                 .setOnClickListener(view ->
@@ -81,6 +100,9 @@ public class ListsActivity extends AppCompatActivity {
         findViewById(R.id.create_list).setVisibility(archived ? View.GONE : View.VISIBLE);
         findViewById(R.id.create_list).setOnClickListener(view -> edit(null));
         findViewById(R.id.retry_lists).setOnClickListener(view -> viewModel.reload());
+    }
+
+    private void configureLists() {
         adapter =
                 new ListsAdapter(
                         new ListsAdapter.Actions() {
@@ -99,7 +121,6 @@ public class ListsActivity extends AppCompatActivity {
         RecyclerView lists = findViewById(R.id.lists);
         lists.setLayoutManager(new LinearLayoutManager(this));
         lists.setAdapter(adapter);
-        viewModel.changes.observe(this, ignored -> render());
     }
 
     @Override
@@ -150,6 +171,13 @@ public class ListsActivity extends AppCompatActivity {
     }
 
     private void render() {
+        renderListState();
+        showErrorIfNeeded();
+        synchronizeNameDialog();
+        showArchiveConfirmationIfNeeded();
+    }
+
+    private void renderListState() {
         adapter.submitList(viewModel.lists);
         findViewById(R.id.create_list).setEnabled(!viewModel.busy);
         findViewById(R.id.lists_loading)
@@ -162,10 +190,16 @@ public class ListsActivity extends AppCompatActivity {
                 !viewModel.loading && !viewModel.readFailed && viewModel.lists.isEmpty()
                         ? View.VISIBLE
                         : View.GONE);
+    }
+
+    private void showErrorIfNeeded() {
         if (viewModel.error != 0) {
             Toast.makeText(this, viewModel.error, Toast.LENGTH_LONG).show();
             viewModel.error = 0;
         }
+    }
+
+    private void synchronizeNameDialog() {
         boolean editing = Boolean.TRUE.equals(viewModel.saved.get(ListsViewModel.STATE_EDITING));
         if (editing && nameDialog == null) {
             showNameDialog();
@@ -177,6 +211,9 @@ public class ListsActivity extends AppCompatActivity {
         if (nameDialog != null) {
             nameDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(!viewModel.busy);
         }
+    }
+
+    private void showArchiveConfirmationIfNeeded() {
         if (viewModel.confirmation != null && confirmationDialog == null) {
             long id = viewModel.confirmation;
             confirmationDialog =
