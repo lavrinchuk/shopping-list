@@ -5,7 +5,6 @@
     <string name="add_item">Додати товар</string>
     <string name="search_purchase">Шукати</string>
     <string name="search_region_title">Де шукати для купівлі: %1$s</string>
-    <string name="search_region_note">Регіон уточнює текст запиту, але не гарантує географічної точності результатів.</string>
     <string name="search_region_anywhere">Без уточнення регіону</string>
     <string name="search_item">Пошукати в інтернеті: %1$s</string>
     <string name="search_unavailable">Не вдалося відкрити пошук у браузері.</string>
