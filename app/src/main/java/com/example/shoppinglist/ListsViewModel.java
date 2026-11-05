@@ -20,64 +20,146 @@ final class ListsViewModel extends ViewModel {
     Long confirmation;
 
     ListsViewModel(ShoppingRepository repository, SavedStateHandle saved, boolean archived) {
-        this.repository = repository; this.saved = saved; this.archived = archived;
+        this.repository = repository;
+        this.saved = saved;
+        this.archived = archived;
     }
-    void reload() { loading = true; publish(); repository.lists(archived, result(false)); }
+
+    void reload() {
+        loading = true;
+        publish();
+        repository.lists(archived, result(false));
+    }
+
     void saveName(long id, String name) {
-        if (busy) return;
+        if (busy) {
+            return;
+        }
         String clean = ShoppingList.cleanName(name);
-        busy = true; publish();
-        if (id == 0) repository.create(clean, result(true));
-        else repository.rename(id, clean, result(true));
+        busy = true;
+        publish();
+        if (id == 0) {
+            repository.create(clean, result(true));
+        } else {
+            repository.rename(id, clean, result(true));
+        }
     }
+
     void archive(ShoppingList list) {
-        if (busy) return;
-        if (list.total > list.purchased) { confirmation = list.id; publish(); }
-        else archive(list.id, false);
+        if (busy) {
+            return;
+        }
+        if (list.total > list.purchased) {
+            confirmation = list.id;
+            publish();
+        } else {
+            archive(list.id, false);
+        }
     }
+
     void archive(long id, boolean confirmed) {
-        if (busy) return;
-        confirmation = null; busy = true; publish();
-        repository.archive(id, confirmed, new ShoppingRepository.Result() {
-            final ShoppingRepository.Result delegate = result(false);
-            @Override public void written() { delegate.written(); }
-            @Override public void loaded(List<ShoppingItem> items) { }
-            @Override public void listsLoaded(List<ShoppingList> lists) { delegate.listsLoaded(lists); }
-            @Override public void failed(boolean reading) { delegate.failed(reading); }
-            @Override public void confirmationRequired() {
-                if (cleared) return;
-                busy = false; confirmation = id; publish();
-            }
-        });
+        if (busy) {
+            return;
+        }
+        confirmation = null;
+        busy = true;
+        publish();
+        repository.archive(
+                id,
+                confirmed,
+                new ShoppingRepository.Result() {
+                    final ShoppingRepository.Result delegate = result(false);
+
+                    @Override
+                    public void written() {
+                        delegate.written();
+                    }
+
+                    @Override
+                    public void loaded(List<ShoppingItem> items) {}
+
+                    @Override
+                    public void listsLoaded(List<ShoppingList> lists) {
+                        delegate.listsLoaded(lists);
+                    }
+
+                    @Override
+                    public void failed(boolean reading) {
+                        delegate.failed(reading);
+                    }
+
+                    @Override
+                    public void confirmationRequired() {
+                        if (cleared) {
+                            return;
+                        }
+                        busy = false;
+                        confirmation = id;
+                        publish();
+                    }
+                });
     }
+
     void restore(long id) {
-        if (busy) return;
-        busy = true; publish(); repository.restore(id, result(false));
+        if (busy) {
+            return;
+        }
+        busy = true;
+        publish();
+        repository.restore(id, result(false));
     }
+
     private ShoppingRepository.Result result(boolean naming) {
         return new ShoppingRepository.Result() {
-            @Override public void written() {
-                if (cleared) return;
+            @Override
+            public void written() {
+                if (cleared) {
+                    return;
+                }
                 busy = false;
-                if (naming) saved.set("editing", false);
+                if (naming) {
+                    saved.set("editing", false);
+                }
                 publish();
             }
-            @Override public void loaded(List<ShoppingItem> ignored) { }
-            @Override public void listsLoaded(List<ShoppingList> updated) {
-                if (cleared) return;
-                lists = updated; loading = false; readFailed = false; publish();
+
+            @Override
+            public void loaded(List<ShoppingItem> ignored) {}
+
+            @Override
+            public void listsLoaded(List<ShoppingList> updated) {
+                if (cleared) {
+                    return;
+                }
+                lists = updated;
+                loading = false;
+                readFailed = false;
+                publish();
             }
-            @Override public void failed(boolean reading) {
-                if (cleared) return;
-                busy = false; loading = false;
-                if (reading) readFailed = true;
-                error = reading ? R.string.read_error : R.string.write_error; publish();
+
+            @Override
+            public void failed(boolean reading) {
+                if (cleared) {
+                    return;
+                }
+                busy = false;
+                loading = false;
+                if (reading) {
+                    readFailed = true;
+                }
+                error = reading ? R.string.read_error : R.string.write_error;
+                publish();
             }
         };
     }
+
     void publish() {
         Integer current = changes.getValue();
         changes.setValue(current == null ? 1 : current + 1);
     }
-    @Override protected void onCleared() { cleared = true; }
+
+    @Override
+    protected void onCleared() {
+        cleared = true;
+    }
 }

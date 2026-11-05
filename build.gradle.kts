@@ -3,4 +3,5 @@ plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.firebase.appdistribution) apply false
     alias(libs.plugins.spotbugs.base) apply false
+    alias(libs.plugins.spotless) apply false
 }

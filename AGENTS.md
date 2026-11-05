@@ -36,3 +36,13 @@ Applies to all work in this repository. Read this document and the relevant GitH
 
 - For ambiguous product behavior, make the smallest reversible implementation, clearly document assumptions, and ask only when the decision materially changes functionality, data loss risk, or security.
 - Summarize exact modified files, tests run, their outcome, and the PR link in the final report.
+
+## Java code style
+
+- Use AOSP Java style with four-space indentation. Spotless is the authoritative formatter.
+- Run `./gradlew spotlessApply` before review and `./gradlew spotlessCheck` to verify all app, unit-test and instrumentation-test Java sources.
+- Write one statement per line, use clear indentation, and always use braces for control structures.
+- Keep methods readable; do not artificially compress methods or multiple operations onto one line.
+- Spotless formats whitespace and organizes imports; it does not enforce every rule above (including mandatory braces). Review those rules explicitly.
+- Keep formatting-only changes separate from behavior changes, refactoring and method renaming.
+- Pin Spotless and google-java-format versions. Keep `cleanup(false)` to disable non-whitespace cleanups.

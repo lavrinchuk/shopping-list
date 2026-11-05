@@ -1,5 +1,11 @@
 package com.example.shoppinglist;
 
+import static androidx.test.espresso.Espresso.onView;
+import static androidx.test.espresso.action.ViewActions.click;
+import static androidx.test.espresso.assertion.ViewAssertions.matches;
+import static androidx.test.espresso.matcher.ViewMatchers.*;
+import static org.junit.Assert.*;
+
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Intent;
@@ -9,20 +15,15 @@ import androidx.test.espresso.IdlingResource;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 import com.google.android.material.appbar.MaterialToolbar;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import static androidx.test.espresso.Espresso.onView;
-import static androidx.test.espresso.action.ViewActions.click;
-import static androidx.test.espresso.assertion.ViewAssertions.matches;
-import static androidx.test.espresso.matcher.ViewMatchers.*;
-import static org.junit.Assert.*;
 
 @RunWith(AndroidJUnit4.class)
 public class ShoppingShareTest {
@@ -35,7 +36,8 @@ public class ShoppingShareTest {
     private IdlingResource idle;
     private long listId;
 
-    @Before public void setup() throws Exception {
+    @Before
+    public void setup() throws Exception {
         app = (TestShoppingApplication) instrumentation.getTargetContext().getApplicationContext();
         instrumentation.runOnMainSync(() -> repository = app.repository());
         enqueue(() -> {
@@ -45,46 +47,92 @@ public class ShoppingShareTest {
             app.database.add(listId, "Молоко", "2 л");
         });
         IdlingResource.ResourceCallback[] callback = new IdlingResource.ResourceCallback[1];
-        instrumentation.runOnMainSync(() -> repository.setIdleListener(() -> {
-            if (callback[0] != null) callback[0].onTransitionToIdle();
-        }));
-        idle = new IdlingResource() {
-            @Override public String getName() { return "Share snapshot queue"; }
-            @Override public boolean isIdleNow() { return repository.isIdle(); }
-            @Override public void registerIdleTransitionCallback(ResourceCallback listener) {
-                callback[0] = listener;
-            }
-        };
+        instrumentation.runOnMainSync(() ->
+                repository.setIdleListener(() -> {
+                    if (callback[0] != null) {
+                        callback[0].onTransitionToIdle();
+                    }
+                }));
+        idle =
+                new IdlingResource() {
+                    @Override
+                    public String getName() {
+                        return "Share snapshot queue";
+                    }
+
+                    @Override
+                    public boolean isIdleNow() {
+                        return repository.isIdle();
+                    }
+
+                    @Override
+                    public void registerIdleTransitionCallback(ResourceCallback listener) {
+                        callback[0] = listener;
+                    }
+                };
         IdlingRegistry.getInstance().register(idle);
-        monitor = new Instrumentation.ActivityMonitor() {
-            @Override public Instrumentation.ActivityResult onStartActivity(Intent intent) {
-                if (!Intent.ACTION_CHOOSER.equals(intent.getAction())) return null;
-                sent.add(intent);
-                return new Instrumentation.ActivityResult(Activity.RESULT_OK, null);
-            }
-        };
+        monitor =
+                new Instrumentation.ActivityMonitor() {
+                    @Override
+                    public Instrumentation.ActivityResult onStartActivity(Intent intent) {
+                        if (!Intent.ACTION_CHOOSER.equals(intent.getAction())) {
+                            return null;
+                        }
+                        sent.add(intent);
+                        return new Instrumentation.ActivityResult(Activity.RESULT_OK, null);
+                    }
+                };
         instrumentation.addMonitor(monitor);
     }
-    @After public void cleanup() {
-        if (app != null && app.database.allowWrite != null) app.database.allowWrite.countDown();
-        if (screen != null) screen.close();
-        if (monitor != null) instrumentation.removeMonitor(monitor);
-        if (idle != null) IdlingRegistry.getInstance().unregister(idle);
-        if (repository != null) instrumentation.runOnMainSync(() -> repository.setIdleListener(null));
+
+    @After
+    public void cleanup() {
+        if (app != null && app.database.allowWrite != null) {
+            app.database.allowWrite.countDown();
+        }
+        if (screen != null) {
+            screen.close();
+        }
+        if (monitor != null) {
+            instrumentation.removeMonitor(monitor);
+        }
+        if (idle != null) {
+            IdlingRegistry.getInstance().unregister(idle);
+        }
+        if (repository != null) {
+            instrumentation.runOnMainSync(() -> repository.setIdleListener(null));
+        }
     }
+
     private void enqueue(Runnable action) throws Exception {
         CountDownLatch done = new CountDownLatch(1);
-        instrumentation.runOnMainSync(() -> repository.execute(action, new ShoppingRepository.Result() {
-            @Override public void written() { done.countDown(); }
-            @Override public void loaded(List<ShoppingItem> ignored) { }
-            @Override public void failed(boolean reading) { throw new AssertionError("Database operation failed"); }
-        }));
+        instrumentation.runOnMainSync(() ->
+                repository.execute(
+                        action,
+                        new ShoppingRepository.Result() {
+                            @Override
+                            public void written() {
+                                done.countDown();
+                            }
+
+                            @Override
+                            public void loaded(List<ShoppingItem> ignored) {}
+
+                            @Override
+                            public void failed(boolean reading) {
+                                throw new AssertionError("Database operation failed");
+                            }
+                        }));
         assertTrue(done.await(10, TimeUnit.SECONDS));
     }
+
     private void open() {
-        screen = ActivityScenario.launch(new Intent(app, MainActivity.class).putExtra("listId", listId));
+        screen =
+                ActivityScenario.launch(
+                        new Intent(app, MainActivity.class).putExtra("listId", listId));
         onView(withContentDescription(R.string.share_list)).check(matches(isEnabled()));
     }
+
     @SuppressWarnings("deprecation")
     private String exportedText() throws Exception {
         Intent chooser = sent.poll(10, TimeUnit.SECONDS);
@@ -97,8 +145,11 @@ public class ShoppingShareTest {
         assertNull(send.getComponent());
         return send.getStringExtra(Intent.EXTRA_TEXT);
     }
+
     private void verifyShareDoesNotWrite(boolean archived) throws Exception {
-        if (archived) enqueue(() -> app.database.archive(listId, true));
+        if (archived) {
+            enqueue(() -> app.database.archive(listId, true));
+        }
         ShoppingList[] before = new ShoppingList[1];
         enqueue(() -> before[0] = app.database.getList(listId));
         open();
@@ -113,13 +164,19 @@ public class ShoppingShareTest {
         });
         assertTrue(sent.isEmpty());
     }
-    @Test public void activeListSharesPlainTextWithoutChangingData() throws Exception {
+
+    @Test
+    public void activeListSharesPlainTextWithoutChangingData() throws Exception {
         verifyShareDoesNotWrite(false);
     }
-    @Test public void archivedListCanShareWithoutChangingData() throws Exception {
+
+    @Test
+    public void archivedListCanShareWithoutChangingData() throws Exception {
         verifyShareDoesNotWrite(true);
     }
-    @Test public void pendingWriteAndRotationProduceFreshSnapshotOnce() throws Exception {
+
+    @Test
+    public void pendingWriteAndRotationProduceFreshSnapshotOnce() throws Exception {
         open();
         app.database.pauseNextWrite();
         screen.onActivity(activity -> {
@@ -138,7 +195,9 @@ public class ShoppingShareTest {
         onView(withContentDescription(R.string.share_list)).check(matches(isEnabled()));
         assertTrue(sent.isEmpty());
     }
-    @Test public void failedSnapshotDoesNotShareStaleDataAndCanRetry() throws Exception {
+
+    @Test
+    public void failedSnapshotDoesNotShareStaleDataAndCanRetry() throws Exception {
         open();
         app.database.failNextRead = true;
         onView(withContentDescription(R.string.share_list)).perform(click());
