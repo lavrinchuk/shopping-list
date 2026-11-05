@@ -4,6 +4,8 @@ import android.content.Context;
 import android.database.sqlite.SQLiteException;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
 import android.net.Uri;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -102,6 +104,37 @@ public final class ReceiptStore {
         }
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inSampleSize = sample;
-        return BitmapFactory.decodeFile(file.getAbsolutePath(), options);
+        Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath(), options);
+        if (bitmap == null) {
+            return null;
+        }
+        int rotation = 0;
+        try {
+            int orientation =
+                    new ExifInterface(file.getAbsolutePath())
+                            .getAttributeInt(
+                                    ExifInterface.TAG_ORIENTATION,
+                                    ExifInterface.ORIENTATION_NORMAL);
+            if (orientation == ExifInterface.ORIENTATION_ROTATE_90) {
+                rotation = 90;
+            } else if (orientation == ExifInterface.ORIENTATION_ROTATE_180) {
+                rotation = 180;
+            } else if (orientation == ExifInterface.ORIENTATION_ROTATE_270) {
+                rotation = 270;
+            }
+        } catch (IOException ignored) {
+            return bitmap;
+        }
+        if (rotation == 0) {
+            return bitmap;
+        }
+        Matrix matrix = new Matrix();
+        matrix.postRotate(rotation);
+        Bitmap corrected =
+                Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+        if (corrected != bitmap) {
+            bitmap.recycle();
+        }
+        return corrected;
     }
 }
