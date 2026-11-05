@@ -201,7 +201,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void displayReceiptPreview(
-            androidx.appcompat.app.AlertDialog dialog, ImageView image, android.graphics.Bitmap bitmap) {
+            androidx.appcompat.app.AlertDialog dialog,
+            ImageView image,
+            android.graphics.Bitmap bitmap) {
         if (!dialog.isShowing()) {
             if (bitmap != null) {
                 bitmap.recycle();
