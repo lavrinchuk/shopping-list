@@ -26,11 +26,14 @@ import com.example.shoppinglist.data.ShoppingRepository;
 import com.example.shoppinglist.model.ShoppingItem;
 import com.example.shoppinglist.ui.AdaptiveFormLayoutController;
 import com.example.shoppinglist.web.ProductSearchUrl;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputLayout;
 
 public class MainActivity extends AppCompatActivity {
     static final String EXTRA_LIST_ID = "listId";
+    private static final String SEARCH_PREFERENCES = "purchase_search";
+    private static final String SEARCH_REGION_KEY = "last_selected_region";
     ShoppingViewModel viewModel;
     ShoppingAdapter adapter;
     private Snackbar retry;
@@ -151,8 +154,40 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void searchInBrowser(ShoppingItem item) {
+        String[] regions = getResources().getStringArray(R.array.purchase_search_regions);
+        String previousRegion =
+                getSharedPreferences(SEARCH_PREFERENCES, MODE_PRIVATE)
+                        .getString(SEARCH_REGION_KEY, "");
+        int initialSelection = 0;
+        for (int index = 1; index < regions.length; index++) {
+            if (regions[index].equals(previousRegion)) {
+                initialSelection = index;
+                break;
+            }
+        }
+        final int[] selection = {initialSelection};
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(getString(R.string.search_region_title, item.name))
+                .setSingleChoiceItems(regions, initialSelection, (dialog, which) -> selection[0] = which)
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(
+                        R.string.search_purchase,
+                        (dialog, which) -> {
+                            String region = selection[0] == 0 ? "" : regions[selection[0]];
+                            getSharedPreferences(SEARCH_PREFERENCES, MODE_PRIVATE)
+                                    .edit()
+                                    .putString(SEARCH_REGION_KEY, region)
+                                    .apply();
+                            openPurchaseSearch(item.name, region);
+                        })
+                .show();
+    }
+
+    private void openPurchaseSearch(String itemName, String region) {
         Intent search =
-                new Intent(Intent.ACTION_VIEW, Uri.parse(ProductSearchUrl.forName(item.name)));
+                new Intent(
+                        Intent.ACTION_VIEW,
+                        Uri.parse(ProductSearchUrl.forPurchase(itemName, region)));
         try {
             startActivity(search);
         } catch (ActivityNotFoundException | SecurityException error) {
