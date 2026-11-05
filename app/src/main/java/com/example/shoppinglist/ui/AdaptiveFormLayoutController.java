@@ -41,16 +41,15 @@ public final class AdaptiveFormLayoutController {
     private void updateLayout() {
         float density = root.getResources().getDisplayMetrics().density;
         float fontScale = root.getResources().getConfiguration().fontScale;
-        int availableWidth =
-                root.getWidth() - root.getPaddingLeft() - root.getPaddingRight();
+        int availableWidth = root.getWidth() - root.getPaddingLeft() - root.getPaddingRight();
 
         updateActionOrientation(availableWidth, density, fontScale);
         updateFormScrollHeight(availableWidth);
     }
 
     private void updateActionOrientation(int availableWidth, float density, float fontScale) {
-        boolean stacked = FormLayoutMeasurements.shouldStackActions(
-                availableWidth, density, fontScale);
+        boolean stacked =
+                FormLayoutMeasurements.shouldStackActions(availableWidth, density, fontScale);
         int orientation = stacked ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL;
         if (actions.getOrientation() == orientation) {
             return;
@@ -64,12 +63,10 @@ public final class AdaptiveFormLayoutController {
                         stacked ? 0 : 1));
 
         int diameter = Math.round(ADD_BUTTON_SIZE_DP * density);
-        LinearLayout.LayoutParams buttonParams =
-                new LinearLayout.LayoutParams(diameter, diameter);
+        LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(diameter, diameter);
         buttonParams.setMarginStart(
                 stacked ? 0 : Math.round(HORIZONTAL_BUTTON_MARGIN_DP * density));
-        buttonParams.topMargin =
-                stacked ? Math.round(VERTICAL_BUTTON_MARGIN_DP * density) : 0;
+        buttonParams.topMargin = stacked ? Math.round(VERTICAL_BUTTON_MARGIN_DP * density) : 0;
         addButton.setLayoutParams(buttonParams);
     }
 
