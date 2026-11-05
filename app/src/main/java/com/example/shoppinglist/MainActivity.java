@@ -168,7 +168,8 @@ public class MainActivity extends AppCompatActivity {
         final int[] selection = {initialSelection};
         new MaterialAlertDialogBuilder(this)
                 .setTitle(getString(R.string.search_region_title, item.name))
-                .setSingleChoiceItems(regions, initialSelection, (dialog, which) -> selection[0] = which)
+                .setSingleChoiceItems(
+                        regions, initialSelection, (dialog, which) -> selection[0] = which)
                 .setNegativeButton(R.string.cancel, null)
                 .setPositiveButton(
                         R.string.search_purchase,
