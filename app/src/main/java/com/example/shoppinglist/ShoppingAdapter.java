@@ -21,6 +21,10 @@ final class ShoppingAdapter extends ListAdapter<ShoppingItem, ShoppingAdapter.Ho
         void delete(ShoppingItem item);
 
         void search(ShoppingItem item);
+
+        void editLink(ShoppingItem item);
+
+        void openLink(ShoppingItem item);
     }
 
     private final Actions actions;
@@ -47,7 +51,8 @@ final class ShoppingAdapter extends ListAdapter<ShoppingItem, ShoppingAdapter.Ho
                         @NonNull ShoppingItem a, @NonNull ShoppingItem b) {
                     return a.name.equals(b.name)
                             && a.quantity.equals(b.quantity)
-                            && a.purchased == b.purchased;
+                            && a.purchased == b.purchased
+                            && java.util.Objects.equals(a.url, b.url);
                 }
             };
 
@@ -100,6 +105,12 @@ final class ShoppingAdapter extends ListAdapter<ShoppingItem, ShoppingAdapter.Ho
         holder.search.setContentDescription(
                 holder.itemView.getContext().getString(R.string.search_item, item.name));
         holder.search.setOnClickListener(view -> actions.search(item));
+        holder.editLink.setVisibility(readOnly ? View.GONE : View.VISIBLE);
+        holder.editLink.setContentDescription(
+                holder.itemView.getContext().getString(R.string.edit_item_link, item.name));
+        holder.editLink.setOnClickListener(view -> actions.editLink(item));
+        holder.openLink.setVisibility(item.url == null ? View.GONE : View.VISIBLE);
+        holder.openLink.setOnClickListener(view -> actions.openLink(item));
         holder.name.setTextColor(
                 MaterialColors.getColor(
                         holder.name,
@@ -124,6 +135,8 @@ final class ShoppingAdapter extends ListAdapter<ShoppingItem, ShoppingAdapter.Ho
         final TextView quantity;
         final View delete;
         final View search;
+        final View editLink;
+        final View openLink;
 
         Holder(View view) {
             super(view);
@@ -131,6 +144,8 @@ final class ShoppingAdapter extends ListAdapter<ShoppingItem, ShoppingAdapter.Ho
             quantity = view.findViewById(R.id.item_quantity);
             delete = view.findViewById(R.id.delete_item);
             search = view.findViewById(R.id.search_item);
+            editLink = view.findViewById(R.id.edit_item_link);
+            openLink = view.findViewById(R.id.open_item_link);
         }
     }
 }
