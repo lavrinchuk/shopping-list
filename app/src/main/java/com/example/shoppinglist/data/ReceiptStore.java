@@ -27,7 +27,7 @@ public final class ReceiptStore {
             throw new SQLiteException("Only archived lists can have receipts");
         }
         if (!directory.isDirectory() && !directory.mkdirs()) {
-            throw new IllegalStateException("Cannot create receipt directory");
+            throw new SQLiteException("Cannot create receipt directory");
         }
         String name = UUID.randomUUID().toString() + ".img";
         File target = new File(directory, name);
@@ -63,7 +63,9 @@ public final class ReceiptStore {
             committed = true;
             deleteOld(old);
         } catch (IOException | SecurityException error) {
-            throw new IllegalStateException("Receipt import failed", error);
+            SQLiteException failure = new SQLiteException("Receipt import failed");
+            failure.initCause(error);
+            throw failure;
         } finally {
             if (!committed) {
                 target.delete();
