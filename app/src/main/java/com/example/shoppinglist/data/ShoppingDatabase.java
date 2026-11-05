@@ -291,12 +291,17 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
             } else {
                 values.put("url", normalized);
             }
-            int changed =
-                    db.update(
-                            "items",
-                            values,
-                            "listId = ? AND id = ? AND NOT (url IS ?)",
-                            new String[] {String.valueOf(listId), String.valueOf(id), normalized});
+            String where =
+                    normalized == null
+                            ? "listId = ? AND id = ? AND url IS NOT NULL"
+                            : "listId = ? AND id = ? AND (url IS NULL OR url != ?)";
+            String[] args =
+                    normalized == null
+                            ? new String[] {String.valueOf(listId), String.valueOf(id)}
+                            : new String[] {
+                                String.valueOf(listId), String.valueOf(id), normalized
+                            };
+            int changed = db.update("items", values, where, args);
             if (changed > 0) {
                 touch(db, list);
             }
