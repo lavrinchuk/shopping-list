@@ -3,9 +3,9 @@ package com.example.shoppinglist;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
-import android.text.InputType;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextWatcher;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -30,8 +30,8 @@ import com.example.shoppinglist.ui.AdaptiveFormLayoutController;
 import com.example.shoppinglist.web.ProductSearchUrl;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
-import com.google.android.material.textfield.TextInputLayout;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 
 public class MainActivity extends AppCompatActivity {
     static final String EXTRA_LIST_ID = "listId";
@@ -190,20 +190,7 @@ public class MainActivity extends AppCompatActivity {
         dialog.setOnShowListener(
                 ignored -> {
                     dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
-                            .setOnClickListener(
-                                    button -> {
-                                        try {
-                                            String url =
-                                                    ItemLink.normalize(
-                                                            input.getText() == null
-                                                                    ? ""
-                                                                    : input.getText().toString());
-                                            viewModel.updateItemUrl(item, url);
-                                            dialog.dismiss();
-                                        } catch (IllegalArgumentException error) {
-                                            field.setError(getString(R.string.item_link_invalid));
-                                        }
-                                    });
+                            .setOnClickListener(button -> saveItemLink(item, input, field, dialog));
                     dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEUTRAL)
                             .setOnClickListener(
                                     button -> {
@@ -212,6 +199,20 @@ public class MainActivity extends AppCompatActivity {
                                     });
                 });
         dialog.show();
+    }
+
+    private void saveItemLink(
+            ShoppingItem item,
+            TextInputEditText input,
+            TextInputLayout field,
+            androidx.appcompat.app.AlertDialog dialog) {
+        try {
+            String url = ItemLink.normalize(input.getText() == null ? "" : input.getText().toString());
+            viewModel.updateItemUrl(item, url);
+            dialog.dismiss();
+        } catch (IllegalArgumentException error) {
+            field.setError(getString(R.string.item_link_invalid));
+        }
     }
 
     private void openItemLink(ShoppingItem item) {
