@@ -229,6 +229,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void renderCurrentList() {
+        com.google.android.material.appbar.MaterialToolbar toolbar = findViewById(R.id.heading);
                     if (viewModel.list != null) {
                         toolbar.setTitle(viewModel.list.name);
                         boolean readOnly = viewModel.list.archivedAt != null;
