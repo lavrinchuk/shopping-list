@@ -375,7 +375,7 @@ public class ShoppingDatabaseTest {
         assertEquals("Молоко", item.name);
         assertEquals("2 л", item.quantity);
         assertNull(item.url);
-        assertEquals(4, db.getReadableDatabase().getVersion());
+        assertEquals(5, db.getReadableDatabase().getVersion());
     }
 
     @Test
@@ -389,7 +389,7 @@ public class ShoppingDatabaseTest {
         long itemId = db.getItems(list.id).get(0).id;
         db.setItemUrl(list.id, itemId, "https://example.com/bread");
         assertEquals("https://example.com/bread", db.getItems(list.id).get(0).url);
-        assertEquals(4, db.getReadableDatabase().getVersion());
+        assertEquals(5, db.getReadableDatabase().getVersion());
     }
 
     @Test
@@ -439,7 +439,49 @@ public class ShoppingDatabaseTest {
         assertEquals(33L, item.id);
         assertEquals("https://example.com/coffee", item.url);
         assertTrue(item.purchased);
-        assertEquals(4, db.getReadableDatabase().getVersion());
+        assertEquals(5, db.getReadableDatabase().getVersion());
+    }
+
+    @Test
+    public void receiptCanBeAttachedOnlyToArchivedListAndSurvivesRestore() {
+        long id = db.createList("Продукти");
+        assertRejected(() -> db.setReceipt(id, "test-receipt.img"));
+        db.add(id, "Молоко", "1");
+        db.archive(id, true);
+        assertNull(db.getList(id).receiptFile);
+        assertNull(db.setReceipt(id, "first.img"));
+        assertEquals("first.img", db.getList(id).receiptFile);
+        assertEquals("first.img", db.setReceipt(id, "second.img"));
+        db.close();
+        db = new ShoppingDatabase(context, file);
+        assertEquals("second.img", db.getList(id).receiptFile);
+        assertEquals("second.img", db.setReceipt(id, null));
+        assertNull(db.getList(id).receiptFile);
+        db.restore(id);
+        assertRejected(() -> db.setReceipt(id, "third.img"));
+        assertNull(db.getList(id).receiptFile);
+    }
+
+    @Test
+    public void upgradeFromVersionFourAddsEmptyReceiptWithoutChangingListsOrLinks() {
+        db.close();
+        try (SQLiteDatabase old = context.openOrCreateDatabase(file, 0, null)) {
+            old.execSQL(
+                    "CREATE TABLE shopping_lists (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL, archivedAt INTEGER, type TEXT NOT NULL DEFAULT 'shopping')");
+            old.execSQL(
+                    "CREATE TABLE items (id INTEGER PRIMARY KEY AUTOINCREMENT, listId INTEGER NOT NULL REFERENCES shopping_lists(id), name TEXT NOT NULL, quantity TEXT NOT NULL, purchased INTEGER NOT NULL, url TEXT)");
+            old.execSQL(
+                    "INSERT INTO shopping_lists VALUES (21, 'Завершений', 100, 120, 120, 'shopping')");
+            old.execSQL(
+                    "INSERT INTO items VALUES (72, 21, 'Кава', '1', 1, 'https://example.com/coffee')");
+            old.setVersion(4);
+        }
+        db = new ShoppingDatabase(context, file);
+        assertNull(db.getList(21).receiptFile);
+        assertEquals(Long.valueOf(120L), db.getList(21).archivedAt);
+        assertEquals("https://example.com/coffee", db.getItems(21).get(0).url);
+        assertEquals(72L, db.getItems(21).get(0).id);
+        assertEquals(5, db.getReadableDatabase().getVersion());
     }
 
     private void assertRejected(Runnable action) {
