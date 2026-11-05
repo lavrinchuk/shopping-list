@@ -187,17 +187,15 @@ public class MainActivity extends AppCompatActivity {
                         .setNeutralButton(R.string.remove_item_link, null)
                         .setPositiveButton(R.string.save, null)
                         .create();
-        dialog.setOnShowListener(
-                ignored -> {
-                    dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
-                            .setOnClickListener(button -> saveItemLink(item, input, field, dialog));
-                    dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEUTRAL)
-                            .setOnClickListener(
-                                    button -> {
-                                        viewModel.updateItemUrl(item, null);
-                                        dialog.dismiss();
-                                    });
-                });
+        dialog.setOnShowListener(ignored -> {
+            dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
+                    .setOnClickListener(button -> saveItemLink(item, input, field, dialog));
+            dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEUTRAL)
+                    .setOnClickListener(button -> {
+                        viewModel.updateItemUrl(item, null);
+                        dialog.dismiss();
+                    });
+        });
         dialog.show();
     }
 
@@ -207,7 +205,8 @@ public class MainActivity extends AppCompatActivity {
             TextInputLayout field,
             androidx.appcompat.app.AlertDialog dialog) {
         try {
-            String url = ItemLink.normalize(input.getText() == null ? "" : input.getText().toString());
+            String url =
+                    ItemLink.normalize(input.getText() == null ? "" : input.getText().toString());
             viewModel.updateItemUrl(item, url);
             dialog.dismiss();
         } catch (IllegalArgumentException error) {
