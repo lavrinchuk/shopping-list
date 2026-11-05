@@ -375,7 +375,7 @@ public class ShoppingDatabaseTest {
         assertEquals("Молоко", item.name);
         assertEquals("2 л", item.quantity);
         assertNull(item.url);
-        assertEquals(3, db.getReadableDatabase().getVersion());
+        assertEquals(4, db.getReadableDatabase().getVersion());
     }
 
     @Test
@@ -389,7 +389,57 @@ public class ShoppingDatabaseTest {
         long itemId = db.getItems(list.id).get(0).id;
         db.setItemUrl(list.id, itemId, "https://example.com/bread");
         assertEquals("https://example.com/bread", db.getItems(list.id).get(0).url);
-        assertEquals(3, db.getReadableDatabase().getVersion());
+        assertEquals(4, db.getReadableDatabase().getVersion());
+    }
+
+    @Test
+    public void wishListsKeepTypeAndArchiveWithoutPurchasingAllItems() {
+        long shopping = db.createList("Звичайні покупки");
+        long wishes = db.createList("Подарунки", ShoppingList.TYPE_WISH);
+        assertEquals(ShoppingList.TYPE_SHOPPING, db.getList(shopping).type);
+        assertTrue(db.getList(wishes).isWish());
+        db.add(wishes, "Велосипед", "1");
+        db.add(wishes, "Книга", "");
+        long firstId = db.getItems(wishes).get(0).id;
+        db.setPurchased(wishes, firstId, true);
+        db.archive(wishes, false);
+        assertNotNull(db.getList(wishes).archivedAt);
+        assertEquals(1, db.getList(wishes).purchased);
+        assertRejected(() -> db.rename(wishes, "Нова назва"));
+        db.close();
+        db = new ShoppingDatabase(context, file);
+        assertTrue(db.getList(wishes).isWish());
+        assertEquals(2, db.getList(wishes).total);
+        db.restore(wishes);
+        assertTrue(db.getList(wishes).isWish());
+        assertNull(db.getList(wishes).archivedAt);
+        db.rename(wishes, "Оновлені бажання");
+        assertEquals("Оновлені бажання", db.getList(wishes).name);
+        assertEquals(ShoppingList.TYPE_WISH, db.getList(wishes).type);
+    }
+
+    @Test
+    public void upgradeFromVersionThreePreservesListsItemsAndLinks() {
+        db.close();
+        try (SQLiteDatabase old = context.openOrCreateDatabase(file, 0, null)) {
+            old.execSQL(
+                    "CREATE TABLE shopping_lists (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL, archivedAt INTEGER)");
+            old.execSQL(
+                    "CREATE TABLE items (id INTEGER PRIMARY KEY AUTOINCREMENT, listId INTEGER NOT NULL REFERENCES shopping_lists(id), name TEXT NOT NULL, quantity TEXT NOT NULL, purchased INTEGER NOT NULL, url TEXT)");
+            old.execSQL("INSERT INTO shopping_lists VALUES (15, 'Старий список', 100, 150, 150)");
+            old.execSQL(
+                    "INSERT INTO items VALUES (33, 15, 'Кава', '1 пачка', 1, 'https://example.com/coffee')");
+            old.setVersion(3);
+        }
+        db = new ShoppingDatabase(context, file);
+        ShoppingList list = db.getList(15);
+        assertEquals(ShoppingList.TYPE_SHOPPING, list.type);
+        assertEquals(Long.valueOf(150), list.archivedAt);
+        ShoppingItem item = db.getItems(15).get(0);
+        assertEquals(33L, item.id);
+        assertEquals("https://example.com/coffee", item.url);
+        assertTrue(item.purchased);
+        assertEquals(4, db.getReadableDatabase().getVersion());
     }
 
     private void assertRejected(Runnable action) {
