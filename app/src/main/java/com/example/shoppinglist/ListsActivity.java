@@ -292,7 +292,8 @@ public class ListsActivity extends AppCompatActivity {
                     });
             LinearLayout.LayoutParams typeParams =
                     new LinearLayout.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.WRAP_CONTENT);
             typeParams.setMargins(pad, 0, pad, pad / 2);
             form.addView(typeInput, typeParams);
         }
