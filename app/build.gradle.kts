@@ -1,6 +1,10 @@
 import com.github.spotbugs.snom.SpotBugsTask
 import com.google.firebase.appdistribution.gradle.firebaseAppDistribution
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition
+import java.net.URI
+import java.nio.file.FileSystems
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.jvm.tasks.Jar
 
@@ -110,14 +114,30 @@ val spotbugsRuntimeClasspath = providers.provider {
 // The Android SDK doesn't contain java.rmi.Remote. SpotBugs may encounter
 // references to this JDK marker interface in dependency bytecode. Supply the
 // *real* class from the CI JDK's java.rmi module for analysis only.
+// A JDK runtime does not necessarily include a jmods/ directory. The jrt: /modules
+// filesystem works for full JDKs and modular runtime images without .jmod files.
+val spotbugsRmiClassesDir = layout.buildDirectory.dir("intermediates/spotbugs/rmi-classes")
+val extractSpotbugsRmi = tasks.register("extractSpotbugsRmi") {
+    group = "verification"
+    description = "Extract the real java.rmi.Remote class from the running JDK image."
+    outputs.dir(spotbugsRmiClassesDir)
+    doLast {
+        val filesystem = FileSystems.getFileSystem(URI.create("jrt:/"))
+        val source = filesystem.getPath("/modules/java.rmi/java/rmi/Remote.class")
+        check(Files.isRegularFile(source)) {
+            "The current JVM does not contain java.rmi.Remote; check the CI JDK image"
+        }
+        val target = spotbugsRmiClassesDir.get()
+            .file("java/rmi/Remote.class").asFile.toPath()
+        Files.createDirectories(target.parent)
+        Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING)
+    }
+}
 val spotbugsRmiJar = tasks.register<Jar>("spotbugsRmiJar") {
     group = "verification"
-    description = "Extract java.rmi.Remote from the JDK for SpotBugs analysis only."
-    from(zipTree(file("${System.getProperty("java.home")}/jmods/java.rmi.jmod"))) {
-        include("classes/java/rmi/Remote.class")
-        eachFile { path = path.removePrefix("classes/") }
-        includeEmptyDirs = false
-    }
+    description = "Package java.rmi.Remote for SpotBugs auxiliary classpath only."
+    dependsOn(extractSpotbugsRmi)
+    from(spotbugsRmiClassesDir)
     archiveFileName.set("spotbugs-java-rmi.jar")
     destinationDirectory.set(layout.buildDirectory.dir("intermediates/spotbugs"))
 }
