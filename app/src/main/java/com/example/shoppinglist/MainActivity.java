@@ -211,9 +211,9 @@ public class MainActivity extends AppCompatActivity {
                         .setView(image)
                         .setPositiveButton(R.string.back, null)
                         .setNeutralButton(
-                                R.string.receipt_replace, (dialog, which) -> openReceiptPicker())
+                                R.string.receipt_replace, (ignored, which) -> openReceiptPicker())
                         .setNegativeButton(
-                                R.string.receipt_remove, (dialog, which) -> confirmReceiptRemoval())
+                                R.string.receipt_remove, (ignored, which) -> confirmReceiptRemoval())
                         .create();
         dialog.show();
         viewModel.previewReceipt(bitmap -> displayReceiptPreview(dialog, image, bitmap));
