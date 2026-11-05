@@ -6,7 +6,6 @@ import android.text.TextWatcher;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
@@ -14,7 +13,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-import androidx.core.widget.NestedScrollView;
 import androidx.lifecycle.AbstractSavedStateViewModelFactory;
 import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
@@ -23,6 +21,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.shoppinglist.data.ShoppingRepository;
 import com.example.shoppinglist.model.ShoppingItem;
+import com.example.shoppinglist.ui.AdaptiveFormLayoutController;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputLayout;
 
@@ -146,7 +145,7 @@ public class MainActivity extends AppCompatActivity {
         EditText name = findViewById(R.id.name);
         EditText quantity = findViewById(R.id.quantity);
         TextInputLayout nameLayout = findViewById(R.id.name_layout);
-        configureForm();
+        new AdaptiveFormLayoutController(findViewById(R.id.main)).attach();
         // Restore the draft from the retained viewModel, not stale framework View state.
         name.setSaveEnabled(false);
         quantity.setSaveEnabled(false);
@@ -277,54 +276,6 @@ public class MainActivity extends AppCompatActivity {
             retry.dismiss();
             retry = null;
         }
-    }
-
-    /** Keep the form compact, but leave scrollable space for both inputs and the list. */
-    private void configureForm() {
-        View root = findViewById(R.id.main);
-        LinearLayout actions = findViewById(R.id.form_actions);
-        View quantity = findViewById(R.id.quantity_layout);
-        View add = findViewById(R.id.add);
-        NestedScrollView scroll = findViewById(R.id.form_scroll);
-        root.addOnLayoutChangeListener(
-                (view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
-                    float density = getResources().getDisplayMetrics().density;
-                    float fontScale = getResources().getConfiguration().fontScale;
-                    int width = root.getWidth() - root.getPaddingLeft() - root.getPaddingRight();
-                    boolean stacked = width / density < 32 + 312 * Math.max(1f, fontScale);
-                    int orientation = stacked ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL;
-                    if (actions.getOrientation() != orientation) {
-                        actions.setOrientation(orientation);
-                        quantity.setLayoutParams(
-                                new LinearLayout.LayoutParams(
-                                        stacked ? -1 : 0, -2, stacked ? 0 : 1));
-                        int diameter = Math.round(56 * density);
-                        LinearLayout.LayoutParams button =
-                                new LinearLayout.LayoutParams(diameter, diameter);
-                        button.setMarginStart(stacked ? 0 : Math.round(12 * density));
-                        button.topMargin = stacked ? Math.round(8 * density) : 0;
-                        add.setLayoutParams(button);
-                    }
-                    int available =
-                            root.getHeight()
-                                    - root.getPaddingTop()
-                                    - root.getPaddingBottom()
-                                    - findViewById(R.id.heading).getHeight();
-                    View content = scroll.getChildAt(0);
-                    content.measure(
-                            View.MeasureSpec.makeMeasureSpec(
-                                    Math.max(0, width), View.MeasureSpec.EXACTLY),
-                            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-                    int height =
-                            Math.min(
-                                    content.getMeasuredHeight(),
-                                    Math.max(0, Math.round(available * 0.60f)));
-                    if (scroll.getLayoutParams().height != height) {
-                        android.view.ViewGroup.LayoutParams params = scroll.getLayoutParams();
-                        params.height = height;
-                        scroll.setLayoutParams(params);
-                    }
-                });
     }
 
     private void dispatchShare() {
