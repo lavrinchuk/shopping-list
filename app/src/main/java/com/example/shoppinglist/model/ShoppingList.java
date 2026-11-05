@@ -14,6 +14,7 @@ public final class ShoppingList {
     public boolean isWish() {
         return TYPE_WISH.equals(type);
     }
+
     public final long id;
     public final String name;
     public final String type;
