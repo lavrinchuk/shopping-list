@@ -1,4 +1,4 @@
-package com.example.shoppinglist;
+package com.example.shoppinglist.data;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -6,17 +6,19 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
+import com.example.shoppinglist.model.ShoppingItem;
+import com.example.shoppinglist.model.ShoppingList;
 import java.util.ArrayList;
 import java.util.List;
 
-class ShoppingDatabase extends SQLiteOpenHelper {
-    static final class IncompleteListException extends SQLiteException {}
+public class ShoppingDatabase extends SQLiteOpenHelper {
+    public static final class IncompleteListException extends SQLiteException {}
 
-    ShoppingDatabase(Context context) {
+    public ShoppingDatabase(Context context) {
         this(context, "shopping.db");
     }
 
-    ShoppingDatabase(Context context, String name) {
+    public ShoppingDatabase(Context context, String name) {
         super(context, name, null, 2);
     }
 
@@ -86,19 +88,19 @@ class ShoppingDatabase extends SQLiteOpenHelper {
         return db.insertOrThrow("shopping_lists", null, values);
     }
 
-    long createList(String name) {
+    public long createList(String name) {
         return insertList(
                 getWritableDatabase(), ShoppingList.cleanName(name), System.currentTimeMillis());
     }
 
-    List<ShoppingList> getLists(boolean archived) {
+    public List<ShoppingList> getLists(boolean archived) {
         return queryLists(
                 "l.archivedAt IS " + (archived ? "NOT NULL" : "NULL"),
                 null,
                 archived ? "l.archivedAt DESC, l.id DESC" : "l.updatedAt DESC, l.id DESC");
     }
 
-    ShoppingList getList(long id) {
+    public ShoppingList getList(long id) {
         List<ShoppingList> lists =
                 queryLists("l.id = ?", new String[] {String.valueOf(id)}, "l.id");
         if (lists.isEmpty()) {
@@ -150,7 +152,7 @@ class ShoppingDatabase extends SQLiteOpenHelper {
         db.update("shopping_lists", values, "id = ?", new String[] {String.valueOf(list.id)});
     }
 
-    void rename(long id, String name) {
+    public void rename(long id, String name) {
         String clean = ShoppingList.cleanName(name);
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
@@ -168,7 +170,7 @@ class ShoppingDatabase extends SQLiteOpenHelper {
         }
     }
 
-    void archive(long id, boolean confirmed) {
+    public void archive(long id, boolean confirmed) {
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
         try {
@@ -187,7 +189,7 @@ class ShoppingDatabase extends SQLiteOpenHelper {
         }
     }
 
-    void restore(long id) {
+    public void restore(long id) {
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
         try {
@@ -204,7 +206,7 @@ class ShoppingDatabase extends SQLiteOpenHelper {
         }
     }
 
-    void add(long listId, String name, String quantity) {
+    public void add(long listId, String name, String quantity) {
         ShoppingItem item = new ShoppingItem(0, listId, name, quantity, false);
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
@@ -222,7 +224,7 @@ class ShoppingDatabase extends SQLiteOpenHelper {
         }
     }
 
-    void setPurchased(long listId, long id, boolean purchased) {
+    public void setPurchased(long listId, long id, boolean purchased) {
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
         try {
@@ -246,7 +248,7 @@ class ShoppingDatabase extends SQLiteOpenHelper {
         }
     }
 
-    void delete(long listId, long id) {
+    public void delete(long listId, long id) {
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
         try {
@@ -264,7 +266,7 @@ class ShoppingDatabase extends SQLiteOpenHelper {
         }
     }
 
-    List<ShoppingItem> getItems(long listId) {
+    public List<ShoppingItem> getItems(long listId) {
         List<ShoppingItem> items = new ArrayList<>();
         try (Cursor c =
                 getReadableDatabase()

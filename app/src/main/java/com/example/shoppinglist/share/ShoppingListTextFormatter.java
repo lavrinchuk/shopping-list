@@ -1,12 +1,13 @@
-package com.example.shoppinglist;
+package com.example.shoppinglist.share;
 
+import com.example.shoppinglist.model.ShoppingItem;
 import java.util.List;
 
 /** Read-only text export; preserves display order within each purchase status. */
-final class ShoppingListTextFormatter {
+public final class ShoppingListTextFormatter {
     private ShoppingListTextFormatter() {}
 
-    static String format(String title, List<ShoppingItem> items) {
+    public static String format(String title, List<ShoppingItem> items) {
         StringBuilder text = new StringBuilder(title).append("\n\n");
         if (items.isEmpty()) {
             return text.append("Список порожній").toString();
