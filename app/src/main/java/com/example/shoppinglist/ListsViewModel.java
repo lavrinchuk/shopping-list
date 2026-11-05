@@ -1,5 +1,9 @@
 package com.example.shoppinglist;
 
+import com.example.shoppinglist.data.ShoppingRepository;
+import com.example.shoppinglist.model.ShoppingItem;
+import com.example.shoppinglist.model.ShoppingList;
+
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
@@ -27,8 +31,8 @@ final class ListsViewModel extends ViewModel {
 
     void reload() {
         loading = true;
-        publish();
-        repository.lists(archived, result(false));
+        notifyStateChanged();
+        repository.lists(archived, createRepositoryCallback(false));
     }
 
     void saveName(long id, String name) {
@@ -37,11 +41,11 @@ final class ListsViewModel extends ViewModel {
         }
         String clean = ShoppingList.cleanName(name);
         busy = true;
-        publish();
+        notifyStateChanged();
         if (id == 0) {
-            repository.create(clean, result(true));
+            repository.create(clean, createRepositoryCallback(true));
         } else {
-            repository.rename(id, clean, result(true));
+            repository.rename(id, clean, createRepositoryCallback(true));
         }
     }
 
@@ -51,7 +55,7 @@ final class ListsViewModel extends ViewModel {
         }
         if (list.total > list.purchased) {
             confirmation = list.id;
-            publish();
+            notifyStateChanged();
         } else {
             archive(list.id, false);
         }
@@ -63,12 +67,12 @@ final class ListsViewModel extends ViewModel {
         }
         confirmation = null;
         busy = true;
-        publish();
+        notifyStateChanged();
         repository.archive(
                 id,
                 confirmed,
                 new ShoppingRepository.Result() {
-                    final ShoppingRepository.Result delegate = result(false);
+                    final ShoppingRepository.Result delegate = createRepositoryCallback(false);
 
                     @Override
                     public void written() {
@@ -95,7 +99,7 @@ final class ListsViewModel extends ViewModel {
                         }
                         busy = false;
                         confirmation = id;
-                        publish();
+                        notifyStateChanged();
                     }
                 });
     }
@@ -105,11 +109,11 @@ final class ListsViewModel extends ViewModel {
             return;
         }
         busy = true;
-        publish();
-        repository.restore(id, result(false));
+        notifyStateChanged();
+        repository.restore(id, createRepositoryCallback(false));
     }
 
-    private ShoppingRepository.Result result(boolean naming) {
+    private ShoppingRepository.Result createRepositoryCallback(boolean naming) {
         return new ShoppingRepository.Result() {
             @Override
             public void written() {
@@ -120,7 +124,7 @@ final class ListsViewModel extends ViewModel {
                 if (naming) {
                     saved.set("editing", false);
                 }
-                publish();
+                notifyStateChanged();
             }
 
             @Override
@@ -134,7 +138,7 @@ final class ListsViewModel extends ViewModel {
                 lists = updated;
                 loading = false;
                 readFailed = false;
-                publish();
+                notifyStateChanged();
             }
 
             @Override
@@ -148,12 +152,12 @@ final class ListsViewModel extends ViewModel {
                     readFailed = true;
                 }
                 error = reading ? R.string.read_error : R.string.write_error;
-                publish();
+                notifyStateChanged();
             }
         };
     }
 
-    void publish() {
+    void notifyStateChanged() {
         Integer current = changes.getValue();
         changes.setValue(current == null ? 1 : current + 1);
     }

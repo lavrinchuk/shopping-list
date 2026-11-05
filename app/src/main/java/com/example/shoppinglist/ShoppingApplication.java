@@ -1,5 +1,8 @@
 package com.example.shoppinglist;
 
+import com.example.shoppinglist.data.ShoppingRepository;
+import com.example.shoppinglist.data.ShoppingDatabase;
+
 import android.app.Application;
 
 public class ShoppingApplication extends Application {

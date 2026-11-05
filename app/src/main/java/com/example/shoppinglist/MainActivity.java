@@ -1,5 +1,9 @@
 package com.example.shoppinglist;
 
+import com.example.shoppinglist.data.ShoppingRepository;
+import com.example.shoppinglist.viewModel.ShoppingItem;
+import com.example.shoppinglist.viewModel.ShoppingList;
+
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -25,7 +29,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputLayout;
 
 public class MainActivity extends AppCompatActivity {
-    ShoppingViewModel model;
+    ShoppingViewModel viewModel;
     ShoppingAdapter adapter;
     private Snackbar retry;
     private boolean rendering;
@@ -68,11 +72,11 @@ public class MainActivity extends AppCompatActivity {
             if (item.getItemId() != R.id.share_list) {
                 return false;
             }
-            model.share();
+            viewModel.share();
             return true;
         });
         ShoppingRepository repository = ((ShoppingApplication) getApplication()).repository();
-        model =
+        viewModel =
                 new ViewModelProvider(
                                 this,
                                 new AbstractSavedStateViewModelFactory(this, savedInstanceState) {
@@ -100,12 +104,12 @@ public class MainActivity extends AppCompatActivity {
                         new ShoppingAdapter.Actions() {
                             @Override
                             public void purchased(ShoppingItem item, boolean checked) {
-                                model.purchased(item, checked);
+                                viewModel.purchased(item, checked);
                             }
 
                             @Override
                             public void delete(ShoppingItem item) {
-                                model.delete(item);
+                                viewModel.delete(item);
                             }
                         });
         RecyclerView list = findViewById(R.id.items);
@@ -115,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
         EditText quantity = findViewById(R.id.quantity);
         TextInputLayout nameLayout = findViewById(R.id.name_layout);
         configureForm();
-        // Restore the draft from the retained model, not stale framework View state.
+        // Restore the draft from the retained viewModel, not stale framework View state.
         name.setSaveEnabled(false);
         quantity.setSaveEnabled(false);
         TextWatcher watcher =
@@ -127,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onTextChanged(CharSequence s, int start, int before, int count) {
                         if (!rendering) {
-                            model.draft(name.getText().toString(), quantity.getText().toString());
+                            viewModel.draft(name.getText().toString(), quantity.getText().toString());
                             if (!name.getText().toString().trim().isEmpty()) {
                                 nameLayout.setError(null);
                             }
@@ -142,7 +146,7 @@ public class MainActivity extends AppCompatActivity {
         View add = findViewById(R.id.add);
         add.setOnClickListener(view -> {
             try {
-                model.add();
+                viewModel.add();
             } catch (IllegalArgumentException error) {
                 nameLayout.setError(getString(R.string.name_required));
                 name.requestFocus();
@@ -157,40 +161,40 @@ public class MainActivity extends AppCompatActivity {
             }
             return true;
         });
-        model.changes.observe(
+        viewModel.changes.observe(
                 this,
                 ignored -> {
                     rendering = true;
-                    if (!name.getText().toString().equals(model.name)) {
-                        boolean cleared = model.name.isEmpty() && !model.adding;
-                        name.setText(model.name);
+                    if (!name.getText().toString().equals(viewModel.name)) {
+                        boolean cleared = viewModel.name.isEmpty() && !viewModel.adding;
+                        name.setText(viewModel.name);
                         if (cleared) {
                             name.requestFocus();
                         }
                     }
-                    if (!quantity.getText().toString().equals(model.quantity)) {
-                        quantity.setText(model.quantity);
+                    if (!quantity.getText().toString().equals(viewModel.quantity)) {
+                        quantity.setText(viewModel.quantity);
                     }
                     rendering = false;
-                    add.setEnabled(!model.adding);
-                    if (model.list != null) {
-                        toolbar.setTitle(model.list.name);
-                        boolean readOnly = model.list.archivedAt != null;
+                    add.setEnabled(!viewModel.adding);
+                    if (viewModel.list != null) {
+                        toolbar.setTitle(viewModel.list.name);
+                        boolean readOnly = viewModel.list.archivedAt != null;
                         toolbar.setSubtitle(readOnly ? getString(R.string.archive) : null);
                         findViewById(R.id.form_scroll)
                                 .setVisibility(readOnly ? View.GONE : View.VISIBLE);
                         adapter.setReadOnly(readOnly);
                     }
-                    toolbar.getMenu().findItem(R.id.share_list).setEnabled(!model.sharing);
+                    toolbar.getMenu().findItem(R.id.share_list).setEnabled(!viewModel.sharing);
                     dispatchShare();
-                    adapter.submitList(model.items);
+                    adapter.submitList(viewModel.items);
                     findViewById(R.id.empty)
                             .setVisibility(
-                                    model.items.isEmpty() && !model.readFailed
+                                    viewModel.items.isEmpty() && !viewModel.readFailed
                                             ? View.VISIBLE
                                             : View.GONE);
-                    int error = model.error;
-                    model.consumeError();
+                    int error = viewModel.error;
+                    viewModel.consumeError();
                     if (error == R.string.share_error) {
                         Toast.makeText(this, error, Toast.LENGTH_LONG).show();
                     }
@@ -198,17 +202,17 @@ public class MainActivity extends AppCompatActivity {
                         adapter.restoreChecks();
                         Toast.makeText(this, error, Toast.LENGTH_LONG).show();
                     }
-                    if (model.readFailed && retry == null) {
+                    if (viewModel.readFailed && retry == null) {
                         retry =
                                 Snackbar.make(list, R.string.read_error, Snackbar.LENGTH_INDEFINITE)
                                         .setAction(
                                                 R.string.retry,
                                                 view -> {
                                                     retry = null;
-                                                    model.reload();
+                                                    viewModel.reload();
                                                 });
                         retry.show();
-                    } else if (!model.readFailed && retry != null) {
+                    } else if (!viewModel.readFailed && retry != null) {
                         retry.dismiss();
                         retry = null;
                     }
@@ -269,7 +273,7 @@ public class MainActivity extends AppCompatActivity {
                 .isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
             return;
         }
-        String text = model.consumeShareText();
+        String text = viewModel.consumeShareText();
         if (text == null) {
             return;
         }
@@ -288,8 +292,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (model != null) {
-            model.reload();
+        if (viewModel != null) {
+            viewModel.reload();
         }
     }
 
