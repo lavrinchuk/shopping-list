@@ -1,5 +1,8 @@
 package com.example.shoppinglist;
 
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -22,6 +25,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.shoppinglist.data.ShoppingRepository;
 import com.example.shoppinglist.model.ShoppingItem;
 import com.example.shoppinglist.ui.AdaptiveFormLayoutController;
+import com.example.shoppinglist.web.ProductSearchUrl;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputLayout;
 
@@ -135,10 +139,24 @@ public class MainActivity extends AppCompatActivity {
                             public void delete(ShoppingItem item) {
                                 viewModel.delete(item);
                             }
+
+                            @Override
+                            public void search(ShoppingItem item) {
+                                searchInBrowser(item);
+                            }
                         });
         RecyclerView list = findViewById(R.id.items);
         list.setLayoutManager(new LinearLayoutManager(this));
         list.setAdapter(adapter);
+    }
+
+    private void searchInBrowser(ShoppingItem item) {
+        Intent search = new Intent(Intent.ACTION_VIEW, Uri.parse(ProductSearchUrl.forName(item.name)));
+        try {
+            startActivity(search);
+        } catch (ActivityNotFoundException | SecurityException error) {
+            Toast.makeText(this, R.string.search_unavailable, Toast.LENGTH_LONG).show();
+        }
     }
 
     private void configureItemForm() {
