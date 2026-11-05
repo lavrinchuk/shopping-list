@@ -1,9 +1,5 @@
 package com.example.shoppinglist;
 
-import com.example.shoppinglist.data.ShoppingDatabase;
-import com.example.shoppinglist.model.ShoppingItem;
-import com.example.shoppinglist.model.ShoppingList;
-
 import static org.junit.Assert.*;
 
 import android.content.Context;
@@ -12,6 +8,9 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
+import com.example.shoppinglist.data.ShoppingDatabase;
+import com.example.shoppinglist.model.ShoppingItem;
+import com.example.shoppinglist.model.ShoppingList;
 import java.util.List;
 import org.junit.After;
 import org.junit.Before;

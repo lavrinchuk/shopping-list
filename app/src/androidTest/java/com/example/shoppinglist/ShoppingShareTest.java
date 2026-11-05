@@ -1,9 +1,5 @@
 package com.example.shoppinglist;
 
-import com.example.shoppinglist.data.ShoppingRepository;
-import com.example.shoppinglist.model.ShoppingItem;
-import com.example.shoppinglist.model.ShoppingList;
-
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
@@ -18,6 +14,9 @@ import androidx.test.espresso.IdlingRegistry;
 import androidx.test.espresso.IdlingResource;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
+import com.example.shoppinglist.data.ShoppingRepository;
+import com.example.shoppinglist.model.ShoppingItem;
+import com.example.shoppinglist.model.ShoppingList;
 import com.google.android.material.appbar.MaterialToolbar;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
