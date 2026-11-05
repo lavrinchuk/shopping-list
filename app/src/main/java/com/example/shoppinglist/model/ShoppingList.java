@@ -1,15 +1,15 @@
-package com.example.shoppinglist;
+package com.example.shoppinglist.model;
 
-final class ShoppingList {
-    final long id;
-    final String name;
-    final long createdAt;
-    final long updatedAt;
-    final Long archivedAt;
-    final int total;
-    final int purchased;
+public final class ShoppingList {
+    public final long id;
+    public final String name;
+    public final long createdAt;
+    public final long updatedAt;
+    public final Long archivedAt;
+    public final int total;
+    public final int purchased;
 
-    ShoppingList(
+    public ShoppingList(
             long id,
             String name,
             long createdAt,
@@ -26,7 +26,7 @@ final class ShoppingList {
         this.purchased = purchased;
     }
 
-    static String cleanName(String name) {
+    public static String cleanName(String name) {
         if (name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("List name is required");
         }

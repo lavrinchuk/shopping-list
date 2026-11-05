@@ -1,19 +1,21 @@
-package com.example.shoppinglist;
+package com.example.shoppinglist.data;
 
 import android.database.sqlite.SQLiteException;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import com.example.shoppinglist.model.ShoppingItem;
+import com.example.shoppinglist.model.ShoppingList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /** One application-owned queue orders writes and their subsequent reads, across Activities. */
-class ShoppingRepository {
-    interface Result {
+public class ShoppingRepository {
+    public interface Result {
         void written();
 
-        void loaded(List<ShoppingItem> items);
+        public void loaded(List<ShoppingItem> items);
 
         void failed(boolean reading);
 
@@ -32,7 +34,7 @@ class ShoppingRepository {
     private int pending;
     private Runnable idleListener;
 
-    ShoppingRepository(ShoppingDatabase database) {
+    public ShoppingRepository(ShoppingDatabase database) {
         this.database = database;
     }
 
@@ -40,18 +42,18 @@ class ShoppingRepository {
         run(null, () -> readItems(listId, result), result);
     }
 
-    void add(long listId, String name, String quantity, Result result) {
+    public void add(long listId, String name, String quantity, Result result) {
         run(() -> database.add(listId, name, quantity), () -> readItems(listId, result), result);
     }
 
-    void purchased(long listId, long id, boolean checked, Result result) {
+    public void purchased(long listId, long id, boolean checked, Result result) {
         run(
                 () -> database.setPurchased(listId, id, checked),
                 () -> readItems(listId, result),
                 result);
     }
 
-    void delete(long listId, long id, Result result) {
+    public void delete(long listId, long id, Result result) {
         run(() -> database.delete(listId, id), () -> readItems(listId, result), result);
     }
 
@@ -64,23 +66,23 @@ class ShoppingRepository {
         });
     }
 
-    void lists(boolean archived, Result result) {
+    public void lists(boolean archived, Result result) {
         run(null, () -> readLists(archived, result), result);
     }
 
-    void create(String name, Result result) {
+    public void create(String name, Result result) {
         run(() -> database.createList(name), () -> readLists(false, result), result);
     }
 
-    void rename(long id, String name, Result result) {
+    public void rename(long id, String name, Result result) {
         run(() -> database.rename(id, name), () -> readLists(false, result), result);
     }
 
-    void archive(long id, boolean confirmed, Result result) {
+    public void archive(long id, boolean confirmed, Result result) {
         run(() -> database.archive(id, confirmed), () -> readLists(false, result), result);
     }
 
-    void restore(long id, Result result) {
+    public void restore(long id, Result result) {
         run(() -> database.restore(id), () -> readLists(true, result), result);
     }
 
@@ -90,7 +92,7 @@ class ShoppingRepository {
     }
 
     // Package-visible for isolated instrumentation setup; production uses scoped methods above.
-    void execute(Runnable write, Result result) {
+    public void execute(Runnable write, Result result) {
         run(write, () -> {}, result);
     }
 
@@ -134,11 +136,11 @@ class ShoppingRepository {
     }
 
     // Main-thread diagnostics also allow instrumentation to synchronize without sleeps.
-    boolean isIdle() {
+    public boolean isIdle() {
         return pending == 0;
     }
 
-    void setIdleListener(Runnable listener) {
+    public void setIdleListener(Runnable listener) {
         idleListener = listener;
     }
 }
