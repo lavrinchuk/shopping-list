@@ -37,6 +37,15 @@
     <string name="wish_item_counts">%1$d / %2$d отримано</string>
     <string name="finish_wish_list">Завершити список бажань</string>
 
+    <string name="receipt_title">Фото чека</string>
+    <string name="receipt_actions">Фото чека</string>
+    <string name="receipt_attach">Додати фото чека</string>
+    <string name="receipt_view">Переглянути фото</string>
+    <string name="receipt_replace">Замінити фото</string>
+    <string name="receipt_remove">Видалити фото</string>
+    <string name="receipt_remove_confirmation">Видалити прикріплене фото чека?</string>
+    <string name="receipt_error">Не вдалося зберегти фото чека. Обери зображення до 8 МБ.</string>
+    <string name="receipt_unavailable">Не вдалося відкрити фото чека.</string>
     <string name="archive">Архів</string>
     <string name="new_list">Новий список</string>
     <string name="rename_list">Перейменувати</string>

@@ -1,6 +1,9 @@
 package com.example.shoppinglist.data;
 
 import android.database.sqlite.SQLiteException;
+import android.graphics.Bitmap;
+import android.net.Uri;
+import com.example.shoppinglist.data.ReceiptStore;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -29,6 +32,7 @@ public class ShoppingRepository {
     }
 
     private final ShoppingDatabase database;
+    private final ReceiptStore receipts;
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
     private final Handler main = new Handler(Looper.getMainLooper());
     private int pending;
@@ -36,6 +40,7 @@ public class ShoppingRepository {
 
     public ShoppingRepository(ShoppingDatabase database) {
         this.database = database;
+        this.receipts = new ReceiptStore(database.context());
     }
 
     public void load(long listId, Result result) {
@@ -59,6 +64,38 @@ public class ShoppingRepository {
 
     public void delete(long listId, long id, Result result) {
         run(() -> database.delete(listId, id), () -> readItems(listId, result), result);
+    }
+
+    public void attachReceipt(long listId, Uri photo, Result result) {
+        run(
+                () -> receipts.attach(database, listId, photo),
+                () -> readItems(listId, result),
+                result);
+    }
+
+    public void removeReceipt(long listId, Result result) {
+        run(
+                () -> receipts.remove(database, listId),
+                () -> readItems(listId, result),
+                result);
+    }
+
+    public interface ReceiptPreview {
+        void loaded(Bitmap bitmap);
+    }
+
+    public void previewReceipt(long listId, ReceiptPreview callback) {
+        worker.execute(() -> {
+            Bitmap preview = null;
+            try {
+                ShoppingList list = database.getList(listId);
+                preview = receipts.preview(list.receiptFile);
+            } catch (RuntimeException error) {
+                Log.e("ShoppingRepository", "Receipt preview failed", error);
+            }
+            Bitmap result = preview;
+            main.post(() -> callback.loaded(result));
+        });
     }
 
     private void readItems(long listId, Result result) {

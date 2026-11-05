@@ -18,6 +18,7 @@ public final class ShoppingList {
     public final long id;
     public final String name;
     public final String type;
+    public final String receiptFile;
     public final long createdAt;
     public final long updatedAt;
     public final Long archivedAt;
@@ -32,7 +33,7 @@ public final class ShoppingList {
             Long archivedAt,
             int total,
             int purchased) {
-        this(id, name, createdAt, updatedAt, archivedAt, total, purchased, TYPE_SHOPPING);
+        this(id, name, createdAt, updatedAt, archivedAt, total, purchased, TYPE_SHOPPING, null);
     }
 
     public ShoppingList(
@@ -44,8 +45,22 @@ public final class ShoppingList {
             int total,
             int purchased,
             String type) {
+        this(id, name, createdAt, updatedAt, archivedAt, total, purchased, type, null);
+    }
+
+    public ShoppingList(
+            long id,
+            String name,
+            long createdAt,
+            long updatedAt,
+            Long archivedAt,
+            int total,
+            int purchased,
+            String type,
+            String receiptFile) {
         this.id = id;
         this.type = requireType(type);
+        this.receiptFile = receiptFile;
         this.name = name;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
