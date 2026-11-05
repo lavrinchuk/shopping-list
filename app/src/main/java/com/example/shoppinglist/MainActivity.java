@@ -151,7 +151,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void searchInBrowser(ShoppingItem item) {
-        Intent search = new Intent(Intent.ACTION_VIEW, Uri.parse(ProductSearchUrl.forName(item.name)));
+        Intent search =
+                new Intent(Intent.ACTION_VIEW, Uri.parse(ProductSearchUrl.forName(item.name)));
         try {
             startActivity(search);
         } catch (ActivityNotFoundException | SecurityException error) {
