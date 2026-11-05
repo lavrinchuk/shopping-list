@@ -255,6 +255,71 @@ public class ShoppingDatabaseTest {
         assertTrue(db.getLists(false).isEmpty());
     }
 
+    @Test
+    public void rollbackOnFailedArchiveKeepsListAndItemsWritable() {
+        long listId = db.createList("Продукти");
+        db.add(listId, "Хліб", "1 шт.");
+        long itemId = db.getItems(listId).get(0).id;
+        ShoppingList before = db.getList(listId);
+
+        try {
+            db.archive(listId, false);
+            fail("Incomplete list should require confirmation");
+        } catch (ShoppingDatabase.IncompleteListException expected) {
+            // The transaction must roll back, not partially archive the list.
+        }
+
+        ShoppingList after = db.getList(listId);
+        assertNull(after.archivedAt);
+        assertEquals(before.updatedAt, after.updatedAt);
+        assertEquals(1, after.total);
+        db.setPurchased(listId, itemId, true);
+        assertEquals(1, db.getList(listId).purchased);
+        db.archive(listId, false);
+        assertNotNull(db.getList(listId).archivedAt);
+    }
+
+    @Test
+    public void noOpMutationsDoNotChangeUpdateTimestamp() {
+        long listId = db.createList("Покупки");
+        db.add(listId, "Кава", "");
+        ShoppingList original = db.getList(listId);
+
+        db.rename(listId, " Покупки ");
+        db.setPurchased(listId, 999999L, true);
+        db.delete(listId, 999999L);
+        assertEquals(original.updatedAt, db.getList(listId).updatedAt);
+        assertEquals(1, db.getList(listId).total);
+
+        db.restore(listId);
+        assertEquals(original.updatedAt, db.getList(listId).updatedAt);
+    }
+
+    @Test
+    public void completedListKeepsItemsAfterReopeningDatabaseAndRestoring() {
+        long listId = db.createList("Дім");
+        db.add(listId, "Лампа", "2");
+        db.add(listId, "Дріт", "3 м");
+        long firstItemId = db.getItems(listId).get(0).id;
+        db.setPurchased(listId, firstItemId, true);
+        db.archive(listId, true);
+        long archivedAt = db.getList(listId).archivedAt;
+
+        db.close();
+        db = new ShoppingDatabase(context, file);
+
+        ShoppingList archivedList = db.getList(listId);
+        assertEquals(Long.valueOf(archivedAt), archivedList.archivedAt);
+        assertEquals(2, archivedList.total);
+        assertEquals(1, archivedList.purchased);
+        assertEquals(2, db.getItems(listId).size());
+        assertEquals(firstItemId, db.getItems(listId).get(1).id);
+
+        db.restore(listId);
+        assertNull(db.getList(listId).archivedAt);
+        assertEquals(1, db.getList(listId).purchased);
+    }
+
     private void assertRejected(Runnable action) {
         try {
             action.run();
