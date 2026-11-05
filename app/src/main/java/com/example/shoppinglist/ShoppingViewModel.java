@@ -69,8 +69,7 @@ public final class ShoppingViewModel extends ViewModel {
     }
 
     void updateItemUrl(ShoppingItem item, String url) {
-        repository.setItemUrl(
-                listId, item.id, url, createRepositoryCallback(false, 0));
+        repository.setItemUrl(listId, item.id, url, createRepositoryCallback(false, 0));
     }
 
     void reload() {
