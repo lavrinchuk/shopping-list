@@ -173,7 +173,7 @@ public class MainActivity extends AppCompatActivity {
         TextInputLayout field = new TextInputLayout(this);
         int pad = Math.round(24 * getResources().getDisplayMetrics().density);
         field.setPadding(pad, 0, pad, 0);
-        field.setHint(R.string.item_link_hint);
+        field.setHint(getString(R.string.item_link_hint));
         TextInputEditText input = new TextInputEditText(field.getContext());
         input.setSingleLine(true);
         input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
