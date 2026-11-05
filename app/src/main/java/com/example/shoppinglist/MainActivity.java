@@ -1,7 +1,6 @@
 package com.example.shoppinglist;
 
 import android.app.Activity;
-import android.graphics.Bitmap;
 import android.widget.ImageView;
 import androidx.activity.result.PickVisualMediaRequest;
 import android.content.ActivityNotFoundException;
