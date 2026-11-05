@@ -11,6 +11,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 final class ListsViewModel extends ViewModel {
+    static final String STATE_EDIT_ID = "editId";
+    static final String STATE_EDIT_NAME = "editName";
+    static final String STATE_EDITING = "editing";
     final MutableLiveData<Integer> changes = new MutableLiveData<>(0);
     final boolean archived;
     final SavedStateHandle saved;
@@ -122,7 +125,7 @@ final class ListsViewModel extends ViewModel {
                 }
                 busy = false;
                 if (naming) {
-                    saved.set("editing", false);
+                    saved.set(STATE_EDITING, false);
                 }
                 notifyStateChanged();
             }

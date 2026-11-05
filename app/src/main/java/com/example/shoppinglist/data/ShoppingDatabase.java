@@ -12,14 +12,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ShoppingDatabase extends SQLiteOpenHelper {
+    private static final String DATABASE_NAME = "shopping.db";
+    private static final int DATABASE_VERSION = 2;
+    private static final String LEGACY_DEFAULT_LIST_NAME = "Мій список";
     public static final class IncompleteListException extends SQLiteException {}
 
     public ShoppingDatabase(Context context) {
-        this(context, "shopping.db");
+        this(context, DATABASE_NAME);
     }
 
     public ShoppingDatabase(Context context, String name) {
-        super(context, name, null, 2);
+        super(context, name, null, DATABASE_VERSION);
     }
 
     @Override
@@ -63,7 +66,7 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
         }
         createLists(db);
         long now = System.currentTimeMillis();
-        long listId = insertList(db, "Мій список", now);
+        long listId = insertList(db, LEGACY_DEFAULT_LIST_NAME, now);
         createItems(db, "items_v2");
         db.execSQL(
                 "INSERT INTO items_v2(id, listId, name, quantity, purchased) SELECT id, ?, name, quantity, purchased FROM items",

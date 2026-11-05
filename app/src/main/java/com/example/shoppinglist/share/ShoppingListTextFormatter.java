@@ -5,12 +5,16 @@ import java.util.List;
 
 /** Read-only text export; preserves display order within each purchase status. */
 public final class ShoppingListTextFormatter {
+    private static final String EMPTY_LIST_LABEL = "Список порожній";
+    private static final String UNPURCHASED_MARKER = "☐ ";
+    private static final String PURCHASED_MARKER = "☑ ";
+    private static final String QUANTITY_SEPARATOR = " — ";
     private ShoppingListTextFormatter() {}
 
     public static String format(String title, List<ShoppingItem> items) {
         StringBuilder text = new StringBuilder(title).append("\n\n");
         if (items.isEmpty()) {
-            return text.append("Список порожній").toString();
+            return text.append(EMPTY_LIST_LABEL).toString();
         }
         appendItems(text, items, false);
         appendItems(text, items, true);
@@ -23,9 +27,9 @@ public final class ShoppingListTextFormatter {
             if (item.purchased != purchased) {
                 continue;
             }
-            text.append(purchased ? "☑ " : "☐ ").append(item.name);
+            text.append(purchased ? PURCHASED_MARKER : UNPURCHASED_MARKER).append(item.name);
             if (!item.quantity.isEmpty()) {
-                text.append(" — ").append(item.quantity);
+                text.append(QUANTITY_SEPARATOR).append(item.quantity);
             }
             text.append('\n');
         }

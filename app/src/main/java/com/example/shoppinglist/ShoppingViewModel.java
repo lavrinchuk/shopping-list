@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class ShoppingViewModel extends ViewModel {
+    private static final String STATE_ITEM_NAME = "name";
+    private static final String STATE_ITEM_QUANTITY = "quantity";
     final MutableLiveData<Integer> changes = new MutableLiveData<>(0);
     private final ShoppingRepository repository;
     private final SavedStateHandle saved;
@@ -32,8 +34,8 @@ public final class ShoppingViewModel extends ViewModel {
         this.repository = repository;
         this.listId = listId;
         this.saved = saved;
-        name = saved.contains("name") ? saved.get("name") : "";
-        quantity = saved.contains("quantity") ? saved.get("quantity") : "";
+        name = saved.contains(STATE_ITEM_NAME) ? saved.get(STATE_ITEM_NAME) : "";
+        quantity = saved.contains(STATE_ITEM_QUANTITY) ? saved.get(STATE_ITEM_QUANTITY) : "";
         reload();
     }
 
@@ -43,8 +45,8 @@ public final class ShoppingViewModel extends ViewModel {
         }
         this.name = name;
         this.quantity = quantity;
-        saved.set("name", name);
-        saved.set("quantity", quantity);
+        saved.set(STATE_ITEM_NAME, name);
+        saved.set(STATE_ITEM_QUANTITY, quantity);
     }
 
     void add() {
