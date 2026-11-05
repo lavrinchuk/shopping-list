@@ -14,8 +14,13 @@ import java.util.List;
 
 public class ShoppingDatabase extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "shopping.db";
-    private static final int DATABASE_VERSION = 4;
+    private static final int DATABASE_VERSION = 5;
     private static final String LEGACY_DEFAULT_LIST_NAME = "Мій список";
+    private final Context context;
+
+    public Context context() {
+        return context;
+    }
 
     public static final class IncompleteListException extends SQLiteException {}
 
@@ -25,6 +30,7 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
 
     public ShoppingDatabase(Context context, String name) {
         super(context, name, null, DATABASE_VERSION);
+        this.context = context.getApplicationContext();
     }
 
     @Override
@@ -34,7 +40,7 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
 
     private void createLists(SQLiteDatabase db) {
         db.execSQL(
-                "CREATE TABLE shopping_lists (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL CHECK(length(trim(name)) > 0), createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL, archivedAt INTEGER, type TEXT NOT NULL DEFAULT 'shopping' CHECK(type IN ('shopping','wish')))");
+                "CREATE TABLE shopping_lists (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL CHECK(length(trim(name)) > 0), createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL, archivedAt INTEGER, type TEXT NOT NULL DEFAULT 'shopping' CHECK(type IN ('shopping','wish')), receiptFile TEXT)");
         db.execSQL(
                 "CREATE INDEX lists_updated ON shopping_lists(archivedAt, updatedAt DESC, id DESC)");
     }
@@ -55,7 +61,7 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        if (oldVersion < 1 || oldVersion > 3 || newVersion != DATABASE_VERSION) {
+        if (oldVersion < 1 || oldVersion > 4 || newVersion != DATABASE_VERSION) {
             throw new SQLiteException("Unsupported database upgrade");
         }
         // SQLiteOpenHelper wraps schema migration and user_version in a transaction.
@@ -65,9 +71,12 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
             db.execSQL("ALTER TABLE items ADD COLUMN url TEXT");
         }
         // Version-one migration creates the latest shopping_lists table.
-        if (oldVersion >= 2) {
+        if (oldVersion >= 2 && oldVersion < 4) {
             db.execSQL(
                     "ALTER TABLE shopping_lists ADD COLUMN type TEXT NOT NULL DEFAULT 'shopping' CHECK(type IN ('shopping','wish'))");
+        }
+        if (oldVersion >= 2) {
+            db.execSQL("ALTER TABLE shopping_lists ADD COLUMN receiptFile TEXT");
         }
     }
 
@@ -144,7 +153,7 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
         try (Cursor c =
                 getReadableDatabase()
                         .rawQuery(
-                                "SELECT l.id, l.name, l.createdAt, l.updatedAt, l.archivedAt, COUNT(i.id), COALESCE(SUM(i.purchased),0), l.type FROM shopping_lists l LEFT JOIN items i ON i.listId = l.id WHERE "
+                                "SELECT l.id, l.name, l.createdAt, l.updatedAt, l.archivedAt, COUNT(i.id), COALESCE(SUM(i.purchased),0), l.type, l.receiptFile FROM shopping_lists l LEFT JOIN items i ON i.listId = l.id WHERE "
                                         + where
                                         + " GROUP BY l.id ORDER BY "
                                         + order,
@@ -159,7 +168,8 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
                                 c.isNull(4) ? null : c.getLong(4),
                                 c.getInt(5),
                                 c.getInt(6),
-                                c.getString(7)));
+                                c.getString(7),
+                                c.getString(8)));
             }
         }
         return lists;
@@ -232,6 +242,38 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
                 db.update("shopping_lists", values, "id = ?", new String[] {String.valueOf(id)});
             }
             db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    /** Receipts can only be modified on archived lists; returns previous file after commit. */
+    public String setReceipt(long listId, String filename) {
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            ShoppingList list = getList(listId);
+            if (list.archivedAt == null) {
+                throw new SQLiteException("Receipts require an archived list");
+            }
+            ContentValues values = new ContentValues();
+            if (filename == null) {
+                values.putNull("receiptFile");
+            } else {
+                values.put("receiptFile", filename);
+            }
+            values.put("updatedAt", nextTimestamp(list));
+            int changed =
+                    db.update(
+                            "shopping_lists",
+                            values,
+                            "id = ?",
+                            new String[] {String.valueOf(listId)});
+            if (changed != 1) {
+                throw new SQLiteException("Could not update receipt");
+            }
+            db.setTransactionSuccessful();
+            return list.receiptFile;
         } finally {
             db.endTransaction();
         }

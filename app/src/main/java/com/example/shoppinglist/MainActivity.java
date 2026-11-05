@@ -1,6 +1,9 @@
 package com.example.shoppinglist;
 
 import android.app.Activity;
+import android.graphics.Bitmap;
+import android.widget.ImageView;
+import androidx.activity.result.PickVisualMediaRequest;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
@@ -47,6 +50,14 @@ public class MainActivity extends AppCompatActivity {
     ShoppingAdapter adapter;
     private Snackbar retry;
     private boolean rendering;
+    private final ActivityResultLauncher<PickVisualMediaRequest> receiptPicker =
+            registerForActivityResult(
+                    new ActivityResultContracts.PickVisualMedia(),
+                    uri -> {
+                        if (uri != null && viewModel != null) {
+                            viewModel.attachReceipt(uri);
+                        }
+                    });
     private final ActivityResultLauncher<Intent> speechRecognition =
             registerForActivityResult(
                     new ActivityResultContracts.StartActivityForResult(),
@@ -122,12 +133,86 @@ public class MainActivity extends AppCompatActivity {
         toolbar.setNavigationOnClickListener(view -> finish());
         toolbar.inflateMenu(R.menu.shopping_list);
         toolbar.setOnMenuItemClickListener(item -> {
-            if (item.getItemId() != R.id.share_list) {
-                return false;
+            if (item.getItemId() == R.id.share_list) {
+                viewModel.share();
+                return true;
             }
-            viewModel.share();
-            return true;
+            if (item.getItemId() == R.id.receipt_actions) {
+                showReceiptActions();
+                return true;
+            }
+            return false;
         });
+    }
+
+    private void showReceiptActions() {
+        if (viewModel.list == null || viewModel.list.archivedAt == null || viewModel.receiptBusy) {
+            return;
+        }
+        boolean attached = viewModel.list.receiptFile != null;
+        String[] options =
+                attached
+                        ? new String[] {
+                            getString(R.string.receipt_view),
+                            getString(R.string.receipt_replace),
+                            getString(R.string.receipt_remove)
+                        }
+                        : new String[] {getString(R.string.receipt_attach)};
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.receipt_title)
+                .setItems(
+                        options,
+                        (dialog, which) -> {
+                            if (!attached || which == 1) {
+                                receiptPicker.launch(
+                                        new PickVisualMediaRequest.Builder()
+                                                .setMediaType(
+                                                        ActivityResultContracts.PickVisualMedia.ImageOnly
+                                                                .getInstance())
+                                                .build());
+                            } else if (which == 0) {
+                                showReceiptPreview();
+                            } else if (which == 2) {
+                                new MaterialAlertDialogBuilder(this)
+                                        .setMessage(R.string.receipt_remove_confirmation)
+                                        .setNegativeButton(R.string.cancel, null)
+                                        .setPositiveButton(
+                                                R.string.receipt_remove,
+                                                (confirm, button) -> viewModel.removeReceipt())
+                                        .show();
+                            }
+                        })
+                .show();
+    }
+
+    private void showReceiptPreview() {
+        ImageView image = new ImageView(this);
+        int padding = Math.round(16 * getResources().getDisplayMetrics().density);
+        image.setPadding(padding, padding, padding, padding);
+        image.setAdjustViewBounds(true);
+        image.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        androidx.appcompat.app.AlertDialog dialog =
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle(R.string.receipt_title)
+                        .setView(image)
+                        .setPositiveButton(R.string.back, null)
+                        .create();
+        dialog.show();
+        viewModel.previewReceipt(
+                bitmap -> {
+                    if (!dialog.isShowing()) {
+                        if (bitmap != null) {
+                            bitmap.recycle();
+                        }
+                        return;
+                    }
+                    if (bitmap != null) {
+                        image.setImageBitmap(bitmap);
+                    } else {
+                        Toast.makeText(this, R.string.receipt_unavailable, Toast.LENGTH_LONG).show();
+                        dialog.dismiss();
+                    }
+                });
     }
 
     private void initializeViewModel(Bundle savedInstanceState, long listId) {
@@ -438,6 +523,9 @@ public class MainActivity extends AppCompatActivity {
             adapter.setReadOnly(readOnly);
         }
         toolbar.getMenu().findItem(R.id.share_list).setEnabled(!viewModel.sharing);
+        android.view.MenuItem receipt = toolbar.getMenu().findItem(R.id.receipt_actions);
+        receipt.setVisible(viewModel.list != null && viewModel.list.archivedAt != null);
+        receipt.setEnabled(!viewModel.receiptBusy);
         dispatchShare();
     }
 
@@ -453,6 +541,9 @@ public class MainActivity extends AppCompatActivity {
     private void showPendingError() {
         int error = viewModel.error;
         viewModel.consumeError();
+        if (error == R.string.receipt_error) {
+            Toast.makeText(this, error, Toast.LENGTH_LONG).show();
+        }
         if (error == R.string.share_error) {
             Toast.makeText(this, error, Toast.LENGTH_LONG).show();
         }

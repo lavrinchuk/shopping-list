@@ -4,4 +4,5 @@
     <item android:id="@+id/share_list" android:title="@string/share_list"
         android:icon="@drawable/ic_share" app:contentDescription="@string/share_list"
         app:showAsAction="ifRoom" />
+    <item android:id="@+id/receipt_actions" android:title="@string/receipt_actions" app:showAsAction="never" />
 </menu>

@@ -1,5 +1,7 @@
 package com.example.shoppinglist;
 
+import android.graphics.Bitmap;
+import android.net.Uri;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
@@ -23,6 +25,7 @@ public final class ShoppingViewModel extends ViewModel {
     String quantity = "";
     boolean adding;
     boolean sharing;
+    boolean receiptBusy;
     String shareText;
     boolean readFailed;
     int error;
@@ -70,6 +73,64 @@ public final class ShoppingViewModel extends ViewModel {
 
     void updateItemUrl(ShoppingItem item, String url) {
         repository.setItemUrl(listId, item.id, url, createRepositoryCallback(false, 0));
+    }
+
+    void attachReceipt(Uri photo) {
+        if (receiptBusy || photo == null || list == null || list.archivedAt == null) {
+            return;
+        }
+        receiptBusy = true;
+        notifyStateChanged();
+        repository.attachReceipt(listId, photo, receiptCallback());
+    }
+
+    void removeReceipt() {
+        if (receiptBusy || list == null || list.archivedAt == null || list.receiptFile == null) {
+            return;
+        }
+        receiptBusy = true;
+        notifyStateChanged();
+        repository.removeReceipt(listId, receiptCallback());
+    }
+
+    void previewReceipt(ShoppingRepository.ReceiptPreview callback) {
+        repository.previewReceipt(listId, callback);
+    }
+
+    private ShoppingRepository.Result receiptCallback() {
+        return new ShoppingRepository.Result() {
+            @Override
+            public void written() {
+                if (!cleared) {
+                    receiptBusy = false;
+                    notifyStateChanged();
+                }
+            }
+
+            @Override
+            public void loaded(List<ShoppingItem> updated) {
+                if (!cleared) {
+                    items = updated;
+                    notifyStateChanged();
+                }
+            }
+
+            @Override
+            public void listLoaded(ShoppingList updated) {
+                if (!cleared) {
+                    list = updated;
+                }
+            }
+
+            @Override
+            public void failed(boolean reading) {
+                if (!cleared) {
+                    receiptBusy = false;
+                    error = R.string.receipt_error;
+                    notifyStateChanged();
+                }
+            }
+        };
     }
 
     void reload() {
