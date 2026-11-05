@@ -1,5 +1,7 @@
 package com.example.shoppinglist;
 
+import com.example.shoppinglist.model.ShoppingList;
+
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,7 +23,7 @@ final class ListsAdapter extends ListAdapter<ShoppingList, ListsAdapter.Holder> 
     }
 
     private final Actions actions;
-    private final DateFormat dates =
+    private final DateFormat dateFormatter =
             DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
 
     ListsAdapter(Actions actions) {
@@ -65,7 +67,7 @@ final class ListsAdapter extends ListAdapter<ShoppingList, ListsAdapter.Holder> 
                                 list.archivedAt == null
                                         ? R.string.updated_date
                                         : R.string.archived_date,
-                                dates.format(
+                                dateFormatter.format(
                                         new Date(
                                                 list.archivedAt == null
                                                         ? list.updatedAt

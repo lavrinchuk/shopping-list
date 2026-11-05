@@ -1,5 +1,7 @@
 package com.example.shoppinglist;
 
+import com.example.shoppinglist.model.ShoppingItem;
+
 import android.graphics.Paint;
 import android.view.LayoutInflater;
 import android.view.View;

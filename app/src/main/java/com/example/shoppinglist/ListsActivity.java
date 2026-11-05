@@ -1,5 +1,9 @@
 package com.example.shoppinglist;
 
+import com.example.shoppinglist.data.ShoppingRepository;
+import com.example.shoppinglist.viewModel.ShoppingItem;
+import com.example.shoppinglist.viewModel.ShoppingList;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
@@ -25,7 +29,7 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
 public class ListsActivity extends AppCompatActivity {
-    ListsViewModel model;
+    ListsViewModel viewModel;
     private ListsAdapter adapter;
     private AlertDialog nameDialog;
     private AlertDialog confirmationDialog;
@@ -47,7 +51,7 @@ public class ListsActivity extends AppCompatActivity {
                 });
         boolean archived = getIntent().getBooleanExtra("archived", false);
         ShoppingRepository repository = ((ShoppingApplication) getApplication()).repository();
-        model =
+        viewModel =
                 new ViewModelProvider(
                                 this,
                                 new AbstractSavedStateViewModelFactory(this, state) {
@@ -76,7 +80,7 @@ public class ListsActivity extends AppCompatActivity {
                                 new Intent(this, ListsActivity.class).putExtra("archived", true)));
         findViewById(R.id.create_list).setVisibility(archived ? View.GONE : View.VISIBLE);
         findViewById(R.id.create_list).setOnClickListener(view -> edit(null));
-        findViewById(R.id.retry_lists).setOnClickListener(view -> model.reload());
+        findViewById(R.id.retry_lists).setOnClickListener(view -> viewModel.reload());
         adapter =
                 new ListsAdapter(
                         new ListsAdapter.Actions() {
@@ -95,34 +99,34 @@ public class ListsActivity extends AppCompatActivity {
         RecyclerView lists = findViewById(R.id.lists);
         lists.setLayoutManager(new LinearLayoutManager(this));
         lists.setAdapter(adapter);
-        model.changes.observe(this, ignored -> render());
+        viewModel.changes.observe(this, ignored -> render());
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if (model != null) {
-            model.reload();
+        if (viewModel != null) {
+            viewModel.reload();
         }
     }
 
     private void edit(ShoppingList list) {
-        if (model.busy) {
+        if (viewModel.busy) {
             return;
         }
-        model.saved.set("editId", list == null ? 0L : list.id);
-        model.saved.set("editName", list == null ? "" : list.name);
-        model.saved.set("editing", true);
-        model.publish();
+        viewModel.saved.set("editId", list == null ? 0L : list.id);
+        viewModel.saved.set("editName", list == null ? "" : list.name);
+        viewModel.saved.set("editing", true);
+        viewModel.publish();
     }
 
     private void showMenu(View anchor, ShoppingList list) {
         PopupMenu menu = new PopupMenu(this, anchor);
-        if (model.archived) {
+        if (viewModel.archived) {
             menu.getMenu()
                     .add(R.string.restore_list)
                     .setOnMenuItemClickListener(item -> {
-                        model.restore(list.id);
+                        viewModel.restore(list.id);
                         return true;
                     });
         } else {
@@ -135,32 +139,32 @@ public class ListsActivity extends AppCompatActivity {
             menu.getMenu()
                     .add(R.string.finish_shopping)
                     .setOnMenuItemClickListener(item -> {
-                        model.archive(list);
+                        viewModel.archive(list);
                         return true;
                     });
         }
         for (int i = 0; i < menu.getMenu().size(); i++) {
-            menu.getMenu().getItem(i).setEnabled(!model.busy);
+            menu.getMenu().getItem(i).setEnabled(!viewModel.busy);
         }
         menu.show();
     }
 
     private void render() {
-        adapter.submitList(model.lists);
-        findViewById(R.id.create_list).setEnabled(!model.busy);
-        findViewById(R.id.lists_loading).setVisibility(model.loading ? View.VISIBLE : View.GONE);
-        findViewById(R.id.retry_lists).setVisibility(model.readFailed ? View.VISIBLE : View.GONE);
+        adapter.submitList(viewModel.lists);
+        findViewById(R.id.create_list).setEnabled(!viewModel.busy);
+        findViewById(R.id.lists_loading).setVisibility(viewModel.loading ? View.VISIBLE : View.GONE);
+        findViewById(R.id.retry_lists).setVisibility(viewModel.readFailed ? View.VISIBLE : View.GONE);
         android.widget.TextView empty = findViewById(R.id.lists_empty);
-        empty.setText(model.archived ? R.string.no_archive : R.string.no_lists);
+        empty.setText(viewModel.archived ? R.string.no_archive : R.string.no_lists);
         empty.setVisibility(
-                !model.loading && !model.readFailed && model.lists.isEmpty()
+                !viewModel.loading && !viewModel.readFailed && viewModel.lists.isEmpty()
                         ? View.VISIBLE
                         : View.GONE);
-        if (model.error != 0) {
-            Toast.makeText(this, model.error, Toast.LENGTH_LONG).show();
-            model.error = 0;
+        if (viewModel.error != 0) {
+            Toast.makeText(this, viewModel.error, Toast.LENGTH_LONG).show();
+            viewModel.error = 0;
         }
-        boolean editing = Boolean.TRUE.equals(model.saved.get("editing"));
+        boolean editing = Boolean.TRUE.equals(viewModel.saved.get("editing"));
         if (editing && nameDialog == null) {
             showNameDialog();
         }
@@ -169,21 +173,21 @@ public class ListsActivity extends AppCompatActivity {
             nameDialog = null;
         }
         if (nameDialog != null) {
-            nameDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(!model.busy);
+            nameDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(!viewModel.busy);
         }
-        if (model.confirmation != null && confirmationDialog == null) {
-            long id = model.confirmation;
+        if (viewModel.confirmation != null && confirmationDialog == null) {
+            long id = viewModel.confirmation;
             confirmationDialog =
                     new MaterialAlertDialogBuilder(this)
                             .setTitle(R.string.finish_shopping)
                             .setMessage(R.string.incomplete_confirmation)
                             .setNegativeButton(
-                                    R.string.cancel, (dialog, which) -> model.confirmation = null)
+                                    R.string.cancel, (dialog, which) -> viewModel.confirmation = null)
                             .setPositiveButton(
                                     R.string.finish_shopping,
-                                    (dialog, which) -> model.archive(id, true))
+                                    (dialog, which) -> viewModel.archive(id, true))
                             .create();
-            confirmationDialog.setOnCancelListener(dialog -> model.confirmation = null);
+            confirmationDialog.setOnCancelListener(dialog -> viewModel.confirmation = null);
             confirmationDialog.setOnDismissListener(dialog -> confirmationDialog = null);
             confirmationDialog.show();
         }
@@ -198,7 +202,7 @@ public class ListsActivity extends AppCompatActivity {
         input.setSingleLine(true);
         input.setId(R.id.list_name_input);
         field.addView(input);
-        input.setText((String) model.saved.get("editName"));
+        input.setText((String) viewModel.saved.get("editName"));
         input.addTextChangedListener(
                 new TextWatcher() {
                     @Override
@@ -207,14 +211,14 @@ public class ListsActivity extends AppCompatActivity {
 
                     @Override
                     public void onTextChanged(CharSequence s, int start, int before, int count) {
-                        model.saved.set("editName", s.toString());
+                        viewModel.saved.set("editName", s.toString());
                         field.setError(null);
                     }
 
                     @Override
                     public void afterTextChanged(Editable s) {}
                 });
-        Long editId = model.saved.get("editId");
+        Long editId = viewModel.saved.get("editId");
         nameDialog =
                 new MaterialAlertDialogBuilder(this)
                         .setTitle(
@@ -224,10 +228,10 @@ public class ListsActivity extends AppCompatActivity {
                         .setView(field)
                         .setNegativeButton(
                                 R.string.cancel,
-                                (dialog, which) -> model.saved.set("editing", false))
+                                (dialog, which) -> viewModel.saved.set("editing", false))
                         .setPositiveButton(R.string.save, null)
                         .create();
-        nameDialog.setOnCancelListener(dialog -> model.saved.set("editing", false));
+        nameDialog.setOnCancelListener(dialog -> viewModel.saved.set("editing", false));
         nameDialog.setOnDismissListener(dialog -> nameDialog = null);
         nameDialog.setOnShowListener(dialog ->
                 nameDialog
@@ -235,7 +239,7 @@ public class ListsActivity extends AppCompatActivity {
                         .setOnClickListener(view -> {
                             try {
                                 Editable text = input.getText();
-                                model.saveName(
+                                viewModel.saveName(
                                         editId == null ? 0 : editId,
                                         text == null ? "" : text.toString());
                             } catch (IllegalArgumentException error) {
