@@ -31,8 +31,8 @@
     <string name="empty_title">Список порожній</string>
     <string name="empty_message">Додайте перший товар у формі вище.</string>
     <string name="all_lists">Мої списки</string>
-    <string name="shopping_list_type">Покупки</string>
-    <string name="wish_list_type">Бажання</string>
+    <string name="shopping_list_type">Список покупок</string>
+    <string name="wish_list_type">Список бажань</string>
     <string name="list_type_hint">Тип списку</string>
     <string name="wish_item_counts">%1$d / %2$d отримано</string>
     <string name="finish_wish_list">Завершити список бажань</string>
