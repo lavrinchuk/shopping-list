@@ -21,9 +21,7 @@ public class ProductSearchUrlTest {
 
     @Test
     public void doesNotIncludeQuantityOrUnrelatedMetadata() {
-        assertEquals(
-                "https://www.google.com/search?q=Milk",
-                ProductSearchUrl.forName("Milk"));
+        assertEquals("https://www.google.com/search?q=Milk", ProductSearchUrl.forName("Milk"));
     }
 
     @Test(expected = IllegalArgumentException.class)
