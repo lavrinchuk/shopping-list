@@ -387,32 +387,34 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void configureFinishAction() {
-        findViewById(R.id.finish_list).setOnClickListener(view -> {
-            if (viewModel.list == null || viewModel.finishing) {
-                return;
-            }
-            if (viewModel.list.total == 0) {
-                new MaterialAlertDialogBuilder(this)
-                        .setTitle(R.string.delete_empty_list)
-                        .setMessage(R.string.delete_empty_list_confirmation)
-                        .setNegativeButton(R.string.cancel, null)
-                        .setPositiveButton(
-                                R.string.delete_empty_list,
-                                (dialog, which) -> viewModel.finishShopping(false, true))
-                        .show();
-            } else if (viewModel.list.purchased < viewModel.list.total) {
-                new MaterialAlertDialogBuilder(this)
-                        .setTitle(R.string.finish_shopping)
-                        .setMessage(R.string.incomplete_confirmation)
-                        .setNegativeButton(R.string.cancel, null)
-                        .setPositiveButton(
-                                R.string.finish_shopping,
-                                (dialog, which) -> viewModel.finishShopping(true, false))
-                        .show();
-            } else {
-                viewModel.finishShopping(false, false);
-            }
-        });
+        findViewById(R.id.finish_list).setOnClickListener(view -> onFinishClicked());
+    }
+
+    private void onFinishClicked() {
+        if (viewModel.list == null || viewModel.finishing) {
+            return;
+        }
+        if (viewModel.list.total == 0) {
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle(R.string.delete_empty_list)
+                    .setMessage(R.string.delete_empty_list_confirmation)
+                    .setNegativeButton(R.string.cancel, null)
+                    .setPositiveButton(
+                            R.string.delete_empty_list,
+                            (dialog, which) -> viewModel.finishShopping(false, true))
+                    .show();
+        } else if (viewModel.list.purchased < viewModel.list.total) {
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle(R.string.finish_shopping)
+                    .setMessage(R.string.incomplete_confirmation)
+                    .setNegativeButton(R.string.cancel, null)
+                    .setPositiveButton(
+                            R.string.finish_shopping,
+                            (dialog, which) -> viewModel.finishShopping(true, false))
+                    .show();
+        } else {
+            viewModel.finishShopping(false, false);
+        }
     }
 
     private void configureItemForm() {
