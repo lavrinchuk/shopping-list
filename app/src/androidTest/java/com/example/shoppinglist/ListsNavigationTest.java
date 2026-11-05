@@ -187,7 +187,7 @@ public class ListsNavigationTest {
         onView(withText(R.string.delete_empty_list_confirmation)).check(matches(isDisplayed()));
         onView(withText(R.string.cancel)).perform(click());
         onView(withId(R.id.finish_list)).perform(click());
-        onView(withText(R.string.delete_empty_list)).perform(click());
+        onView(withId(android.R.id.button1)).perform(click());
         onView(withText("Тимчасовий")).check(doesNotExist());
         onView(withId(R.id.open_archive)).perform(click());
         onView(withText("Тимчасовий")).check(doesNotExist());
