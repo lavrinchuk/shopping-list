@@ -13,7 +13,9 @@
             <com.google.android.material.textfield.TextInputLayout android:id="@+id/name_layout"
                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:hint="@string/name_hint" app:boxBackgroundColor="?attr/colorSurface">
+                android:hint="@string/name_hint" app:boxBackgroundColor="?attr/colorSurface"
+                app:endIconMode="custom" app:endIconDrawable="@drawable/ic_mic"
+                app:endIconContentDescription="@string/voice_add_item">
                 <com.google.android.material.textfield.TextInputEditText android:id="@+id/name"
                     android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:minHeight="56dp" android:inputType="textCapSentences" android:singleLine="true"
