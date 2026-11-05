@@ -53,6 +53,13 @@ public class ShoppingRepository {
                 result);
     }
 
+    public void setItemUrl(long listId, long id, String url, Result result) {
+        run(
+                () -> database.setItemUrl(listId, id, url),
+                () -> readItems(listId, result),
+                result);
+    }
+
     public void delete(long listId, long id, Result result) {
         run(() -> database.delete(listId, id), () -> readItems(listId, result), result);
     }
