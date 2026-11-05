@@ -1,11 +1,11 @@
 package com.example.shoppinglist;
 
-import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.Espresso.onData;
-import static org.hamcrest.Matchers.anything;
+import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.*;
 import static androidx.test.espresso.assertion.ViewAssertions.*;
 import static androidx.test.espresso.matcher.ViewMatchers.*;
+import static org.hamcrest.Matchers.anything;
 import static org.junit.Assert.*;
 
 import android.app.Activity;
@@ -147,7 +147,8 @@ public class ListsNavigationTest {
     @Test
     public void createWishArchiveWithoutAllCheckedAndRestore() {
         onView(withId(R.id.create_list)).perform(click());
-        onView(withId(R.id.list_name_input)).perform(replaceText("Мої бажання"), closeSoftKeyboard());
+        onView(withId(R.id.list_name_input))
+                .perform(replaceText("Мої бажання"), closeSoftKeyboard());
         onView(withId(R.id.list_type_input)).perform(click());
         onData(anything()).atPosition(1).perform(click());
         onView(withText(R.string.save)).perform(click());
