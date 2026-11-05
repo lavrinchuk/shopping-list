@@ -58,6 +58,9 @@ jobs:
       - name: JaCoCo coverage and SpotBugs static analysis
         run: ./gradlew :app:createDebugUnitTestCoverageReport :app:spotbugsDebug --no-daemon --no-configuration-cache
 
+      - name: Summarize targeted JVM test coverage
+        run: python3 scripts/report-focused-coverage.py
+
       - name: Verify SpotBugs inputs and report
         shell: bash
         run: |
