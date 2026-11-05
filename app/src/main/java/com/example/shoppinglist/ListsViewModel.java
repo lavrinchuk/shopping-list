@@ -61,17 +61,20 @@ final class ListsViewModel extends ViewModel {
                     clean,
                     ShoppingList.requireType(type == null ? ShoppingList.TYPE_SHOPPING : type),
                     new ShoppingRepository.Result() {
+                        private Long createdId;
+
                         @Override
-                        public void created(long createdId) {
-                            if (!cleared) {
-                                saved.set(STATE_OPEN_CREATED_ID, createdId);
-                                notifyStateChanged();
-                            }
+                        public void created(long id) {
+                            createdId = id;
                         }
 
                         @Override
                         public void written() {
                             delegate.written();
+                            if (!cleared && createdId != null) {
+                                saved.set(STATE_OPEN_CREATED_ID, createdId);
+                                notifyStateChanged();
+                            }
                         }
 
                         @Override
