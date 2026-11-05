@@ -3,7 +3,6 @@ package com.example.shoppinglist.data;
 import android.database.sqlite.SQLiteException;
 import android.graphics.Bitmap;
 import android.net.Uri;
-import com.example.shoppinglist.data.ReceiptStore;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -67,17 +66,11 @@ public class ShoppingRepository {
     }
 
     public void attachReceipt(long listId, Uri photo, Result result) {
-        run(
-                () -> receipts.attach(database, listId, photo),
-                () -> readItems(listId, result),
-                result);
+        run(() -> receipts.attach(database, listId, photo), () -> readItems(listId, result), result);
     }
 
     public void removeReceipt(long listId, Result result) {
-        run(
-                () -> receipts.remove(database, listId),
-                () -> readItems(listId, result),
-                result);
+        run(() -> receipts.remove(database, listId), () -> readItems(listId, result), result);
     }
 
     public interface ReceiptPreview {
