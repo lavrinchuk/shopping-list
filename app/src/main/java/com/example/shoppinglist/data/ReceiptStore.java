@@ -131,7 +131,8 @@ public final class ReceiptStore {
         Matrix matrix = new Matrix();
         matrix.postRotate(rotation);
         Bitmap corrected =
-                Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+                Bitmap.createBitmap(
+                        bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
         if (corrected != bitmap) {
             bitmap.recycle();
         }
