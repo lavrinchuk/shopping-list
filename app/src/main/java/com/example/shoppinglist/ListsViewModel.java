@@ -12,6 +12,7 @@ import java.util.List;
 final class ListsViewModel extends ViewModel {
     static final String STATE_EDIT_ID = "editId";
     static final String STATE_EDIT_NAME = "editName";
+    static final String STATE_EDIT_TYPE = "editType";
     static final String STATE_EDITING = "editing";
     final MutableLiveData<Integer> changes = new MutableLiveData<>(0);
     final boolean archived;
@@ -45,7 +46,11 @@ final class ListsViewModel extends ViewModel {
         busy = true;
         notifyStateChanged();
         if (id == 0) {
-            repository.create(clean, createRepositoryCallback(true));
+            String type = saved.get(STATE_EDIT_TYPE);
+            repository.create(
+                    clean,
+                    ShoppingList.requireType(type == null ? ShoppingList.TYPE_SHOPPING : type),
+                    createRepositoryCallback(true));
         } else {
             repository.rename(id, clean, createRepositoryCallback(true));
         }
@@ -55,7 +60,7 @@ final class ListsViewModel extends ViewModel {
         if (busy) {
             return;
         }
-        if (list.total > list.purchased) {
+        if (!list.isWish() && list.total > list.purchased) {
             confirmation = list.id;
             notifyStateChanged();
         } else {

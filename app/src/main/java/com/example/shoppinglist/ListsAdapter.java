@@ -40,6 +40,7 @@ final class ListsAdapter extends ListAdapter<ShoppingList, ListsAdapter.Holder> 
                         return a.name.equals(b.name)
                                 && a.updatedAt == b.updatedAt
                                 && Objects.equals(a.archivedAt, b.archivedAt)
+                                && a.type.equals(b.type)
                                 && a.total == b.total
                                 && a.purchased == b.purchased;
                     }
@@ -59,6 +60,7 @@ final class ListsAdapter extends ListAdapter<ShoppingList, ListsAdapter.Holder> 
     public void onBindViewHolder(@NonNull Holder holder, int position) {
         ShoppingList list = getItem(position);
         holder.name.setText(list.name);
+        holder.type.setText(list.isWish() ? R.string.wish_list_type : R.string.shopping_list_type);
         holder.date.setText(
                 holder.itemView
                         .getContext()
@@ -74,7 +76,10 @@ final class ListsAdapter extends ListAdapter<ShoppingList, ListsAdapter.Holder> 
         holder.counts.setText(
                 holder.itemView
                         .getContext()
-                        .getString(R.string.item_counts, list.purchased, list.total));
+                        .getString(
+                                list.isWish() ? R.string.wish_item_counts : R.string.item_counts,
+                                list.purchased,
+                                list.total));
         holder.progress.setVisibility(list.total == 0 ? View.GONE : View.VISIBLE);
         holder.progress.setMax(Math.max(1, list.total));
         holder.progress.setProgressCompat(list.purchased, false);
@@ -85,13 +90,14 @@ final class ListsAdapter extends ListAdapter<ShoppingList, ListsAdapter.Holder> 
     }
 
     static final class Holder extends RecyclerView.ViewHolder {
-        final TextView name, date, counts;
+        final TextView name, type, date, counts;
         final View menu;
         final LinearProgressIndicator progress;
 
         Holder(View view) {
             super(view);
             name = view.findViewById(R.id.list_name);
+            type = view.findViewById(R.id.list_type);
             date = view.findViewById(R.id.list_date);
             counts = view.findViewById(R.id.list_counts);
             menu = view.findViewById(R.id.list_menu);

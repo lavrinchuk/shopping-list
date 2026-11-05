@@ -428,7 +428,12 @@ public class MainActivity extends AppCompatActivity {
         if (viewModel.list != null) {
             toolbar.setTitle(viewModel.list.name);
             boolean readOnly = viewModel.list.archivedAt != null;
-            toolbar.setSubtitle(readOnly ? getString(R.string.archive) : null);
+            toolbar.setSubtitle(
+                    readOnly
+                            ? getString(R.string.archive)
+                            : (viewModel.list.isWish()
+                                    ? getString(R.string.wish_list_type)
+                                    : null));
             findViewById(R.id.form_scroll).setVisibility(readOnly ? View.GONE : View.VISIBLE);
             adapter.setReadOnly(readOnly);
         }
