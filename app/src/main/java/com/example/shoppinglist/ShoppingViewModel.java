@@ -1,6 +1,5 @@
 package com.example.shoppinglist;
 
-import android.graphics.Bitmap;
 import android.net.Uri;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.SavedStateHandle;
