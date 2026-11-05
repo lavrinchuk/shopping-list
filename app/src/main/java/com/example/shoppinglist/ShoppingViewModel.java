@@ -25,6 +25,8 @@ public final class ShoppingViewModel extends ViewModel {
     boolean adding;
     boolean sharing;
     boolean receiptBusy;
+    boolean finishing;
+    boolean closeAfterFinish;
     String shareText;
     boolean readFailed;
     int error;
@@ -72,6 +74,50 @@ public final class ShoppingViewModel extends ViewModel {
 
     void updateItemUrl(ShoppingItem item, String url) {
         repository.setItemUrl(listId, item.id, url, createRepositoryCallback(false, 0));
+    }
+
+    void finishShopping(boolean confirmed, boolean deleteEmpty) {
+        if (finishing || list == null || list.archivedAt != null || list.isWish()) {
+            return;
+        }
+        finishing = true;
+        notifyStateChanged();
+        ShoppingRepository.Result callback =
+                new ShoppingRepository.Result() {
+                    @Override
+                    public void written() {
+                        if (!cleared) {
+                            closeAfterFinish = true;
+                            notifyStateChanged();
+                        }
+                    }
+
+                    @Override
+                    public void loaded(List<ShoppingItem> ignored) {}
+
+                    @Override
+                    public void failed(boolean reading) {
+                        if (!cleared) {
+                            finishing = false;
+                            error = R.string.write_error;
+                            notifyStateChanged();
+                        }
+                    }
+
+                    @Override
+                    public void confirmationRequired() {
+                        if (!cleared) {
+                            finishing = false;
+                            error = R.string.finish_confirmation_needed;
+                            notifyStateChanged();
+                        }
+                    }
+                };
+        if (deleteEmpty) {
+            repository.deleteEmptyShoppingList(listId, callback);
+        } else {
+            repository.completeShoppingList(listId, confirmed, callback);
+        }
     }
 
     void attachReceipt(Uri photo) {

@@ -50,6 +50,9 @@
     <string name="new_list">Новий список</string>
     <string name="rename_list">Перейменувати</string>
     <string name="finish_shopping">Завершити покупки</string>
+    <string name="delete_empty_list">Видалити список</string>
+    <string name="delete_empty_list_confirmation">Список порожній. Видалити його назавжди? Цю дію не можна скасувати.</string>
+    <string name="finish_confirmation_needed">Список змінився. Повтори завершення покупок.</string>
     <string name="restore_list">Відновити</string>
     <string name="cancel">Скасувати</string>
     <string name="save">Зберегти</string>

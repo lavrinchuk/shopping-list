@@ -99,6 +99,7 @@ public class MainActivity extends AppCompatActivity {
         observeLifecycleForSharing();
         configureItemsList();
         configureItemForm();
+        configureFinishAction();
         viewModel.changes.observe(this, ignored -> render());
     }
 
@@ -385,6 +386,35 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void configureFinishAction() {
+        findViewById(R.id.finish_list).setOnClickListener(view -> {
+            if (viewModel.list == null || viewModel.finishing) {
+                return;
+            }
+            if (viewModel.list.total == 0) {
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle(R.string.delete_empty_list)
+                        .setMessage(R.string.delete_empty_list_confirmation)
+                        .setNegativeButton(R.string.cancel, null)
+                        .setPositiveButton(
+                                R.string.delete_empty_list,
+                                (dialog, which) -> viewModel.finishShopping(false, true))
+                        .show();
+            } else if (viewModel.list.purchased < viewModel.list.total) {
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle(R.string.finish_shopping)
+                        .setMessage(R.string.incomplete_confirmation)
+                        .setNegativeButton(R.string.cancel, null)
+                        .setPositiveButton(
+                                R.string.finish_shopping,
+                                (dialog, which) -> viewModel.finishShopping(true, false))
+                        .show();
+            } else {
+                viewModel.finishShopping(false, false);
+            }
+        });
+    }
+
     private void configureItemForm() {
         EditText name = findViewById(R.id.name);
         EditText quantity = findViewById(R.id.quantity);
@@ -486,6 +516,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void render() {
+        if (viewModel.closeAfterFinish) {
+            finish();
+            return;
+        }
         EditText name = findViewById(R.id.name);
         EditText quantity = findViewById(R.id.quantity);
         renderDraft(name, quantity);
@@ -524,6 +558,15 @@ public class MainActivity extends AppCompatActivity {
                                     : null));
             findViewById(R.id.form_scroll).setVisibility(readOnly ? View.GONE : View.VISIBLE);
             adapter.setReadOnly(readOnly);
+            com.google.android.material.button.MaterialButton finishButton =
+                    findViewById(R.id.finish_list);
+            finishButton.setVisibility(
+                    !readOnly && !viewModel.list.isWish() ? View.VISIBLE : View.GONE);
+            finishButton.setText(
+                    viewModel.list.total == 0
+                            ? R.string.delete_empty_list
+                            : R.string.finish_shopping);
+            finishButton.setEnabled(!viewModel.finishing && !viewModel.adding);
         }
         toolbar.getMenu().findItem(R.id.share_list).setEnabled(!viewModel.sharing);
         android.view.MenuItem receipt = toolbar.getMenu().findItem(R.id.receipt_actions);
@@ -544,6 +587,9 @@ public class MainActivity extends AppCompatActivity {
     private void showPendingError() {
         int error = viewModel.error;
         viewModel.consumeError();
+        if (error == R.string.finish_confirmation_needed) {
+            Toast.makeText(this, error, Toast.LENGTH_LONG).show();
+        }
         if (error == R.string.receipt_error) {
             Toast.makeText(this, error, Toast.LENGTH_LONG).show();
         }

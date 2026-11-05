@@ -95,6 +95,8 @@ public class ListsNavigationTest {
         onView(withId(R.id.create_list)).perform(click());
         onView(withId(R.id.list_name_input)).perform(replaceText(name), closeSoftKeyboard());
         onView(withText(R.string.save)).perform(click());
+        onView(withId(R.id.heading)).check(matches(isDisplayed()));
+        back();
         onView(withText(name)).check(matches(isDisplayed()));
     }
 
@@ -116,7 +118,6 @@ public class ListsNavigationTest {
         home.recreate();
         onView(withId(R.id.list_name_input)).check(matches(withText("Сільпо")));
         onView(withText(R.string.save)).perform(click());
-        onView(withText("Сільпо")).perform(click());
         onView(withId(R.id.name)).perform(replaceText("Молоко"), closeSoftKeyboard());
         onView(withId(R.id.add)).perform(click());
         onView(withText("Молоко")).check(matches(isDisplayed()));
@@ -152,6 +153,7 @@ public class ListsNavigationTest {
         onView(withId(R.id.list_type_input)).perform(click());
         onData(anything()).atPosition(1).perform(click());
         onView(withText(R.string.save)).perform(click());
+        back();
         onView(withText("Мої бажання")).check(matches(isDisplayed()));
         home.onActivity(activity -> {
             ShoppingList list =

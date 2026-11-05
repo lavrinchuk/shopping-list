@@ -484,6 +484,24 @@ public class ShoppingDatabaseTest {
         assertEquals(5, db.getReadableDatabase().getVersion());
     }
 
+    @Test
+    public void onlyEmptyActiveShoppingListCanBeDeleted() {
+        long empty = db.createList("Порожній");
+        long filled = db.createList("Непорожній");
+        long wish = db.createList("Бажання", ShoppingList.TYPE_WISH);
+        long archived = db.createList("Архівний");
+        db.add(filled, "Хліб", "1");
+        db.archive(archived, false);
+        assertRejected(() -> db.deleteEmptyShoppingList(filled));
+        assertRejected(() -> db.deleteEmptyShoppingList(wish));
+        assertRejected(() -> db.deleteEmptyShoppingList(archived));
+        assertEquals(4, db.getLists(false).size() + db.getLists(true).size());
+        db.deleteEmptyShoppingList(empty);
+        assertRejected(() -> db.getList(empty));
+        assertEquals(3, db.getLists(false).size() + db.getLists(true).size());
+        assertEquals(1, db.getList(filled).total);
+    }
+
     private void assertRejected(Runnable action) {
         try {
             action.run();
