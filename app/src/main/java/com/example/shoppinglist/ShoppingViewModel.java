@@ -91,7 +91,7 @@ public final class ShoppingViewModel extends ViewModel {
     }
 
     void finishShopping(boolean confirmed, boolean deleteEmpty) {
-        if (finishing || list == null || list.archivedAt != null || list.isWish()) {
+        if (finishing || receiptOfferPending || list == null || list.archivedAt != null || list.isWish()) {
             return;
         }
         finishing = true;
