@@ -1,9 +1,8 @@
 package com.example.shoppinglist;
 
-import com.example.shoppinglist.model.ShoppingItem;
-
 import static org.junit.Assert.*;
 
+import com.example.shoppinglist.model.ShoppingItem;
 import org.junit.Test;
 
 public class ShoppingItemTest {

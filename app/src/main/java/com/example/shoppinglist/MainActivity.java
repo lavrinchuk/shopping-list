@@ -1,9 +1,5 @@
 package com.example.shoppinglist;
 
-import com.example.shoppinglist.data.ShoppingRepository;
-import com.example.shoppinglist.viewModel.ShoppingItem;
-import com.example.shoppinglist.viewModel.ShoppingList;
-
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -25,6 +21,8 @@ import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.example.shoppinglist.data.ShoppingRepository;
+import com.example.shoppinglist.model.ShoppingItem;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputLayout;
 
@@ -132,7 +130,8 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onTextChanged(CharSequence s, int start, int before, int count) {
                         if (!rendering) {
-                            viewModel.draft(name.getText().toString(), quantity.getText().toString());
+                            viewModel.draft(
+                                    name.getText().toString(), quantity.getText().toString());
                             if (!name.getText().toString().trim().isEmpty()) {
                                 nameLayout.setError(null);
                             }
