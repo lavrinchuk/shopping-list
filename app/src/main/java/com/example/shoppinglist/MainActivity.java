@@ -29,6 +29,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputLayout;
 
 public class MainActivity extends AppCompatActivity {
+    static final String EXTRA_LIST_ID = "listId";
     ShoppingViewModel viewModel;
     ShoppingAdapter adapter;
     private Snackbar retry;
@@ -59,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
                     view.setPadding(bars.left, bars.top, bars.right, bars.bottom);
                     return insets;
                 });
-        long listId = getIntent().getLongExtra("listId", -1);
+        long listId = getIntent().getLongExtra(EXTRA_LIST_ID, -1);
         if (listId <= 0) {
             startActivity(new android.content.Intent(this, ListsActivity.class));
             finish();

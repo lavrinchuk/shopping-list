@@ -29,6 +29,7 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
 public class ListsActivity extends AppCompatActivity {
+    private static final String EXTRA_ARCHIVED = "archived";
     ListsViewModel viewModel;
     private ListsAdapter adapter;
     private AlertDialog nameDialog;
@@ -49,7 +50,7 @@ public class ListsActivity extends AppCompatActivity {
                     view.setPadding(bars.left, bars.top, bars.right, bars.bottom);
                     return insets;
                 });
-        boolean archived = getIntent().getBooleanExtra("archived", false);
+        boolean archived = getIntent().getBooleanExtra(EXTRA_ARCHIVED, false);
         ShoppingRepository repository = ((ShoppingApplication) getApplication()).repository();
         viewModel =
                 new ViewModelProvider(
@@ -77,7 +78,7 @@ public class ListsActivity extends AppCompatActivity {
         findViewById(R.id.open_archive)
                 .setOnClickListener(view ->
                         startActivity(
-                                new Intent(this, ListsActivity.class).putExtra("archived", true)));
+                                new Intent(this, ListsActivity.class).putExtra(EXTRA_ARCHIVED, true)));
         findViewById(R.id.create_list).setVisibility(archived ? View.GONE : View.VISIBLE);
         findViewById(R.id.create_list).setOnClickListener(view -> edit(null));
         findViewById(R.id.retry_lists).setOnClickListener(view -> viewModel.reload());
@@ -88,7 +89,7 @@ public class ListsActivity extends AppCompatActivity {
                             public void open(ShoppingList list) {
                                 startActivity(
                                         new Intent(ListsActivity.this, MainActivity.class)
-                                                .putExtra("listId", list.id));
+                                                .putExtra(MainActivity.EXTRA_LIST_ID, list.id));
                             }
 
                             @Override
@@ -114,9 +115,9 @@ public class ListsActivity extends AppCompatActivity {
         if (viewModel.busy) {
             return;
         }
-        viewModel.saved.set("editId", list == null ? 0L : list.id);
-        viewModel.saved.set("editName", list == null ? "" : list.name);
-        viewModel.saved.set("editing", true);
+        viewModel.saved.set(ListsViewModel.STATE_EDIT_ID, list == null ? 0L : list.id);
+        viewModel.saved.set(ListsViewModel.STATE_EDIT_NAME, list == null ? "" : list.name);
+        viewModel.saved.set(ListsViewModel.STATE_EDITING, true);
         viewModel.publish();
     }
 
@@ -164,7 +165,7 @@ public class ListsActivity extends AppCompatActivity {
             Toast.makeText(this, viewModel.error, Toast.LENGTH_LONG).show();
             viewModel.error = 0;
         }
-        boolean editing = Boolean.TRUE.equals(viewModel.saved.get("editing"));
+        boolean editing = Boolean.TRUE.equals(viewModel.saved.get(ListsViewModel.STATE_EDITING));
         if (editing && nameDialog == null) {
             showNameDialog();
         }
@@ -202,7 +203,7 @@ public class ListsActivity extends AppCompatActivity {
         input.setSingleLine(true);
         input.setId(R.id.list_name_input);
         field.addView(input);
-        input.setText((String) viewModel.saved.get("editName"));
+        input.setText((String) viewModel.saved.get(ListsViewModel.STATE_EDIT_NAME));
         input.addTextChangedListener(
                 new TextWatcher() {
                     @Override
@@ -211,14 +212,14 @@ public class ListsActivity extends AppCompatActivity {
 
                     @Override
                     public void onTextChanged(CharSequence s, int start, int before, int count) {
-                        viewModel.saved.set("editName", s.toString());
+                        viewModel.saved.set(ListsViewModel.STATE_EDIT_NAME, s.toString());
                         field.setError(null);
                     }
 
                     @Override
                     public void afterTextChanged(Editable s) {}
                 });
-        Long editId = viewModel.saved.get("editId");
+        Long editId = viewModel.saved.get(ListsViewModel.STATE_EDIT_ID);
         nameDialog =
                 new MaterialAlertDialogBuilder(this)
                         .setTitle(
@@ -228,10 +229,10 @@ public class ListsActivity extends AppCompatActivity {
                         .setView(field)
                         .setNegativeButton(
                                 R.string.cancel,
-                                (dialog, which) -> viewModel.saved.set("editing", false))
+                                (dialog, which) -> viewModel.saved.set(ListsViewModel.STATE_EDITING, false))
                         .setPositiveButton(R.string.save, null)
                         .create();
-        nameDialog.setOnCancelListener(dialog -> viewModel.saved.set("editing", false));
+        nameDialog.setOnCancelListener(dialog -> viewModel.saved.set(ListsViewModel.STATE_EDITING, false));
         nameDialog.setOnDismissListener(dialog -> nameDialog = null);
         nameDialog.setOnShowListener(dialog ->
                 nameDialog
