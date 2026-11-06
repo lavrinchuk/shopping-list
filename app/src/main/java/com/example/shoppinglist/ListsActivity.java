@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -26,6 +27,8 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.shoppinglist.data.ShoppingRepository;
+import com.example.shoppinglist.data.ShoppingTemplate;
+import com.google.android.material.button.MaterialButton;
 import com.example.shoppinglist.model.ShoppingList;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -105,6 +108,8 @@ public class ListsActivity extends AppCompatActivity {
                                         .putExtra(EXTRA_ARCHIVED, true)));
         findViewById(R.id.create_list).setVisibility(archived ? View.GONE : View.VISIBLE);
         findViewById(R.id.create_list).setOnClickListener(view -> edit(null));
+        findViewById(R.id.open_templates).setVisibility(archived ? View.GONE : View.VISIBLE);
+        findViewById(R.id.open_templates).setOnClickListener(view -> showTemplates());
         findViewById(R.id.retry_lists).setOnClickListener(view -> viewModel.reload());
     }
 
@@ -182,10 +187,121 @@ public class ListsActivity extends AppCompatActivity {
                         return true;
                     });
         }
+        if (!list.isWish() && list.total > 0) {
+            menu.getMenu()
+                    .add(R.string.save_as_template)
+                    .setOnMenuItemClickListener(item -> {
+                        showSaveTemplate(list);
+                        return true;
+                    });
+        }
         for (int i = 0; i < menu.getMenu().size(); i++) {
             menu.getMenu().getItem(i).setEnabled(!viewModel.busy);
         }
         menu.show();
+    }
+
+    private void showSaveTemplate(ShoppingList source) {
+        if (viewModel.busy) {
+            return;
+        }
+        TextInputLayout field = new TextInputLayout(this);
+        int pad = Math.round(24 * getResources().getDisplayMetrics().density);
+        field.setPadding(pad, 0, pad, 0);
+        field.setHint(getString(R.string.template_name_hint));
+        TextInputEditText input = new TextInputEditText(field.getContext());
+        input.setId(R.id.template_name_input);
+        input.setSingleLine(true);
+        input.setText(source.name);
+        field.addView(input);
+        AlertDialog dialog =
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle(R.string.save_as_template)
+                        .setView(field)
+                        .setNegativeButton(R.string.cancel, null)
+                        .setPositiveButton(R.string.save, null)
+                        .create();
+        dialog.setOnShowListener(ignored ->
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                        .setOnClickListener(button -> {
+                            try {
+                                viewModel.saveTemplate(
+                                        source,
+                                        input.getText() == null
+                                                ? ""
+                                                : input.getText().toString());
+                                dialog.dismiss();
+                            } catch (IllegalArgumentException error) {
+                                field.setError(getString(R.string.list_name_required));
+                            }
+                        }));
+        dialog.show();
+    }
+
+    private void showTemplates() {
+        if (viewModel.busy || viewModel.archived) {
+            return;
+        }
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        int pad = Math.round(12 * getResources().getDisplayMetrics().density);
+        content.setPadding(pad, pad, pad, pad);
+        AlertDialog dialog =
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle(R.string.templates_title)
+                        .setView(content)
+                        .setNegativeButton(R.string.back, null)
+                        .create();
+        if (viewModel.templates.isEmpty()) {
+            TextView empty = new TextView(this);
+            empty.setText(R.string.templates_empty);
+            content.addView(empty);
+        }
+        for (ShoppingTemplate template : viewModel.templates) {
+            TextView title = new TextView(this);
+            title.setText(getString(R.string.template_details, template.name, template.itemCount));
+            title.setTextAppearance(
+                    com.google.android.material.R.style.TextAppearance_Material3_TitleMedium);
+            content.addView(title);
+            LinearLayout buttons = new LinearLayout(this);
+            MaterialButton create = new MaterialButton(this);
+            create.setText(R.string.create_from_template);
+            buttons.addView(
+                    create,
+                    new LinearLayout.LayoutParams(0, pad * 5, 1f));
+            MaterialButton delete = new MaterialButton(this);
+            delete.setText(R.string.template_delete);
+            buttons.addView(
+                    delete,
+                    new LinearLayout.LayoutParams(0, pad * 5, 1f));
+            content.addView(buttons);
+            create.setOnClickListener(view -> {
+                dialog.dismiss();
+                viewModel.createFromTemplate(template.id);
+            });
+            delete.setOnClickListener(view ->
+                    new MaterialAlertDialogBuilder(this)
+                            .setMessage(getString(R.string.template_delete_confirm, template.name))
+                            .setNegativeButton(R.string.cancel, null)
+                            .setPositiveButton(
+                                    R.string.template_delete,
+                                    (confirmation, which) -> {
+                                        dialog.dismiss();
+                                        viewModel.deleteTemplate(template.id);
+                                    })
+                            .show());
+        }
+        ScrollView scroll = new ScrollView(this);
+        content.setLayoutParams(
+                new ScrollView.LayoutParams(
+                        ScrollView.LayoutParams.MATCH_PARENT,
+                        ScrollView.LayoutParams.WRAP_CONTENT));
+        // Keep the dialog actions outside the scrollable template list.
+        if (content.getParent() == null) {
+            scroll.addView(content);
+            dialog.setView(scroll);
+        }
+        dialog.show();
     }
 
     private void confirmEmptyListDeletion(long id) {
@@ -214,6 +330,9 @@ public class ListsActivity extends AppCompatActivity {
                             .putExtra(MainActivity.EXTRA_LIST_ID, created));
         }
         renderListState();
+        if (viewModel.consumeTemplateSaved()) {
+            Toast.makeText(this, R.string.template_saved, Toast.LENGTH_SHORT).show();
+        }
         showErrorIfNeeded();
         synchronizeNameDialog();
         showArchiveConfirmationIfNeeded();
@@ -222,6 +341,7 @@ public class ListsActivity extends AppCompatActivity {
     private void renderListState() {
         adapter.submitList(viewModel.lists);
         findViewById(R.id.create_list).setEnabled(!viewModel.busy);
+        findViewById(R.id.open_templates).setEnabled(!viewModel.busy);
         findViewById(R.id.lists_loading)
                 .setVisibility(viewModel.loading ? View.VISIBLE : View.GONE);
         findViewById(R.id.retry_lists)
