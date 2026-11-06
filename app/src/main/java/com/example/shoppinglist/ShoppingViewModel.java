@@ -6,6 +6,7 @@ import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
 import com.example.shoppinglist.data.ReceiptAttachment;
 import com.example.shoppinglist.data.ShoppingRepository;
+import com.example.shoppinglist.data.StoreLink;
 import com.example.shoppinglist.model.ShoppingItem;
 import com.example.shoppinglist.model.ShoppingList;
 import com.example.shoppinglist.share.ShoppingListTextFormatter;
@@ -23,6 +24,7 @@ public final class ShoppingViewModel extends ViewModel {
     ShoppingList list;
     List<ShoppingItem> items = new ArrayList<>();
     List<ReceiptAttachment> receiptAttachments = new ArrayList<>();
+    List<StoreLink> storeLinks = new ArrayList<>();
     String name = "";
     String quantity = "";
     boolean adding;
@@ -82,6 +84,39 @@ public final class ShoppingViewModel extends ViewModel {
             return;
         }
         repository.setItemBarcode(listId, item.id, barcode, createRepositoryCallback(false, 0));
+    }
+
+    void addStoreLink(ShoppingItem item, String storeName, String url) {
+        if (list == null || list.archivedAt != null) {
+            return;
+        }
+        repository.addStoreLink(
+                listId, item.id, storeName, url, createRepositoryCallback(false, 0));
+    }
+
+    void updateStoreLink(StoreLink link, String storeName, String url) {
+        if (list == null || list.archivedAt != null) {
+            return;
+        }
+        repository.updateStoreLink(
+                listId, link.id, storeName, url, createRepositoryCallback(false, 0));
+    }
+
+    void deleteStoreLink(StoreLink link) {
+        if (list == null || list.archivedAt != null) {
+            return;
+        }
+        repository.deleteStoreLink(listId, link.id, createRepositoryCallback(false, 0));
+    }
+
+    List<StoreLink> linksFor(ShoppingItem item) {
+        List<StoreLink> matches = new ArrayList<>();
+        for (StoreLink link : storeLinks) {
+            if (link.itemId == item.id) {
+                matches.add(link);
+            }
+        }
+        return matches;
     }
 
     void updateItemUrl(ShoppingItem item, String url) {
@@ -226,6 +261,13 @@ public final class ShoppingViewModel extends ViewModel {
             public void receiptsLoaded(List<ReceiptAttachment> attachments) {
                 if (!cleared) {
                     receiptAttachments = attachments;
+                }
+            }
+
+            @Override
+            public void storeLinksLoaded(List<StoreLink> links) {
+                if (!cleared) {
+                    storeLinks = links;
                 }
             }
 
