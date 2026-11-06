@@ -25,13 +25,13 @@ public final class ProductSearchUrl {
         return encodeQuery(query);
     }
 
-    /** Web search only: a valid barcode does not guarantee a catalog match. */
+    /** Opens the verified GS1 Ukraine GTIN form; the caller copies the code for manual entry. */
     public static String forBarcode(String barcode) {
         String code = ProductBarcode.normalize(barcode);
         if (code == null) {
             throw new IllegalArgumentException("Barcode is required");
         }
-        return encodeQuery("\"" + code + "\" товар");
+        return "https://gepir.gs1ua.org/search/gtin";
     }
 
     private static String encodeQuery(String query) {
