@@ -4,10 +4,15 @@
     <string name="quantity_hint">Кількість</string>
     <string name="add_item">Додати товар</string>
     <string name="voice_add_item">Продиктувати назву товару</string>
-    <string name="voice_prompt">Назви один товар українською</string>
+    <string name="voice_prompt">Назви товари українською, розділяючи їх паузами або словами з комами</string>
     <string name="voice_confirmation_title">Розпізнано назву товару</string>
     <string name="voice_use_result">Використати</string>
     <string name="voice_unavailable">Розпізнавання мовлення недоступне. Перевір наявність мовного сервісу на пристрої.</string>
+    <string name="voice_batch_title">Розпізнано товарів: %1$d</string>
+    <string name="voice_batch_instructions">Перевір назви перед додаванням. Один товар на рядок. Можна виправити або видалити рядок.</string>
+    <string name="voice_batch_hint">Товари</string>
+    <string name="voice_batch_add">Додати товари</string>
+    <string name="voice_batch_invalid">Вкажи від 1 до 20 непорожніх назв товарів.</string>
     <string name="voice_no_result">Не вдалося розпізнати назву товару. Спробуй ще раз.</string>
     <string name="barcode_label">Штрихкод</string>
     <string name="barcode_scan">Сканувати штрихкод</string>
