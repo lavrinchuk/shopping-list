@@ -16,6 +16,13 @@ import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.TextView;
+import com.google.android.material.button.MaterialButton;
+import com.example.shoppinglist.data.ReceiptAttachment;
+import java.util.Collections;
+import java.util.List;
 import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
@@ -61,10 +68,18 @@ public class MainActivity extends AppCompatActivity {
     private androidx.appcompat.app.AlertDialog receiptOfferDialog;
     private final ActivityResultLauncher<PickVisualMediaRequest> receiptPicker =
             registerForActivityResult(
-                    new ActivityResultContracts.PickVisualMedia(),
+                    new ActivityResultContracts.PickMultipleVisualMedia(10),
+                    uris -> {
+                        if (uris != null && !uris.isEmpty() && viewModel != null) {
+                            viewModel.attachReceipts(uris);
+                        }
+                    });
+    private final ActivityResultLauncher<String[]> receiptPdfPicker =
+            registerForActivityResult(
+                    new ActivityResultContracts.OpenDocument(),
                     uri -> {
                         if (uri != null && viewModel != null) {
-                            viewModel.attachReceipt(uri);
+                            viewModel.attachReceipts(Collections.singletonList(uri));
                         }
                     });
     private final ActivityResultLauncher<Intent> speechRecognition =
@@ -159,18 +174,35 @@ public class MainActivity extends AppCompatActivity {
         if (viewModel.list == null || viewModel.list.archivedAt == null || viewModel.receiptBusy) {
             return;
         }
-        receiptPicker.launch(
-                new PickVisualMediaRequest.Builder()
-                        .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
-                        .build());
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.receipt_add_title)
+                .setItems(
+                        new String[] {
+                            getString(R.string.receipt_choose_photos),
+                            getString(R.string.receipt_choose_pdf)
+                        },
+                        (dialog, which) -> {
+                            if (which == 0) {
+                                receiptPicker.launch(
+                                        new PickVisualMediaRequest.Builder()
+                                                .setMediaType(
+                                                        ActivityResultContracts.PickVisualMedia
+                                                                .ImageOnly.INSTANCE)
+                                                .build());
+                            } else {
+                                receiptPdfPicker.launch(new String[] {"application/pdf"});
+                            }
+                        })
+                .show();
     }
 
-    private void confirmReceiptRemoval() {
+    private void confirmReceiptRemoval(ReceiptAttachment receipt) {
         new MaterialAlertDialogBuilder(this)
                 .setMessage(R.string.receipt_remove_confirmation)
                 .setNegativeButton(R.string.cancel, null)
                 .setPositiveButton(
-                        R.string.receipt_remove, (dialog, which) -> viewModel.removeReceipt())
+                        R.string.receipt_remove,
+                        (dialog, which) -> viewModel.removeReceipt(receipt))
                 .show();
     }
 
@@ -207,42 +239,135 @@ public class MainActivity extends AppCompatActivity {
         receiptOfferDialog.show();
     }
 
-    private void showReceiptPreview() {
+    private int receiptPixels(float dp) {
+        return Math.round(dp * getResources().getDisplayMetrics().density);
+    }
+
+    private void showReceiptGallery() {
+        List<ReceiptAttachment> receipts = viewModel.receiptAttachments;
+        if (receipts.isEmpty()) {
+            openReceiptPicker();
+            return;
+        }
+        if (receipts.size() == 1) {
+            showReceiptPreview(receipts.get(0));
+            return;
+        }
+        LinearLayout gallery = new LinearLayout(this);
+        gallery.setOrientation(LinearLayout.VERTICAL);
+        gallery.setPadding(receiptPixels(16), receiptPixels(8), receiptPixels(16), 0);
+        for (int i = 0; i < receipts.size(); i++) {
+            ReceiptAttachment attachment = receipts.get(i);
+            LinearLayout entry = new LinearLayout(this);
+            entry.setOrientation(LinearLayout.VERTICAL);
+            TextView title = new TextView(this);
+            title.setText(
+                    getString(
+                            attachment.isPdf()
+                                    ? R.string.receipt_pdf_number
+                                    : R.string.receipt_photo_number,
+                            i + 1));
+            entry.addView(title);
+            ImageView thumbnail = new ImageView(this);
+            thumbnail.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            thumbnail.setContentDescription(title.getText());
+            entry.addView(
+                    thumbnail,
+                    new LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT, receiptPixels(108)));
+            MaterialButton open = new MaterialButton(this);
+            open.setText(R.string.receipt_view);
+            entry.addView(open);
+            gallery.addView(entry);
+            viewModel.previewReceipt(
+                    attachment,
+                    bitmap -> {
+                        if (!isDestroyed() && thumbnail.isAttachedToWindow() && bitmap != null) {
+                            thumbnail.setImageBitmap(bitmap);
+                        } else if (bitmap != null) {
+                            bitmap.recycle();
+                        }
+                    });
+        }
+        ScrollView scroll = new ScrollView(this);
+        scroll.addView(gallery);
+        androidx.appcompat.app.AlertDialog dialog =
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle(R.string.receipt_gallery_title)
+                        .setView(scroll)
+                        .setNegativeButton(R.string.back, null)
+                        .setPositiveButton(R.string.receipt_add_more, (d, which) -> openReceiptPicker())
+                        .create();
+        for (int i = 0; i < receipts.size(); i++) {
+            ReceiptAttachment current = receipts.get(i);
+            LinearLayout entry = (LinearLayout) gallery.getChildAt(i);
+            MaterialButton open = (MaterialButton) entry.getChildAt(2);
+            open.setOnClickListener(view -> {
+                dialog.dismiss();
+                showReceiptPreview(current);
+            });
+        }
+        dialog.show();
+    }
+
+    private void showReceiptPreview(ReceiptAttachment receipt) {
         ImageView image = new ImageView(this);
-        int padding = Math.round(16 * getResources().getDisplayMetrics().density);
+        int padding = receiptPixels(16);
         image.setPadding(padding, padding, padding, padding);
         image.setAdjustViewBounds(true);
         image.setScaleType(ImageView.ScaleType.FIT_CENTER);
         androidx.appcompat.app.AlertDialog dialog =
                 new MaterialAlertDialogBuilder(this)
-                        .setTitle(R.string.receipt_title)
+                        .setTitle(receipt.isPdf() ? R.string.receipt_pdf_preview : R.string.receipt_title)
                         .setView(image)
                         .setPositiveButton(R.string.back, null)
                         .setNeutralButton(
-                                R.string.receipt_replace, (ignored, which) -> openReceiptPicker())
+                                receipt.isPdf() ? R.string.receipt_open_pdf : R.string.receipt_add_more,
+                                (ignored, which) -> {
+                                    if (receipt.isPdf()) {
+                                        openReceiptPdf(receipt);
+                                    } else {
+                                        openReceiptPicker();
+                                    }
+                                })
                         .setNegativeButton(
                                 R.string.receipt_remove,
-                                (ignored, which) -> confirmReceiptRemoval())
+                                (ignored, which) -> confirmReceiptRemoval(receipt))
                         .create();
         dialog.show();
-        viewModel.previewReceipt(bitmap -> displayReceiptPreview(dialog, image, bitmap));
+        viewModel.previewReceipt(
+                receipt,
+                bitmap -> {
+                    if (!dialog.isShowing() || isDestroyed()) {
+                        if (bitmap != null) {
+                            bitmap.recycle();
+                        }
+                    } else if (bitmap != null) {
+                        image.setImageBitmap(bitmap);
+                    } else {
+                        Toast.makeText(this, R.string.receipt_unavailable, Toast.LENGTH_LONG).show();
+                        dialog.dismiss();
+                    }
+                });
     }
 
-    private void displayReceiptPreview(
-            androidx.appcompat.app.AlertDialog dialog,
-            ImageView image,
-            android.graphics.Bitmap bitmap) {
-        if (!dialog.isShowing()) {
-            if (bitmap != null) {
-                bitmap.recycle();
-            }
+    private void openReceiptPdf(ReceiptAttachment receipt) {
+        if (!receipt.isPdf() || !receipt.fileName.matches("[0-9a-f-]{36}\\\\.pdf")) {
             return;
         }
-        if (bitmap != null) {
-            image.setImageBitmap(bitmap);
-        } else {
-            Toast.makeText(this, R.string.receipt_unavailable, Toast.LENGTH_LONG).show();
-            dialog.dismiss();
+        java.io.File file =
+                new java.io.File(new java.io.File(getFilesDir(), "receipts"), receipt.fileName);
+        Uri uri =
+                androidx.core.content.FileProvider.getUriForFile(
+                        this, getPackageName() + ".receipts", file);
+        Intent intent =
+                new Intent(Intent.ACTION_VIEW)
+                        .setDataAndType(uri, "application/pdf")
+                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        try {
+            startActivity(intent);
+        } catch (ActivityNotFoundException | SecurityException error) {
+            Toast.makeText(this, R.string.receipt_pdf_unavailable, Toast.LENGTH_LONG).show();
         }
     }
 
@@ -561,11 +686,7 @@ public class MainActivity extends AppCompatActivity {
         if (viewModel.list == null || viewModel.receiptBusy) {
             return;
         }
-        if (viewModel.list.receiptFile == null) {
-            openReceiptPicker();
-        } else {
-            showReceiptPreview();
-        }
+        showReceiptGallery();
     }
 
     private void onFinishClicked() {
@@ -752,10 +873,11 @@ public class MainActivity extends AppCompatActivity {
             com.google.android.material.button.MaterialButton receiptButton =
                     findViewById(R.id.receipt_bottom_action);
             receiptButton.setVisibility(readOnly ? View.VISIBLE : View.GONE);
+            int receiptCount = viewModel.receiptAttachments.size();
             receiptButton.setText(
-                    viewModel.list.receiptFile == null
-                            ? R.string.receipt_attach
-                            : R.string.receipt_view_button);
+                    receiptCount == 0
+                            ? getString(R.string.receipt_attach)
+                            : getString(R.string.receipt_count_button, receiptCount));
             receiptButton.setEnabled(!viewModel.receiptBusy);
         }
         toolbar.getMenu().findItem(R.id.share_list).setEnabled(!viewModel.sharing);
