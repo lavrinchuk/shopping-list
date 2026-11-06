@@ -375,7 +375,7 @@ public class ShoppingDatabaseTest {
         assertEquals("Молоко", item.name);
         assertEquals("2 л", item.quantity);
         assertNull(item.url);
-        assertEquals(6, db.getReadableDatabase().getVersion());
+        assertEquals(7, db.getReadableDatabase().getVersion());
     }
 
     @Test
@@ -389,7 +389,7 @@ public class ShoppingDatabaseTest {
         long itemId = db.getItems(list.id).get(0).id;
         db.setItemUrl(list.id, itemId, "https://example.com/bread");
         assertEquals("https://example.com/bread", db.getItems(list.id).get(0).url);
-        assertEquals(6, db.getReadableDatabase().getVersion());
+        assertEquals(7, db.getReadableDatabase().getVersion());
     }
 
     @Test
@@ -439,7 +439,7 @@ public class ShoppingDatabaseTest {
         assertEquals(33L, item.id);
         assertEquals("https://example.com/coffee", item.url);
         assertTrue(item.purchased);
-        assertEquals(6, db.getReadableDatabase().getVersion());
+        assertEquals(7, db.getReadableDatabase().getVersion());
     }
 
     @Test
@@ -481,7 +481,7 @@ public class ShoppingDatabaseTest {
         assertEquals(Long.valueOf(120L), db.getList(21).archivedAt);
         assertEquals("https://example.com/coffee", db.getItems(21).get(0).url);
         assertEquals(72L, db.getItems(21).get(0).id);
-        assertEquals(6, db.getReadableDatabase().getVersion());
+        assertEquals(7, db.getReadableDatabase().getVersion());
     }
 
     @Test
@@ -537,13 +537,64 @@ public class ShoppingDatabaseTest {
             old.setVersion(5);
         }
         db = new ShoppingDatabase(context, file);
-        assertEquals(6, db.getReadableDatabase().getVersion());
+        assertEquals(7, db.getReadableDatabase().getVersion());
         assertEquals("receipt.img", db.getList(1).receiptFile);
         ShoppingItem item = db.getItems(1).get(0);
         assertEquals(3L, item.id);
         assertEquals("https://example.com/item", item.url);
         assertNull(item.barcode);
         assertTrue(item.purchased);
+    }
+
+    @Test
+    public void upgradeV6PreservesExistingReceiptAndMakesItFirstAttachment() {
+        db.close();
+        try (SQLiteDatabase old = context.openOrCreateDatabase(file, 0, null)) {
+            old.execSQL(
+                    "CREATE TABLE shopping_lists (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL, archivedAt INTEGER, type TEXT NOT NULL DEFAULT 'shopping', receiptFile TEXT)");
+            old.execSQL(
+                    "CREATE TABLE items (id INTEGER PRIMARY KEY AUTOINCREMENT, listId INTEGER NOT NULL REFERENCES shopping_lists(id), name TEXT NOT NULL, quantity TEXT NOT NULL, purchased INTEGER NOT NULL, url TEXT, barcode TEXT)");
+            old.execSQL(
+                    "INSERT INTO shopping_lists VALUES (42, 'Старий чек', 10, 20, 20, 'shopping', 'existing.img')");
+            old.execSQL(
+                    "INSERT INTO items VALUES (12, 42, 'Кава', '1', 1, NULL, '012345678905')");
+            old.setVersion(6);
+        }
+        db = new ShoppingDatabase(context, file);
+        assertEquals(7, db.getReadableDatabase().getVersion());
+        assertEquals("existing.img", db.getList(42).receiptFile);
+        assertEquals(1, db.getReceipts(42).size());
+        assertEquals("existing.img", db.getReceipts(42).get(0).fileName);
+        assertEquals("012345678905", db.getItems(42).get(0).barcode);
+    }
+
+    @Test
+    public void addAndDeleteSpecificReceiptPreservesOtherAttachments() {
+        long id = db.createList("Завершений");
+        db.archive(id, false);
+        db.addReceipts(
+                id,
+                java.util.Arrays.asList(
+                        new com.example.shoppinglist.data.ReceiptAttachment(
+                                0, id, "first.img", "image/png"),
+                        new com.example.shoppinglist.data.ReceiptAttachment(
+                                0, id, "second.pdf", "application/pdf")));
+        assertEquals(2, db.getReceipts(id).size());
+        assertEquals("first.img", db.getList(id).receiptFile);
+        long first = db.getReceipts(id).get(0).id;
+        assertEquals("first.img", db.removeReceipt(id, first));
+        assertEquals(1, db.getReceipts(id).size());
+        assertEquals("second.pdf", db.getList(id).receiptFile);
+        db.close();
+        db = new ShoppingDatabase(context, file);
+        assertEquals("second.pdf", db.getReceipts(id).get(0).fileName);
+        db.restore(id);
+        assertRejected(
+                () -> db.addReceipts(
+                        id,
+                        java.util.Collections.singletonList(
+                                new com.example.shoppinglist.data.ReceiptAttachment(
+                                        0, id, "third.img", "image/png"))));
     }
 
     private void assertRejected(Runnable action) {
