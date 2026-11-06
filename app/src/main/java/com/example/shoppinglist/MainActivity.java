@@ -39,9 +39,9 @@ import com.example.shoppinglist.model.ShoppingItem;
 import com.example.shoppinglist.ui.AdaptiveFormLayoutController;
 import com.example.shoppinglist.voice.VoiceRecognitionResult;
 import com.example.shoppinglist.web.ProductSearchUrl;
-import com.google.android.gms.vision.barcode.GmsBarcodeScanner;
-import com.google.android.gms.vision.barcode.GmsBarcodeScanning;
-import com.google.android.gms.vision.barcode.GmsBarcodeScannerOptions;
+import com.google.mlkit.vision.codescanner.GmsBarcodeScanner;
+import com.google.mlkit.vision.codescanner.GmsBarcodeScanning;
+import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
@@ -360,6 +360,7 @@ public class MainActivity extends AppCompatActivity {
                         this, new GmsBarcodeScannerOptions.Builder().enableAutoZoom().build());
         scanner.startScan()
                 .addOnSuccessListener(
+                        this,
                         barcode -> {
                             scanningBarcode = false;
                             String value;
@@ -375,8 +376,9 @@ public class MainActivity extends AppCompatActivity {
                             }
                             confirmScannedBarcode(item, value);
                         })
-                .addOnCanceledListener(() -> scanningBarcode = false)
+                .addOnCanceledListener(this, () -> scanningBarcode = false)
                 .addOnFailureListener(
+                        this,
                         error -> {
                             scanningBarcode = false;
                             Toast.makeText(this, R.string.barcode_unavailable, Toast.LENGTH_LONG)
