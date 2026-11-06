@@ -60,13 +60,13 @@ public class ProductSearchUrlTest {
     @Test
     public void barcodeSearchOpensVerifiedGs1Form() {
         assertEquals(
-                "https://gepir.gs1ua.org/search/gtin", ProductSearchUrl.forBarcode(" 012345678905 "));
+                "https://gepir.gs1ua.org/search/gtin",
+                ProductSearchUrl.forBarcode(" 012345678905 "));
     }
 
     @Test
     public void barcodeSearchDoesNotInventUnsupportedDeepLink() {
-        assertEquals(
-                "https://gepir.gs1ua.org/search/gtin", ProductSearchUrl.forBarcode("AB+12&C"));
+        assertEquals("https://gepir.gs1ua.org/search/gtin", ProductSearchUrl.forBarcode("AB+12&C"));
     }
 
     @Test(expected = IllegalArgumentException.class)
