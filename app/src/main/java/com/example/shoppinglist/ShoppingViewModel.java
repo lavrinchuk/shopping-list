@@ -75,6 +75,13 @@ public final class ShoppingViewModel extends ViewModel {
         repository.delete(listId, item.id, createRepositoryCallback(false, 0));
     }
 
+    void updateItemBarcode(ShoppingItem item, String barcode) {
+        if (list == null || list.archivedAt != null) {
+            return;
+        }
+        repository.setItemBarcode(listId, item.id, barcode, createRepositoryCallback(false, 0));
+    }
+
     void updateItemUrl(ShoppingItem item, String url) {
         repository.setItemUrl(listId, item.id, url, createRepositoryCallback(false, 0));
     }

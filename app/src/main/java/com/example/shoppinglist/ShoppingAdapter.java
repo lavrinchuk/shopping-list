@@ -25,6 +25,8 @@ final class ShoppingAdapter extends ListAdapter<ShoppingItem, ShoppingAdapter.Ho
         void editLink(ShoppingItem item);
 
         void openLink(ShoppingItem item);
+
+        void barcode(ShoppingItem item);
     }
 
     private final Actions actions;
@@ -52,7 +54,8 @@ final class ShoppingAdapter extends ListAdapter<ShoppingItem, ShoppingAdapter.Ho
                     return a.name.equals(b.name)
                             && a.quantity.equals(b.quantity)
                             && a.purchased == b.purchased
-                            && java.util.Objects.equals(a.url, b.url);
+                            && java.util.Objects.equals(a.url, b.url)
+                            && java.util.Objects.equals(a.barcode, b.barcode);
                 }
             };
 
@@ -125,6 +128,19 @@ final class ShoppingAdapter extends ListAdapter<ShoppingItem, ShoppingAdapter.Ho
                 (button, checked) -> actions.purchased(item, checked));
         holder.quantity.setText(item.quantity);
         holder.quantity.setVisibility(item.quantity.isEmpty() ? View.GONE : View.VISIBLE);
+        holder.barcode.setText(item.barcode == null ? R.string.barcode_scan : R.string.barcode_view);
+        holder.barcode.setVisibility(
+                readOnly && item.barcode == null ? View.GONE : View.VISIBLE);
+        holder.barcode.setContentDescription(
+                holder.itemView.getContext().getString(R.string.barcode_action_for, item.name));
+        holder.barcode.setOnClickListener(view -> actions.barcode(item));
+        holder.barcodeValue.setVisibility(item.barcode == null ? View.GONE : View.VISIBLE);
+        holder.barcodeValue.setText(
+                item.barcode == null
+                        ? ""
+                        : holder.itemView
+                                .getContext()
+                                .getString(R.string.barcode_value, item.barcode));
         holder.delete.setContentDescription(
                 holder.itemView.getContext().getString(R.string.delete_item, item.name));
         holder.delete.setOnClickListener(view -> actions.delete(item));
@@ -137,6 +153,8 @@ final class ShoppingAdapter extends ListAdapter<ShoppingItem, ShoppingAdapter.Ho
         final View search;
         final View editLink;
         final View openLink;
+        final TextView barcode;
+        final TextView barcodeValue;
 
         Holder(View view) {
             super(view);
@@ -146,6 +164,8 @@ final class ShoppingAdapter extends ListAdapter<ShoppingItem, ShoppingAdapter.Ho
             search = view.findViewById(R.id.search_item);
             editLink = view.findViewById(R.id.edit_item_link);
             openLink = view.findViewById(R.id.open_item_link);
+            barcode = view.findViewById(R.id.barcode_action);
+            barcodeValue = view.findViewById(R.id.barcode_value);
         }
     }
 }

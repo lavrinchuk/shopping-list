@@ -375,7 +375,7 @@ public class ShoppingDatabaseTest {
         assertEquals("Молоко", item.name);
         assertEquals("2 л", item.quantity);
         assertNull(item.url);
-        assertEquals(5, db.getReadableDatabase().getVersion());
+        assertEquals(6, db.getReadableDatabase().getVersion());
     }
 
     @Test
@@ -389,7 +389,7 @@ public class ShoppingDatabaseTest {
         long itemId = db.getItems(list.id).get(0).id;
         db.setItemUrl(list.id, itemId, "https://example.com/bread");
         assertEquals("https://example.com/bread", db.getItems(list.id).get(0).url);
-        assertEquals(5, db.getReadableDatabase().getVersion());
+        assertEquals(6, db.getReadableDatabase().getVersion());
     }
 
     @Test
@@ -439,7 +439,7 @@ public class ShoppingDatabaseTest {
         assertEquals(33L, item.id);
         assertEquals("https://example.com/coffee", item.url);
         assertTrue(item.purchased);
-        assertEquals(5, db.getReadableDatabase().getVersion());
+        assertEquals(6, db.getReadableDatabase().getVersion());
     }
 
     @Test
@@ -481,7 +481,7 @@ public class ShoppingDatabaseTest {
         assertEquals(Long.valueOf(120L), db.getList(21).archivedAt);
         assertEquals("https://example.com/coffee", db.getItems(21).get(0).url);
         assertEquals(72L, db.getItems(21).get(0).id);
-        assertEquals(5, db.getReadableDatabase().getVersion());
+        assertEquals(6, db.getReadableDatabase().getVersion());
     }
 
     @Test
@@ -500,6 +500,49 @@ public class ShoppingDatabaseTest {
         assertRejected(() -> db.getList(empty));
         assertEquals(3, db.getLists(false).size() + db.getLists(true).size());
         assertEquals(1, db.getList(filled).total);
+    }
+
+    @Test
+    public void barcodePersistsThroughReopenArchiveAndRestore() {
+        long listId = db.createList("Крамниця");
+        db.add(listId, "Молоко", "1");
+        long itemId = db.getItems(listId).get(0).id;
+        db.setItemBarcode(listId, itemId, " 012345678905 ");
+        assertEquals("012345678905", db.getItems(listId).get(0).barcode);
+        long updated = db.getList(listId).updatedAt;
+        db.setItemBarcode(listId, itemId, "012345678905");
+        assertEquals(updated, db.getList(listId).updatedAt);
+        db.archive(listId, true);
+        assertRejected(() -> db.setItemBarcode(listId, itemId, "9876543210123"));
+        db.close();
+        db = new ShoppingDatabase(context, file);
+        assertEquals("012345678905", db.getItems(listId).get(0).barcode);
+        db.restore(listId);
+        db.setItemBarcode(listId, itemId, null);
+        assertNull(db.getItems(listId).get(0).barcode);
+    }
+
+    @Test
+    public void upgradeFromVersionFiveKeepsExistingItemAndAddsBarcode() {
+        db.close();
+        try (SQLiteDatabase old = context.openOrCreateDatabase(file, 0, null)) {
+            old.execSQL(
+                    "CREATE TABLE shopping_lists (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL, archivedAt INTEGER, type TEXT NOT NULL DEFAULT 'shopping', receiptFile TEXT)");
+            old.execSQL(
+                    "CREATE TABLE items (id INTEGER PRIMARY KEY AUTOINCREMENT, listId INTEGER NOT NULL REFERENCES shopping_lists(id), name TEXT NOT NULL, quantity TEXT NOT NULL, purchased INTEGER NOT NULL, url TEXT)");
+            old.execSQL("INSERT INTO shopping_lists VALUES (1, 'Завершений', 100, 200, 200, 'shopping', 'receipt.img')");
+            old.execSQL(
+                    "INSERT INTO items VALUES (3, 1, 'Кава', '2', 1, 'https://example.com/item')");
+            old.setVersion(5);
+        }
+        db = new ShoppingDatabase(context, file);
+        assertEquals(6, db.getReadableDatabase().getVersion());
+        assertEquals("receipt.img", db.getList(1).receiptFile);
+        ShoppingItem item = db.getItems(1).get(0);
+        assertEquals(3L, item.id);
+        assertEquals("https://example.com/item", item.url);
+        assertNull(item.barcode);
+        assertTrue(item.purchased);
     }
 
     private void assertRejected(Runnable action) {
