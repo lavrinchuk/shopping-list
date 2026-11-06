@@ -115,6 +115,7 @@ public class ShoppingScreenTest {
         onView(withId(R.id.barcode_action)).perform(click());
         onView(withText("012345678905")).check(matches(isDisplayed()));
         onView(withText(R.string.barcode_search_web)).check(matches(isDisplayed()));
+        onView(withText(R.string.barcode_scan_again)).check(matches(isDisplayed()));
         onView(withText(R.string.barcode_copy)).perform(click());
         android.content.ClipboardManager clipboard =
                 (android.content.ClipboardManager)
@@ -124,6 +125,26 @@ public class ShoppingScreenTest {
         assertEquals(
                 "012345678905",
                 clipboard.getPrimaryClip().getItemAt(0).coerceToText(app).toString());
+    }
+
+    @Test
+    public void newlyScannedBarcodeActionsAreVisibleAndSavePersistsCode() {
+        add("Хліб");
+        screen.onActivity(
+                activity -> {
+                    ShoppingItem item = activity.viewModel.items.get(0);
+                    activity.confirmScannedBarcode(item, "012345678905");
+                });
+        onView(withText(R.string.save)).check(matches(isDisplayed()));
+        onView(withText(R.string.barcode_copy)).check(matches(isDisplayed()));
+        onView(withText(R.string.barcode_search_web)).check(matches(isDisplayed()));
+        onView(withText(R.string.save)).perform(click());
+        onView(withId(R.id.barcode_value))
+                .check(matches(withText("Штрихкод: 012345678905")));
+        screen.close();
+        open();
+        onView(withId(R.id.barcode_value))
+                .check(matches(withText("Штрихкод: 012345678905")));
     }
 
     @Test
