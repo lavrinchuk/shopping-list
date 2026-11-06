@@ -4,6 +4,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
 import com.example.shoppinglist.data.ShoppingRepository;
+import com.example.shoppinglist.data.ShoppingTemplate;
 import com.example.shoppinglist.model.ShoppingItem;
 import com.example.shoppinglist.model.ShoppingList;
 import java.util.ArrayList;
@@ -19,7 +20,9 @@ final class ListsViewModel extends ViewModel {
     final SavedStateHandle saved;
     private final ShoppingRepository repository;
     List<ShoppingList> lists = new ArrayList<>();
+    List<ShoppingTemplate> templates = new ArrayList<>();
     boolean busy;
+    boolean templateSaved;
     boolean loading = true;
     boolean readFailed;
     int error;
@@ -196,6 +199,109 @@ final class ListsViewModel extends ViewModel {
                 });
     }
 
+    void saveTemplate(ShoppingList source, String name) {
+        if (busy || source.isWish() || source.total == 0) {
+            return;
+        }
+        String title = ShoppingList.cleanName(name);
+        busy = true;
+        notifyStateChanged();
+        ShoppingRepository.Result delegate = createRepositoryCallback(false);
+        repository.saveTemplate(
+                source.id,
+                title,
+                archived,
+                new ShoppingRepository.Result() {
+                    @Override
+                    public void written() {
+                        delegate.written();
+                        if (!cleared) {
+                            templateSaved = true;
+                            notifyStateChanged();
+                        }
+                    }
+
+                    @Override
+                    public void loaded(List<ShoppingItem> ignored) {}
+
+                    @Override
+                    public void templatesLoaded(List<ShoppingTemplate> updated) {
+                        delegate.templatesLoaded(updated);
+                    }
+
+                    @Override
+                    public void listsLoaded(List<ShoppingList> updated) {
+                        delegate.listsLoaded(updated);
+                    }
+
+                    @Override
+                    public void failed(boolean reading) {
+                        delegate.failed(reading);
+                    }
+                });
+    }
+
+    void createFromTemplate(long templateId) {
+        if (busy || archived) {
+            return;
+        }
+        busy = true;
+        notifyStateChanged();
+        ShoppingRepository.Result delegate = createRepositoryCallback(false);
+        repository.createFromTemplate(
+                templateId,
+                new ShoppingRepository.Result() {
+                    Long created;
+
+                    @Override
+                    public void created(long id) {
+                        created = id;
+                    }
+
+                    @Override
+                    public void written() {
+                        delegate.written();
+                        if (!cleared && created != null) {
+                            saved.set(STATE_OPEN_CREATED_ID, created);
+                            notifyStateChanged();
+                        }
+                    }
+
+                    @Override
+                    public void loaded(List<ShoppingItem> ignored) {}
+
+                    @Override
+                    public void templatesLoaded(List<ShoppingTemplate> updated) {
+                        delegate.templatesLoaded(updated);
+                    }
+
+                    @Override
+                    public void listsLoaded(List<ShoppingList> updated) {
+                        delegate.listsLoaded(updated);
+                    }
+
+                    @Override
+                    public void failed(boolean reading) {
+                        delegate.failed(reading);
+                    }
+                });
+    }
+
+    void deleteTemplate(long templateId) {
+        if (busy || archived) {
+            return;
+        }
+        busy = true;
+        notifyStateChanged();
+        repository.deleteTemplate(templateId, createRepositoryCallback(false));
+    }
+
+    boolean consumeTemplateSaved() {
+        boolean result = templateSaved;
+        templateSaved = false;
+        return result;
+    }
+
     void restore(long id) {
         if (busy) {
             return;
@@ -221,6 +327,13 @@ final class ListsViewModel extends ViewModel {
 
             @Override
             public void loaded(List<ShoppingItem> ignored) {}
+
+            @Override
+            public void templatesLoaded(List<ShoppingTemplate> updated) {
+                if (!cleared) {
+                    templates = updated;
+                }
+            }
 
             @Override
             public void listsLoaded(List<ShoppingList> updated) {
