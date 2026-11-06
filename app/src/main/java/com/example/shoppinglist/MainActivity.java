@@ -37,6 +37,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.shoppinglist.data.ReceiptAttachment;
 import com.example.shoppinglist.data.ShoppingRepository;
+import com.example.shoppinglist.data.StoreLink;
 import com.example.shoppinglist.model.ItemLink;
 import com.example.shoppinglist.model.ProductBarcode;
 import com.example.shoppinglist.model.ShoppingItem;
@@ -475,7 +476,7 @@ public class MainActivity extends AppCompatActivity {
 
                             @Override
                             public void editLink(ShoppingItem item) {
-                                showLinkEditor(item);
+                                showStoreLinks(item);
                             }
 
                             @Override
@@ -489,7 +490,7 @@ public class MainActivity extends AppCompatActivity {
 
                             @Override
                             public void openLink(ShoppingItem item) {
-                                openItemLink(item);
+                                showStoreLinks(item);
                             }
                         });
         RecyclerView list = findViewById(R.id.items);
@@ -624,6 +625,150 @@ public class MainActivity extends AppCompatActivity {
             copyBarcode(code);
         } catch (ActivityNotFoundException | SecurityException error) {
             Toast.makeText(this, R.string.search_unavailable, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void showStoreLinks(ShoppingItem item) {
+        List<StoreLink> links = viewModel.linksFor(item);
+        boolean archived = viewModel.list == null || viewModel.list.archivedAt != null;
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        int pad = Math.round(16 * getResources().getDisplayMetrics().density);
+        content.setPadding(pad, 0, pad, pad);
+        if (links.isEmpty()) {
+            TextView empty = new TextView(this);
+            empty.setText(R.string.store_links_empty);
+            content.addView(empty);
+        }
+        for (StoreLink link : links) {
+            TextView store = new TextView(this);
+            store.setText(link.storeName);
+            store.setTextAppearance(
+                    com.google.android.material.R.style.TextAppearance_Material3_TitleMedium);
+            content.addView(store);
+            TextView address = new TextView(this);
+            address.setText(link.url);
+            address.setMaxLines(2);
+            address.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            content.addView(address);
+
+            LinearLayout actions = new LinearLayout(this);
+            MaterialButton open = new MaterialButton(this);
+            open.setText(R.string.open_item_link);
+            actions.addView(
+                    open,
+                    new LinearLayout.LayoutParams(
+                            0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+            MaterialButton edit = new MaterialButton(this);
+            edit.setText(R.string.store_link_edit);
+            if (!archived) {
+                actions.addView(
+                        edit,
+                        new LinearLayout.LayoutParams(
+                                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+            }
+            content.addView(actions);
+            View divider = new View(this);
+            divider.setBackgroundColor(
+                    com.google.android.material.color.MaterialColors.getColor(
+                            content, com.google.android.material.R.attr.colorOutlineVariant));
+            LinearLayout.LayoutParams dividerParams =
+                    new LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT, Math.max(1, pad / 16));
+            dividerParams.setMargins(0, pad / 2, 0, pad / 2);
+            content.addView(divider, dividerParams);
+            open.setOnClickListener(view -> openStoreLink(link.url));
+            edit.setOnClickListener(view -> showStoreLinkEditor(item, link));
+        }
+        ScrollView scroll = new ScrollView(this);
+        scroll.addView(content);
+        androidx.appcompat.app.AlertDialog dialog =
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle(getString(R.string.store_links_title, item.name))
+                        .setView(scroll)
+                        .setNegativeButton(R.string.back, null)
+                        .create();
+        if (!archived) {
+            dialog.setButton(
+                    androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE,
+                    getString(R.string.store_link_add),
+                    (button, which) -> showStoreLinkEditor(item, null));
+        }
+        dialog.show();
+    }
+
+    private void showStoreLinkEditor(ShoppingItem item, StoreLink link) {
+        if (viewModel.list == null || viewModel.list.archivedAt != null) {
+            return;
+        }
+        int pad = Math.round(24 * getResources().getDisplayMetrics().density);
+        LinearLayout container = new LinearLayout(this);
+        container.setOrientation(LinearLayout.VERTICAL);
+        container.setPadding(pad, 0, pad, 0);
+        TextInputLayout storeField = new TextInputLayout(this);
+        storeField.setHint(R.string.store_name_hint);
+        TextInputEditText storeInput = new TextInputEditText(storeField.getContext());
+        storeInput.setSingleLine(true);
+        storeInput.setText(link == null ? "" : link.storeName);
+        storeField.addView(storeInput);
+        container.addView(storeField);
+        TextInputLayout urlField = new TextInputLayout(this);
+        urlField.setHint(R.string.item_link_hint);
+        TextInputEditText urlInput = new TextInputEditText(urlField.getContext());
+        urlInput.setSingleLine(true);
+        urlInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
+        urlInput.setText(link == null ? "" : link.url);
+        urlField.addView(urlInput);
+        container.addView(urlField);
+        androidx.appcompat.app.AlertDialog dialog =
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle(link == null ? R.string.store_link_add : R.string.store_link_edit)
+                        .setView(container)
+                        .setNegativeButton(R.string.cancel, null)
+                        .setPositiveButton(R.string.save, null)
+                        .create();
+        dialog.setOnShowListener(ignored -> {
+            dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
+                    .setOnClickListener(button -> {
+                        try {
+                            String name =
+                                    StoreLink.cleanStoreName(
+                                            storeInput.getText() == null
+                                                    ? ""
+                                                    : storeInput.getText().toString());
+                            String url =
+                                    ItemLink.normalize(
+                                            urlInput.getText() == null
+                                                    ? ""
+                                                    : urlInput.getText().toString());
+                            if (url == null) {
+                                throw new IllegalArgumentException("URL is required");
+                            }
+                            if (link == null) {
+                                viewModel.addStoreLink(item, name, url);
+                            } else {
+                                viewModel.updateStoreLink(link, name, url);
+                            }
+                            dialog.dismiss();
+                        } catch (IllegalArgumentException error) {
+                            if (storeInput.getText() == null
+                                    || storeInput.getText().toString().trim().isEmpty()) {
+                                storeField.setError(getString(R.string.store_name_invalid));
+                            } else {
+                                urlField.setError(getString(R.string.item_link_invalid));
+                            }
+                        }
+                    });
+        });
+        dialog.show();
+    }
+
+    private void openStoreLink(String url) {
+        Intent open = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        try {
+            startActivity(open);
+        } catch (ActivityNotFoundException | SecurityException error) {
+            Toast.makeText(this, R.string.item_link_unavailable, Toast.LENGTH_LONG).show();
         }
     }
 
