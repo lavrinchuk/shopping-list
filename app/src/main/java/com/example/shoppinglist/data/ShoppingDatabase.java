@@ -563,8 +563,8 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
     }
 
     /**
-     * Compatibility with LINK-01. Replaces all links because the old API has one URL field.
-     * LINK-02 UI uses add/update/deleteStoreLink instead.
+     * Compatibility with LINK-01. Replaces all links because the old API has one URL field. LINK-02
+     * UI uses add/update/deleteStoreLink instead.
      */
     public void setItemUrl(long listId, long id, String url) {
         String normalized = ItemLink.normalize(url);
