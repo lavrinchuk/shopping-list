@@ -747,13 +747,21 @@ public class MainActivity extends AppCompatActivity {
             }
             dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
                     .setOnClickListener(button -> {
+                        String name;
                         try {
-                            String name =
+                            name =
                                     StoreLink.cleanStoreName(
                                             storeInput.getText() == null
                                                     ? ""
                                                     : storeInput.getText().toString());
-                            String url =
+                            storeField.setError(null);
+                        } catch (IllegalArgumentException error) {
+                            storeField.setError(getString(R.string.store_name_invalid));
+                            return;
+                        }
+                        String url;
+                        try {
+                            url =
                                     ItemLink.normalize(
                                             urlInput.getText() == null
                                                     ? ""
@@ -761,20 +769,17 @@ public class MainActivity extends AppCompatActivity {
                             if (url == null) {
                                 throw new IllegalArgumentException("URL is required");
                             }
-                            if (link == null) {
-                                viewModel.addStoreLink(item, name, url);
-                            } else {
-                                viewModel.updateStoreLink(link, name, url);
-                            }
-                            dialog.dismiss();
+                            urlField.setError(null);
                         } catch (IllegalArgumentException error) {
-                            if (storeInput.getText() == null
-                                    || storeInput.getText().toString().trim().isEmpty()) {
-                                storeField.setError(getString(R.string.store_name_invalid));
-                            } else {
-                                urlField.setError(getString(R.string.item_link_invalid));
-                            }
+                            urlField.setError(getString(R.string.item_link_invalid));
+                            return;
                         }
+                        if (link == null) {
+                            viewModel.addStoreLink(item, name, url);
+                        } else {
+                            viewModel.updateStoreLink(link, name, url);
+                        }
+                        dialog.dismiss();
                     });
         });
         dialog.show();
