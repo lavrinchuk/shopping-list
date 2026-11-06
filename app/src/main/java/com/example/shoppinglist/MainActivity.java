@@ -67,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean rendering;
     private boolean scanningBarcode;
     private androidx.appcompat.app.AlertDialog receiptOfferDialog;
+    private androidx.appcompat.app.AlertDialog voiceBatchDialog;
     private final ActivityResultLauncher<PickVisualMediaRequest> receiptPicker =
             registerForActivityResult(
                     new ActivityResultContracts.PickMultipleVisualMedia(10),
@@ -103,7 +104,21 @@ public class MainActivity extends AppCompatActivity {
                             showVoiceError();
                             return;
                         }
-                        confirmVoiceResult(recognized);
+                        List<String> parsed;
+                        try {
+                            parsed = VoiceRecognitionResult.items(recognized);
+                        } catch (IllegalArgumentException error) {
+                            showVoiceError();
+                            return;
+                        }
+                        if (parsed.isEmpty()) {
+                            showVoiceError();
+                        } else if (parsed.size() == 1) {
+                            confirmVoiceResult(parsed.get(0));
+                        } else {
+                            viewModel.prepareVoiceDraft(parsed);
+                            showVoiceBatchEditorIfNeeded();
+                        }
                     });
 
     @Override
@@ -993,6 +1008,85 @@ public class MainActivity extends AppCompatActivity {
                 .show();
     }
 
+    private void showVoiceBatchEditorIfNeeded() {
+        if (voiceBatchDialog != null
+                || viewModel.voiceDraft.isEmpty()
+                || viewModel.voiceAdding
+                || viewModel.list == null
+                || viewModel.list.archivedAt != null
+                || isFinishing()) {
+            return;
+        }
+        int pad = receiptPixels(16);
+        LinearLayout form = new LinearLayout(this);
+        form.setOrientation(LinearLayout.VERTICAL);
+        form.setPadding(pad, 0, pad, 0);
+        TextView instructions = new TextView(this);
+        instructions.setText(R.string.voice_batch_instructions);
+        form.addView(instructions);
+        TextInputLayout inputLayout = new TextInputLayout(this);
+        inputLayout.setHint(getString(R.string.voice_batch_hint));
+        TextInputEditText input = new TextInputEditText(inputLayout.getContext());
+        input.setId(R.id.voice_batch_editor);
+        input.setMinLines(3);
+        input.setMaxLines(10);
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+        input.setText(String.join("\n", viewModel.voiceDraft));
+        inputLayout.addView(input);
+        form.addView(inputLayout);
+        ScrollView scroll = new ScrollView(this);
+        scroll.addView(form);
+        androidx.appcompat.app.AlertDialog dialog =
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle(getString(R.string.voice_batch_title, viewModel.voiceDraft.size()))
+                        .setView(scroll)
+                        .setNegativeButton(R.string.cancel, null)
+                        .setPositiveButton(R.string.voice_batch_add, null)
+                        .create();
+        voiceBatchDialog = dialog;
+        input.addTextChangedListener(
+                new TextWatcher() {
+                    @Override
+                    public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+                    @Override
+                    public void onTextChanged(CharSequence s, int start, int before, int count) {
+                        // Each line is an editable item; deleting a line excludes that item.
+                        viewModel.prepareVoiceDraft(
+                                java.util.Arrays.asList(s.toString().split("\\n", -1)));
+                        inputLayout.setError(null);
+                    }
+
+                    @Override
+                    public void afterTextChanged(Editable s) {}
+                });
+        dialog.setOnShowListener(ignored ->
+                dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
+                        .setOnClickListener(button -> {
+                            List<String> names = new ArrayList<>();
+                            for (String entry : viewModel.voiceDraft) {
+                                String clean = entry.trim();
+                                if (!clean.isEmpty()) {
+                                    names.add(VoiceRecognitionResult.capitalizeFirst(clean));
+                                }
+                            }
+                            if (names.isEmpty() || names.size() > 20) {
+                                inputLayout.setError(getString(R.string.voice_batch_invalid));
+                                return;
+                            }
+                            viewModel.prepareVoiceDraft(names);
+                            viewModel.addVoiceDraft();
+                            dialog.dismiss();
+                        }));
+        dialog.setOnDismissListener(ignored -> {
+            voiceBatchDialog = null;
+            if (!viewModel.voiceAdding) {
+                viewModel.cancelVoiceDraft();
+            }
+        });
+        dialog.show();
+    }
+
     private void showVoiceError() {
         Toast.makeText(this, R.string.voice_no_result, Toast.LENGTH_LONG).show();
     }
@@ -1058,6 +1152,7 @@ public class MainActivity extends AppCompatActivity {
         showPendingError();
         synchronizeReadError();
         showReceiptOfferIfNeeded();
+        showVoiceBatchEditorIfNeeded();
     }
 
     private void renderDraft(EditText name, EditText quantity) {
@@ -1192,6 +1287,11 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        if (voiceBatchDialog != null) {
+            voiceBatchDialog.setOnDismissListener(null);
+            voiceBatchDialog.dismiss();
+            voiceBatchDialog = null;
+        }
         if (receiptOfferDialog != null) {
             receiptOfferDialog.setOnCancelListener(null);
             receiptOfferDialog.setOnDismissListener(null);
