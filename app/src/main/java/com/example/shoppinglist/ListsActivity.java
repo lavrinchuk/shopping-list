@@ -244,10 +244,12 @@ public class ListsActivity extends AppCompatActivity {
         content.setOrientation(LinearLayout.VERTICAL);
         int pad = Math.round(12 * getResources().getDisplayMetrics().density);
         content.setPadding(pad, pad, pad, pad);
+        ScrollView scroll = new ScrollView(this);
+        scroll.addView(content);
         AlertDialog dialog =
                 new MaterialAlertDialogBuilder(this)
                         .setTitle(R.string.templates_title)
-                        .setView(content)
+                        .setView(scroll)
                         .setNegativeButton(R.string.back, null)
                         .create();
         if (viewModel.templates.isEmpty()) {
@@ -284,16 +286,6 @@ public class ListsActivity extends AppCompatActivity {
                                         viewModel.deleteTemplate(template.id);
                                     })
                             .show());
-        }
-        ScrollView scroll = new ScrollView(this);
-        content.setLayoutParams(
-                new ScrollView.LayoutParams(
-                        ScrollView.LayoutParams.MATCH_PARENT,
-                        ScrollView.LayoutParams.WRAP_CONTENT));
-        // Keep the dialog actions outside the scrollable template list.
-        if (content.getParent() == null) {
-            scroll.addView(content);
-            dialog.setView(scroll);
         }
         dialog.show();
     }
@@ -335,7 +327,7 @@ public class ListsActivity extends AppCompatActivity {
     private void renderListState() {
         adapter.submitList(viewModel.lists);
         findViewById(R.id.create_list).setEnabled(!viewModel.busy);
-        findViewById(R.id.open_templates).setEnabled(!viewModel.busy);
+        findViewById(R.id.open_templates).setEnabled(!viewModel.busy && !viewModel.loading);
         findViewById(R.id.lists_loading)
                 .setVisibility(viewModel.loading ? View.VISIBLE : View.GONE);
         findViewById(R.id.retry_lists)
