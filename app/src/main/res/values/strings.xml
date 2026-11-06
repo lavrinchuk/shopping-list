@@ -75,7 +75,7 @@
     <string name="receipt_attach">Додати фото чека</string>
     <string name="receipt_view">Переглянути фото</string>
     <string name="receipt_replace">Замінити фото</string>
-    <string name="receipt_remove">Видалити фото</string>
+    <string name="receipt_remove">Видалити</string>
     <string name="receipt_remove_confirmation">Видалити прикріплене фото чека?</string>
     <string name="receipt_error">Не вдалося додати чек. Фото мають бути до 8 МБ, PDF до 20 МБ.</string>
     <string name="receipt_unavailable">Не вдалося відкрити фото чека.</string>
