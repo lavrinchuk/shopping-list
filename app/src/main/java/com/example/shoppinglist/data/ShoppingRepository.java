@@ -2,6 +2,7 @@ package com.example.shoppinglist.data;
 
 import android.database.sqlite.SQLiteException;
 import android.graphics.Bitmap;
+import com.example.shoppinglist.data.ReceiptAttachment;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
@@ -22,6 +23,8 @@ public class ShoppingRepository {
         void failed(boolean reading);
 
         default void listLoaded(ShoppingList list) {}
+
+        default void receiptsLoaded(List<ReceiptAttachment> attachments) {}
 
         default void created(long id) {}
 
@@ -81,6 +84,35 @@ public class ShoppingRepository {
                 result);
     }
 
+    public void addReceipts(long listId, List<Uri> sources, Result result) {
+        run(() -> receipts.add(database, listId, sources), () -> readItems(listId, result), result);
+    }
+
+    public void removeReceipt(long listId, long receiptId, Result result) {
+        run(
+                () -> receipts.remove(database, listId, receiptId),
+                () -> readItems(listId, result),
+                result);
+    }
+
+    public interface ReceiptAttachmentsResult {
+        void loaded(List<ReceiptAttachment> attachments);
+    }
+
+    public void receiptAttachments(long listId, ReceiptAttachmentsResult callback) {
+        worker.execute(() -> {
+            List<ReceiptAttachment> list = database.getReceipts(listId);
+            main.post(() -> callback.loaded(list));
+        });
+    }
+
+    public void previewReceipt(ReceiptAttachment item, ReceiptPreview callback) {
+        worker.execute(() -> {
+            Bitmap bitmap = receipts.preview(item);
+            main.post(() -> callback.loaded(bitmap));
+        });
+    }
+
     public void removeReceipt(long listId, Result result) {
         run(() -> receipts.remove(database, listId), () -> readItems(listId, result), result);
     }
@@ -106,7 +138,9 @@ public class ShoppingRepository {
     private void readItems(long listId, Result result) {
         ShoppingList list = database.getList(listId);
         List<ShoppingItem> items = database.getItems(listId);
+        List<ReceiptAttachment> attachments = database.getReceipts(listId);
         main.post(() -> {
+            result.receiptsLoaded(attachments);
             result.listLoaded(list);
             result.loaded(items);
         });
