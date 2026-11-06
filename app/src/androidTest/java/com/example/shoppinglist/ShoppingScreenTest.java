@@ -122,6 +122,38 @@ public class ShoppingScreenTest {
     }
 
     @Test
+    public void storeLinkActionsHaveMatchingHeightAndAlignment() {
+        add("Перець");
+        main(() ->
+                repository.execute(
+                        () -> {
+                            long id = app.database.getItems(app.listId).get(0).id;
+                            app.database.addStoreLink(
+                                    app.listId, id, "Rozetka", "https://rozetka.com.ua");
+                        },
+                        noResult()));
+        screen.onActivity(activity -> activity.viewModel.reload());
+        onView(withId(R.id.edit_item_link)).perform(click());
+        onView(withText(R.string.store_link_open))
+                .check((view, failure) -> {
+                    if (failure != null) {
+                        throw failure;
+                    }
+                    android.view.ViewGroup row = (android.view.ViewGroup) view.getParent();
+                    assertEquals(2, row.getChildCount());
+                    android.view.View edit = row.getChildAt(1);
+                    assertEquals(view.getHeight(), edit.getHeight());
+                    assertEquals(view.getWidth(), edit.getWidth());
+                    int[] openPosition = new int[2];
+                    int[] editPosition = new int[2];
+                    view.getLocationOnScreen(openPosition);
+                    edit.getLocationOnScreen(editPosition);
+                    assertEquals(openPosition[1], editPosition[1]);
+                    assertEquals("Змінити", ((android.widget.TextView) edit).getText().toString());
+                });
+    }
+
+    @Test
     public void storedBarcodeIsDisplayedAndCanBeCopied() {
         add("Молоко");
         main(() ->
