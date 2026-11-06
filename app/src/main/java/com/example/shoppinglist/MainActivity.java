@@ -317,13 +317,26 @@ public class MainActivity extends AppCompatActivity {
         image.setPadding(padding, padding, padding, padding);
         image.setAdjustViewBounds(true);
         image.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        // Bound only the image area; AlertDialog owns the action buttons outside the scroll.
+        ScrollView photoScroll = new ScrollView(this);
+        photoScroll.setFillViewport(false);
+        photoScroll.addView(
+                image,
+                new ScrollView.LayoutParams(
+                        ScrollView.LayoutParams.MATCH_PARENT,
+                        ScrollView.LayoutParams.WRAP_CONTENT));
+        int screenHeight = getResources().getDisplayMetrics().heightPixels;
+        int maxPreviewHeight = Math.min((int) (screenHeight * 0.55f), receiptPixels(560));
+        photoScroll.setLayoutParams(
+                new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT, maxPreviewHeight));
         androidx.appcompat.app.AlertDialog dialog =
                 new MaterialAlertDialogBuilder(this)
                         .setTitle(
                                 receipt.isPdf()
                                         ? R.string.receipt_pdf_preview
                                         : R.string.receipt_title)
-                        .setView(image)
+                        .setView(photoScroll)
                         .setPositiveButton(R.string.back, null)
                         .setNeutralButton(
                                 receipt.isPdf()
