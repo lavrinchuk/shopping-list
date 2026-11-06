@@ -154,8 +154,11 @@ public final class ShoppingViewModel extends ViewModel {
     }
 
     void attachReceipts(List<Uri> sources) {
-        if (receiptBusy || sources == null || sources.isEmpty()
-                || list == null || list.archivedAt == null) {
+        if (receiptBusy
+                || sources == null
+                || sources.isEmpty()
+                || list == null
+                || list.archivedAt == null) {
             return;
         }
         receiptBusy = true;
