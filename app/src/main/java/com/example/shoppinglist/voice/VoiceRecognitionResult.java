@@ -27,8 +27,8 @@ public final class VoiceRecognitionResult {
         }
         List<String> names = new java.util.ArrayList<>();
         // Some speech engines transcribe spoken punctuation as a literal word.
-        String explicitSeparators = recognized.replaceAll("(?iu)\\\\s+кома\\\\s+", ",");
-        for (String part : explicitSeparators.split("[,;\\\\n]+")) {
+        String explicitSeparators = recognized.replaceAll("(?iu)\\s+кома\\s+", ",");
+        for (String part : explicitSeparators.split("[,;\\n]+")) {
             if (!part.isBlank()) {
                 names.add(capitalizeFirst(part));
             }
