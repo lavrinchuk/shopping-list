@@ -35,6 +35,36 @@ public class VoiceRecognitionResultTest {
     }
 
     @Test
+    public void parsesExplicitDelimitersAndCapitalizesEachName() {
+        assertEquals(
+                Arrays.asList("Молоко", "Хліб", "Яблука"),
+                VoiceRecognitionResult.items(" молоко, хліб; яблука "));
+        assertEquals(
+                Arrays.asList("Сир", "Олія"),
+                VoiceRecognitionResult.items("сир\n\n олія"));
+    }
+
+    @Test
+    public void doesNotGuessNaturalLanguageQuantityOrConjunctions() {
+        assertEquals(
+                Collections.singletonList("Два літри молока й три батони"),
+                VoiceRecognitionResult.items("два літри молока й три батони"));
+    }
+
+    @Test
+    public void ignoresBlankPartsWithoutRemovingIntentionalDuplicates() {
+        assertEquals(
+                Arrays.asList("Хліб", "Хліб"),
+                VoiceRecognitionResult.items("хліб,,, хліб; "));
+        assertEquals(Collections.emptyList(), VoiceRecognitionResult.items(null));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void limitsVoiceBatchToTwentyItems() {
+        VoiceRecognitionResult.items("хліб,".repeat(21));
+    }
+
+    @Test
     public void ignoresMissingCandidates() {
         assertNull(VoiceRecognitionResult.firstNonBlank(null));
         assertNull(VoiceRecognitionResult.firstNonBlank(Collections.emptyList()));
