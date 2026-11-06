@@ -1194,7 +1194,10 @@ public class MainActivity extends AppCompatActivity {
                             ? R.string.delete_empty_list
                             : R.string.finish_shopping);
             finishButton.setEnabled(
-                    !viewModel.finishing && !viewModel.adding && !viewModel.receiptOfferPending);
+                    !viewModel.finishing
+                            && !viewModel.adding
+                            && !viewModel.voiceAdding
+                            && !viewModel.receiptOfferPending);
             com.google.android.material.button.MaterialButton receiptButton =
                     findViewById(R.id.receipt_bottom_action);
             receiptButton.setVisibility(readOnly ? View.VISIBLE : View.GONE);
