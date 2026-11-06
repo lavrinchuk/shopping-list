@@ -31,6 +31,13 @@
     <string name="search_region_title">Де шукати для купівлі: %1$s</string>
     <string name="search_region_anywhere">Без уточнення регіону</string>
     <string name="edit_item_link">Посилання для товару: %1$s</string>
+    <string name="store_links_title">Магазини: %1$s</string>
+    <string name="store_links_empty">Поки немає посилань на магазини.</string>
+    <string name="store_name_hint">Назва магазину</string>
+    <string name="store_name_invalid">Введи назву магазину (до 80 символів)</string>
+    <string name="store_link_add">Додати магазин</string>
+    <string name="store_link_edit">Змінити</string>
+    <string name="view_store_links">Переглянути магазини</string>
     <string name="item_link_title">Посилання: %1$s</string>
     <string name="item_link_hint">https://магазин.example/товар</string>
     <string name="item_link_invalid">Введи повне посилання http:// або https://</string>
