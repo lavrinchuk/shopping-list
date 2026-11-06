@@ -311,7 +311,7 @@ public class MainActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    private void showReceiptPreview(ReceiptAttachment receipt) {
+    void showReceiptPreview(ReceiptAttachment receipt) {
         ImageView image = new ImageView(this);
         int padding = receiptPixels(16);
         image.setPadding(padding, padding, padding, padding);
