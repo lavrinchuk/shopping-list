@@ -336,8 +336,7 @@ public class MainActivity extends AppCompatActivity {
                             getString(R.string.barcode_scan_again)
                         };
         new MaterialAlertDialogBuilder(this)
-                .setTitle(getString(R.string.barcode_title, item.name))
-                .setMessage(current)
+                .setTitle(getString(R.string.barcode_code_title, current))
                 .setItems(
                         actions,
                         (dialog, which) -> {
@@ -401,13 +400,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void confirmScannedBarcode(ShoppingItem item, String value) {
+    void confirmScannedBarcode(ShoppingItem item, String value) {
         if (viewModel.list == null || viewModel.list.archivedAt != null) {
             return;
         }
         new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.barcode_scanned_title)
-                .setMessage(getString(R.string.barcode_scanned_message, value))
+                .setTitle(getString(R.string.barcode_scanned_code_title, value))
                 .setItems(
                         new String[] {
                             getString(R.string.save),
