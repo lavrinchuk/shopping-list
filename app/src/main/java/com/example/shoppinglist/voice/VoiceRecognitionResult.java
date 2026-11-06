@@ -18,7 +18,9 @@ public final class VoiceRecognitionResult {
         return null;
     }
 
-    /** Splits only explicit separators; quantity and natural-language parsing belongs to VOICE-03. */
+    /**
+     * Splits only explicit separators; quantity and natural-language parsing belongs to VOICE-03.
+     */
     public static List<String> items(String recognized) {
         if (recognized == null || recognized.isBlank()) {
             return java.util.Collections.emptyList();
