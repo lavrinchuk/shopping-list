@@ -25,6 +25,8 @@ public class ShoppingRepository {
 
         default void receiptsLoaded(List<ReceiptAttachment> attachments) {}
 
+        default void storeLinksLoaded(List<StoreLink> links) {}
+
         default void created(long id) {}
 
         default void listsLoaded(List<ShoppingList> lists) {}
@@ -63,6 +65,29 @@ public class ShoppingRepository {
 
     public void setItemUrl(long listId, long id, String url, Result result) {
         run(() -> database.setItemUrl(listId, id, url), () -> readItems(listId, result), result);
+    }
+
+    public void addStoreLink(
+            long listId, long itemId, String storeName, String url, Result result) {
+        run(
+                () -> database.addStoreLink(listId, itemId, storeName, url),
+                () -> readItems(listId, result),
+                result);
+    }
+
+    public void updateStoreLink(
+            long listId, long linkId, String storeName, String url, Result result) {
+        run(
+                () -> database.updateStoreLink(listId, linkId, storeName, url),
+                () -> readItems(listId, result),
+                result);
+    }
+
+    public void deleteStoreLink(long listId, long linkId, Result result) {
+        run(
+                () -> database.deleteStoreLink(listId, linkId),
+                () -> readItems(listId, result),
+                result);
     }
 
     public void setItemBarcode(long listId, long id, String code, Result result) {
@@ -138,7 +163,9 @@ public class ShoppingRepository {
         ShoppingList list = database.getList(listId);
         List<ShoppingItem> items = database.getItems(listId);
         List<ReceiptAttachment> attachments = database.getReceipts(listId);
+        List<StoreLink> links = database.getStoreLinks(listId);
         main.post(() -> {
+            result.storeLinksLoaded(links);
             result.receiptsLoaded(attachments);
             result.listLoaded(list);
             result.loaded(items);
