@@ -163,7 +163,27 @@ public class ShoppingScreenTest {
                             new com.example.shoppinglist.data.ReceiptAttachment(
                                     0, app.listId, source.getName(), "image/png")));
             onView(withId(R.id.receipt_preview_more)).check(matches(isDisplayed()));
-            onView(withId(R.id.receipt_preview_remove)).check(matches(isDisplayed()));
+            onView(withId(R.id.receipt_preview_remove))
+                    .check(matches(withText(R.string.receipt_remove)));
+            onView(withId(R.id.receipt_preview_remove))
+                    .check((view, missing) -> {
+                        if (missing != null) {
+                            throw missing;
+                        }
+                        android.view.View root = view.getRootView();
+                        android.view.View more = root.findViewById(R.id.receipt_preview_more);
+                        android.view.View back = root.findViewById(R.id.receipt_preview_back);
+                        assertNotNull(more);
+                        assertNotNull(back);
+                        assertEquals(more.getHeight(), view.getHeight());
+                        assertEquals(view.getHeight(), back.getHeight());
+                        assertEquals(view.getWidth(), back.getWidth());
+                        int[] removePosition = new int[2];
+                        int[] backPosition = new int[2];
+                        view.getLocationOnScreen(removePosition);
+                        back.getLocationOnScreen(backPosition);
+                        assertEquals(removePosition[1], backPosition[1]);
+                    });
             onView(withId(R.id.receipt_preview_back))
                     .check((view, missing) -> {
                         if (missing != null) {
