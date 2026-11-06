@@ -130,21 +130,18 @@ public class ShoppingScreenTest {
     @Test
     public void newlyScannedBarcodeActionsAreVisibleAndSavePersistsCode() {
         add("Хліб");
-        screen.onActivity(
-                activity -> {
-                    ShoppingItem item = activity.viewModel.items.get(0);
-                    activity.confirmScannedBarcode(item, "012345678905");
-                });
+        screen.onActivity(activity -> {
+            ShoppingItem item = activity.viewModel.items.get(0);
+            activity.confirmScannedBarcode(item, "012345678905");
+        });
         onView(withText(R.string.save)).check(matches(isDisplayed()));
         onView(withText(R.string.barcode_copy)).check(matches(isDisplayed()));
         onView(withText(R.string.barcode_search_web)).check(matches(isDisplayed()));
         onView(withText(R.string.save)).perform(click());
-        onView(withId(R.id.barcode_value))
-                .check(matches(withText("Штрихкод: 012345678905")));
+        onView(withId(R.id.barcode_value)).check(matches(withText("Штрихкод: 012345678905")));
         screen.close();
         open();
-        onView(withId(R.id.barcode_value))
-                .check(matches(withText("Штрихкод: 012345678905")));
+        onView(withId(R.id.barcode_value)).check(matches(withText("Штрихкод: 012345678905")));
     }
 
     @Test
