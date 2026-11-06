@@ -616,6 +616,9 @@ public class ShoppingDatabaseTest {
         assertRejected(() -> db.addStoreLink(listId, itemId, "Інший", "https://example.org"));
         assertRejected(() -> db.deleteStoreLink(listId, secondId));
         db.restore(listId);
+        db.setItemUrl(listId, itemId, "https://fresh.example.com/new");
+        assertEquals(2, db.getStoreLinks(listId).size());
+        assertEquals("https://fresh.example.com/new", db.getItems(listId).get(0).url);
         db.deleteStoreLink(listId, db.getStoreLinks(listId).get(0).id);
         assertEquals(1, db.getStoreLinks(listId).size());
         assertEquals("https://metro.ua/milk", db.getItems(listId).get(0).url);
