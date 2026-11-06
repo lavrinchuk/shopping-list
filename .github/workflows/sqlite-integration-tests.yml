@@ -9,6 +9,9 @@ on:
       - 'app/src/main/java/com/example/shoppinglist/data/**'
       - 'app/src/main/java/com/example/shoppinglist/model/**'
       - 'app/src/androidTest/java/com/example/shoppinglist/ShoppingDatabaseTest.java'
+      - 'app/src/androidTest/java/com/example/shoppinglist/ShoppingScreenTest.java'
+      - 'app/src/main/java/com/example/shoppinglist/ShoppingViewModel.java'
+      - 'app/src/main/java/com/example/shoppinglist/MainActivity.java'
       - '.github/workflows/sqlite-integration-tests.yml'
 
 permissions:
@@ -48,7 +51,9 @@ jobs:
           target: google_apis
           disable-animations: true
           emulator-boot-timeout: 600
-          script: ./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.shoppinglist.ShoppingDatabaseTest --no-daemon --no-configuration-cache
+          script: |
+            ./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.shoppinglist.ShoppingDatabaseTest --no-daemon --no-configuration-cache
+            ./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.shoppinglist.ShoppingScreenTest#multipleStoreOptionsAreVisibleWithTheirNamesAndUrls --no-daemon --no-configuration-cache
       - name: Upload Android test reports
         if: always()
         uses: actions/upload-artifact@v4
