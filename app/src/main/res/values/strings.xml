@@ -95,6 +95,15 @@
     <string name="receipt_error">Не вдалося додати чек. Фото мають бути до 8 МБ, PDF до 20 МБ.</string>
     <string name="receipt_unavailable">Не вдалося відкрити фото чека.</string>
     <string name="archive">Архів</string>
+    <string name="templates_title">Шаблони покупок</string>
+    <string name="templates_empty">Шаблонів поки немає. Збережи непорожній список через меню ⋮.</string>
+    <string name="save_as_template">Зберегти як шаблон</string>
+    <string name="template_name_hint">Назва шаблону</string>
+    <string name="template_details">%1$s (%2$d товарів)</string>
+    <string name="create_from_template">Створити список</string>
+    <string name="template_delete">Видалити</string>
+    <string name="template_delete_confirm">Видалити шаблон «%1$s»? Створені раніше списки залишаться.</string>
+    <string name="template_saved">Шаблон збережено</string>
     <string name="new_list">Новий список</string>
     <string name="rename_list">Перейменувати</string>
     <string name="finish_shopping">Завершити покупки</string>
