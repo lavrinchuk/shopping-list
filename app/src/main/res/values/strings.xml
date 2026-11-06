@@ -9,6 +9,7 @@
     <string name="voice_use_result">Використати</string>
     <string name="voice_unavailable">Розпізнавання мовлення недоступне. Перевір наявність мовного сервісу на пристрої.</string>
     <string name="voice_no_result">Не вдалося розпізнати назву товару. Спробуй ще раз.</string>
+    <string name="barcode_label">Штрихкод</string>
     <string name="barcode_scan">Сканувати штрихкод</string>
     <string name="barcode_view">Переглянути штрихкод</string>
     <string name="barcode_action_for">Штрихкод товару: %1$s</string>
