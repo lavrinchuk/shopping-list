@@ -101,6 +101,27 @@ public class ShoppingScreenTest {
     }
 
     @Test
+    public void multipleStoreOptionsAreVisibleWithTheirNamesAndUrls() {
+        add("Кава");
+        main(() ->
+                repository.execute(
+                        () -> {
+                            long id = app.database.getItems(app.listId).get(0).id;
+                            app.database.addStoreLink(
+                                    app.listId, id, "Сільпо", "https://silpo.ua/coffee");
+                            app.database.addStoreLink(
+                                    app.listId, id, "АТБ", "https://atbmarket.com/coffee");
+                        },
+                        noResult()));
+        screen.onActivity(activity -> activity.viewModel.reload());
+        onView(withId(R.id.edit_item_link)).perform(click());
+        onView(withText("Сільпо")).check(matches(isDisplayed()));
+        onView(withText("АТБ")).check(matches(isDisplayed()));
+        onView(withText("https://silpo.ua/coffee")).check(matches(isDisplayed()));
+        onView(withText("https://atbmarket.com/coffee")).check(matches(isDisplayed()));
+    }
+
+    @Test
     public void storedBarcodeIsDisplayedAndCanBeCopied() {
         add("Молоко");
         main(() ->
