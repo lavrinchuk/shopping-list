@@ -148,8 +148,7 @@ public class ShoppingScreenTest {
     public void tallReceiptDoesNotPushPreviewActionsOffScreen() throws Exception {
         java.io.File directory = new java.io.File(app.getFilesDir(), "receipts");
         assertTrue(directory.isDirectory() || directory.mkdirs());
-        java.io.File source =
-                new java.io.File(directory, java.util.UUID.randomUUID() + ".img");
+        java.io.File source = new java.io.File(directory, java.util.UUID.randomUUID() + ".img");
         android.graphics.Bitmap bitmap =
                 android.graphics.Bitmap.createBitmap(
                         80, 1200, android.graphics.Bitmap.Config.ARGB_8888);
@@ -159,23 +158,21 @@ public class ShoppingScreenTest {
             bitmap.recycle();
         }
         try {
-            screen.onActivity(
-                    activity ->
-                            activity.showReceiptPreview(
-                                    new com.example.shoppinglist.data.ReceiptAttachment(
-                                            0, app.listId, source.getName(), "image/png")));
+            screen.onActivity(activity ->
+                    activity.showReceiptPreview(
+                            new com.example.shoppinglist.data.ReceiptAttachment(
+                                    0, app.listId, source.getName(), "image/png")));
             onView(withId(R.id.receipt_preview_more)).check(matches(isDisplayed()));
             onView(withId(R.id.receipt_preview_remove)).check(matches(isDisplayed()));
             onView(withId(R.id.receipt_preview_back))
-                    .check(
-                            (view, missing) -> {
-                                if (missing != null) {
-                                    throw missing;
-                                }
-                                android.graphics.Rect visible = new android.graphics.Rect();
-                                assertTrue(view.getGlobalVisibleRect(visible));
-                                assertTrue(visible.height() >= view.getHeight() / 2);
-                            });
+                    .check((view, missing) -> {
+                        if (missing != null) {
+                            throw missing;
+                        }
+                        android.graphics.Rect visible = new android.graphics.Rect();
+                        assertTrue(view.getGlobalVisibleRect(visible));
+                        assertTrue(visible.height() >= view.getHeight() / 2);
+                    });
             onView(withId(R.id.receipt_preview_back)).perform(click());
         } finally {
             source.delete();
