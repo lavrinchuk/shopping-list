@@ -94,7 +94,6 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
                 "INSERT INTO receipt_attachments(listId, fileName, mimeType, createdAt) "
                         + "SELECT id, receiptFile, 'image/jpeg', updatedAt FROM shopping_lists "
                         + "WHERE receiptFile IS NOT NULL");
-
     }
 
     private void upgradeFromV1(SQLiteDatabase db) {
@@ -353,11 +352,7 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
                 }
             }
             changed.put("updatedAt", nextTimestamp(list));
-            db.update(
-                    "shopping_lists",
-                    changed,
-                    "id = ?",
-                    new String[] {String.valueOf(listId)});
+            db.update("shopping_lists", changed, "id = ?", new String[] {String.valueOf(listId)});
             db.setTransactionSuccessful();
         } finally {
             db.endTransaction();
@@ -424,10 +419,7 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
             } else {
                 values.put("receiptFile", filename);
             }
-            db.delete(
-                    "receipt_attachments",
-                    "listId = ?",
-                    new String[] {String.valueOf(listId)});
+            db.delete("receipt_attachments", "listId = ?", new String[] {String.valueOf(listId)});
             if (filename != null) {
                 ContentValues record = new ContentValues();
                 record.put("listId", listId);
