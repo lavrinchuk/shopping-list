@@ -4,4 +4,7 @@
         <item>@string/wish_list_type</item>
     </string-array>
     <item name="list_type_input" type="id" />
+    <item name="receipt_preview_more" type="id" />
+    <item name="receipt_preview_remove" type="id" />
+    <item name="receipt_preview_back" type="id" />
 </resources>
