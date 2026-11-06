@@ -315,6 +315,13 @@ public final class ShoppingViewModel extends ViewModel {
             }
 
             @Override
+            public void receiptsLoaded(List<ReceiptAttachment> attachments) {
+                if (!cleared) {
+                    receiptAttachments = attachments;
+                }
+            }
+
+            @Override
             public void loaded(List<ShoppingItem> updated) {
                 if (cleared) {
                     return;
