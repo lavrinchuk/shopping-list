@@ -5,17 +5,17 @@ import android.database.sqlite.SQLiteException;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
+import android.graphics.pdf.PdfRenderer;
 import android.media.ExifInterface;
 import android.net.Uri;
-import android.graphics.pdf.PdfRenderer;
 import android.os.ParcelFileDescriptor;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.UUID;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /** Owns private receipt images. No external URI is persisted. */
 public final class ReceiptStore {
