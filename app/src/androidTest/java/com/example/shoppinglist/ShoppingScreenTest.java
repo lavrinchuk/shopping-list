@@ -101,6 +101,32 @@ public class ShoppingScreenTest {
     }
 
     @Test
+    public void storedBarcodeIsDisplayedAndCanBeCopied() {
+        add("Молоко");
+        main(
+                () -> repository.execute(
+                        () -> {
+                            long id = app.database.getItems(app.listId).get(0).id;
+                            app.database.setItemBarcode(app.listId, id, "012345678905");
+                        },
+                        noResult()));
+        screen.onActivity(activity -> activity.viewModel.reload());
+        onView(withId(R.id.barcode_value))
+                .check(matches(withText("Штрихкод: 012345678905")));
+        onView(withId(R.id.barcode_action)).perform(click());
+        onView(withText("012345678905")).check(matches(isDisplayed()));
+        onView(withText(R.string.barcode_copy)).perform(click());
+        android.content.ClipboardManager clipboard =
+                (android.content.ClipboardManager)
+                        app.getSystemService(android.content.Context.CLIPBOARD_SERVICE);
+        assertNotNull(clipboard);
+        assertNotNull(clipboard.getPrimaryClip());
+        assertEquals(
+                "012345678905",
+                clipboard.getPrimaryClip().getItemAt(0).coerceToText(app).toString());
+    }
+
+    @Test
     public void addCheckReopenAndDelete() {
         onView(withId(R.id.add)).perform(click());
         screen.onActivity(activity ->
