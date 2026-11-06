@@ -54,6 +54,8 @@ jobs:
           script: |
             ./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.shoppinglist.ShoppingDatabaseTest --no-daemon --no-configuration-cache
             ./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.shoppinglist.ShoppingScreenTest#multipleStoreOptionsAreVisibleWithTheirNamesAndUrls --no-daemon --no-configuration-cache
+            ./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.shoppinglist.ShoppingScreenTest#voiceBatchCanBeEditedAndOnlyConfirmedItemsArePersisted --no-daemon --no-configuration-cache
+            ./gradlew :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.shoppinglist.ShoppingScreenTest#cancelledVoiceBatchDoesNotWriteItems --no-daemon --no-configuration-cache
       - name: Upload Android test reports
         if: always()
         uses: actions/upload-artifact@v4
