@@ -103,16 +103,15 @@ public class ShoppingScreenTest {
     @Test
     public void storedBarcodeIsDisplayedAndCanBeCopied() {
         add("Молоко");
-        main(
-                () -> repository.execute(
+        main(() ->
+                repository.execute(
                         () -> {
                             long id = app.database.getItems(app.listId).get(0).id;
                             app.database.setItemBarcode(app.listId, id, "012345678905");
                         },
                         noResult()));
         screen.onActivity(activity -> activity.viewModel.reload());
-        onView(withId(R.id.barcode_value))
-                .check(matches(withText("Штрихкод: 012345678905")));
+        onView(withId(R.id.barcode_value)).check(matches(withText("Штрихкод: 012345678905")));
         onView(withId(R.id.barcode_action)).perform(click());
         onView(withText("012345678905")).check(matches(isDisplayed()));
         onView(withText(R.string.barcode_copy)).perform(click());
