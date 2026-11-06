@@ -657,8 +657,7 @@ public class MainActivity extends AppCompatActivity {
             open.setText(R.string.open_item_link);
             actions.addView(
                     open,
-                    new LinearLayout.LayoutParams(
-                            0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+                    new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
             MaterialButton edit = new MaterialButton(this);
             edit.setText(R.string.store_link_edit);
             if (!archived) {
