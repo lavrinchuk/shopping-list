@@ -28,8 +28,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.shoppinglist.data.ShoppingRepository;
 import com.example.shoppinglist.data.ShoppingTemplate;
-import com.google.android.material.button.MaterialButton;
 import com.example.shoppinglist.model.ShoppingList;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
@@ -227,9 +227,7 @@ public class ListsActivity extends AppCompatActivity {
                             try {
                                 viewModel.saveTemplate(
                                         source,
-                                        input.getText() == null
-                                                ? ""
-                                                : input.getText().toString());
+                                        input.getText() == null ? "" : input.getText().toString());
                                 dialog.dismiss();
                             } catch (IllegalArgumentException error) {
                                 field.setError(getString(R.string.list_name_required));
@@ -266,14 +264,10 @@ public class ListsActivity extends AppCompatActivity {
             LinearLayout buttons = new LinearLayout(this);
             MaterialButton create = new MaterialButton(this);
             create.setText(R.string.create_from_template);
-            buttons.addView(
-                    create,
-                    new LinearLayout.LayoutParams(0, pad * 5, 1f));
+            buttons.addView(create, new LinearLayout.LayoutParams(0, pad * 5, 1f));
             MaterialButton delete = new MaterialButton(this);
             delete.setText(R.string.template_delete);
-            buttons.addView(
-                    delete,
-                    new LinearLayout.LayoutParams(0, pad * 5, 1f));
+            buttons.addView(delete, new LinearLayout.LayoutParams(0, pad * 5, 1f));
             content.addView(buttons);
             create.setOnClickListener(view -> {
                 dialog.dismiss();
