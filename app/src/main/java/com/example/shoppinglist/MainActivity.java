@@ -1038,7 +1038,8 @@ public class MainActivity extends AppCompatActivity {
         scroll.addView(form);
         androidx.appcompat.app.AlertDialog dialog =
                 new MaterialAlertDialogBuilder(this)
-                        .setTitle(getString(R.string.voice_batch_title, viewModel.voiceDraft.size()))
+                        .setTitle(
+                                getString(R.string.voice_batch_title, viewModel.voiceDraft.size()))
                         .setView(scroll)
                         .setNegativeButton(R.string.cancel, null)
                         .setPositiveButton(R.string.voice_batch_add, null)
@@ -1047,7 +1048,8 @@ public class MainActivity extends AppCompatActivity {
         input.addTextChangedListener(
                 new TextWatcher() {
                     @Override
-                    public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                    public void beforeTextChanged(
+                            CharSequence s, int start, int count, int after) {}
 
                     @Override
                     public void onTextChanged(CharSequence s, int start, int before, int count) {
