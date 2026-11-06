@@ -317,7 +317,13 @@ public class MainActivity extends AppCompatActivity {
         image.setPadding(padding, padding, padding, padding);
         image.setAdjustViewBounds(true);
         image.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        // Bound only the image area; AlertDialog owns the action buttons outside the scroll.
+
+        // The scroll area has a measured height inside a vertical container.
+        // The fixed action panel is a sibling, so a tall image cannot push it off screen.
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setPadding(padding, 0, padding, padding);
+
         ScrollView photoScroll = new ScrollView(this);
         photoScroll.setFillViewport(false);
         photoScroll.addView(
@@ -326,33 +332,60 @@ public class MainActivity extends AppCompatActivity {
                         ScrollView.LayoutParams.MATCH_PARENT,
                         ScrollView.LayoutParams.WRAP_CONTENT));
         int screenHeight = getResources().getDisplayMetrics().heightPixels;
-        int maxPreviewHeight = Math.min((int) (screenHeight * 0.55f), receiptPixels(560));
-        photoScroll.setLayoutParams(
+        int previewHeight = Math.min((int) (screenHeight * 0.38f), receiptPixels(360));
+        content.addView(
+                photoScroll,
                 new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT, maxPreviewHeight));
+                        LinearLayout.LayoutParams.MATCH_PARENT, previewHeight));
+
+        MaterialButton more = new MaterialButton(this);
+        more.setId(R.id.receipt_preview_more);
+        more.setText(receipt.isPdf() ? R.string.receipt_open_pdf : R.string.receipt_add_more);
+        content.addView(
+                more,
+                new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        LinearLayout actions = new LinearLayout(this);
+        actions.setOrientation(LinearLayout.HORIZONTAL);
+        MaterialButton remove = new MaterialButton(this);
+        remove.setId(R.id.receipt_preview_remove);
+        remove.setText(R.string.receipt_remove);
+        actions.addView(
+                remove,
+                new LinearLayout.LayoutParams(
+                        0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        MaterialButton back = new MaterialButton(this);
+        back.setId(R.id.receipt_preview_back);
+        back.setText(R.string.back);
+        actions.addView(
+                back,
+                new LinearLayout.LayoutParams(
+                        0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        content.addView(actions);
+
         androidx.appcompat.app.AlertDialog dialog =
                 new MaterialAlertDialogBuilder(this)
                         .setTitle(
                                 receipt.isPdf()
                                         ? R.string.receipt_pdf_preview
                                         : R.string.receipt_title)
-                        .setView(photoScroll)
-                        .setPositiveButton(R.string.back, null)
-                        .setNeutralButton(
-                                receipt.isPdf()
-                                        ? R.string.receipt_open_pdf
-                                        : R.string.receipt_add_more,
-                                (ignored, which) -> {
-                                    if (receipt.isPdf()) {
-                                        openReceiptPdf(receipt);
-                                    } else {
-                                        openReceiptPicker();
-                                    }
-                                })
-                        .setNegativeButton(
-                                R.string.receipt_remove,
-                                (ignored, which) -> confirmReceiptRemoval(receipt))
+                        .setView(content)
                         .create();
+        back.setOnClickListener(view -> dialog.dismiss());
+        remove.setOnClickListener(view -> {
+            dialog.dismiss();
+            confirmReceiptRemoval(receipt);
+        });
+        more.setOnClickListener(view -> {
+            dialog.dismiss();
+            if (receipt.isPdf()) {
+                openReceiptPdf(receipt);
+            } else {
+                openReceiptPicker();
+            }
+        });
         dialog.show();
         viewModel.previewReceipt(
                 receipt,
