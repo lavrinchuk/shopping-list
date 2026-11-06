@@ -1,8 +1,7 @@
 package com.example.shoppinglist;
 
-import static org.junit.Assert.*;
-
 import android.content.Context;
+
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
@@ -16,6 +15,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import static org.junit.Assert.*;
 
 @RunWith(AndroidJUnit4.class)
 public class ShoppingDatabaseTest {
@@ -556,8 +556,7 @@ public class ShoppingDatabaseTest {
                     "CREATE TABLE items (id INTEGER PRIMARY KEY AUTOINCREMENT, listId INTEGER NOT NULL REFERENCES shopping_lists(id), name TEXT NOT NULL, quantity TEXT NOT NULL, purchased INTEGER NOT NULL, url TEXT, barcode TEXT)");
             old.execSQL(
                     "INSERT INTO shopping_lists VALUES (42, 'Старий чек', 10, 20, 20, 'shopping', 'existing.img')");
-            old.execSQL(
-                    "INSERT INTO items VALUES (12, 42, 'Кава', '1', 1, NULL, '012345678905')");
+            old.execSQL("INSERT INTO items VALUES (12, 42, 'Кава', '1', 1, NULL, '012345678905')");
             old.setVersion(6);
         }
         db = new ShoppingDatabase(context, file);
@@ -589,8 +588,8 @@ public class ShoppingDatabaseTest {
         db = new ShoppingDatabase(context, file);
         assertEquals("second.pdf", db.getReceipts(id).get(0).fileName);
         db.restore(id);
-        assertRejected(
-                () -> db.addReceipts(
+        assertRejected(() ->
+                db.addReceipts(
                         id,
                         java.util.Collections.singletonList(
                                 new com.example.shoppinglist.data.ReceiptAttachment(
