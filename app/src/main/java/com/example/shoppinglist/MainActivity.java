@@ -395,11 +395,9 @@ public class MainActivity extends AppCompatActivity {
                 .setTitle(R.string.barcode_scanned_title)
                 .setMessage(value)
                 .setNegativeButton(R.string.cancel, null)
-                .setNeutralButton(
-                        R.string.barcode_copy, (dialog, which) -> copyBarcode(value))
+                .setNeutralButton(R.string.barcode_copy, (dialog, which) -> copyBarcode(value))
                 .setPositiveButton(
-                        R.string.save,
-                        (dialog, which) -> viewModel.updateItemBarcode(item, value))
+                        R.string.save, (dialog, which) -> viewModel.updateItemBarcode(item, value))
                 .show();
     }
 
