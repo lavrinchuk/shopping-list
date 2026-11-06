@@ -672,6 +672,34 @@ public class ShoppingDatabaseTest {
         assertNotNull(db.getList(7).archivedAt);
     }
 
+    @Test
+    public void voiceBatchInsertsAllItemsAndTouchOnce() {
+        long id = db.createList("Продукти");
+        db.addItems(id, java.util.Arrays.asList("Молоко", "Хліб", "Яблука"));
+        List<ShoppingItem> items = db.getItems(id);
+        assertEquals(3, items.size());
+        assertEquals("Молоко", items.get(0).name);
+        assertEquals("Хліб", items.get(1).name);
+        assertEquals("Яблука", items.get(2).name);
+        assertEquals(3, db.getList(id).total);
+        assertEquals("", items.get(1).quantity);
+        assertFalse(items.get(2).purchased);
+    }
+
+    @Test
+    public void voiceBatchRejectsInvalidInputWithoutPartialInsertion() {
+        long id = db.createList("Продукти");
+        try {
+            db.addItems(id, java.util.Arrays.asList("Молоко", " ", "Яблука"));
+            fail("Invalid batch must not partially save");
+        } catch (IllegalArgumentException expected) {
+            assertTrue(db.getItems(id).isEmpty());
+        }
+        db.archive(id, false);
+        assertRejected(() -> db.addItems(id, java.util.Arrays.asList("Сир", "Хліб")));
+        assertTrue(db.getItems(id).isEmpty());
+    }
+
     private void assertRejected(Runnable action) {
         try {
             action.run();
