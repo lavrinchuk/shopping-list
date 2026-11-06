@@ -8,8 +8,7 @@ public class StoreLinkTest {
     @Test
     public void normalizesNameAndUrl() {
         StoreLink link =
-                new StoreLink(
-                        1, 7, "  Епіцентр  ", " https://example.com/product?id=10 ");
+                new StoreLink(1, 7, "  Епіцентр  ", " https://example.com/product?id=10 ");
         assertEquals("Епіцентр", link.storeName);
         assertEquals("https://example.com/product?id=10", link.url);
     }
