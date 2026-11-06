@@ -342,21 +342,18 @@ public class MainActivity extends AppCompatActivity {
                         .setView(actions)
                         .setNegativeButton(R.string.back, null)
                         .create();
-        copy.setOnClickListener(
-                view -> {
-                    dialog.dismiss();
-                    copyBarcode(current);
-                });
-        search.setOnClickListener(
-                view -> {
-                    dialog.dismiss();
-                    openBarcodeSearch(current);
-                });
-        rescan.setOnClickListener(
-                view -> {
-                    dialog.dismiss();
-                    scanBarcode(item);
-                });
+        copy.setOnClickListener(view -> {
+            dialog.dismiss();
+            copyBarcode(current);
+        });
+        search.setOnClickListener(view -> {
+            dialog.dismiss();
+            openBarcodeSearch(current);
+        });
+        rescan.setOnClickListener(view -> {
+            dialog.dismiss();
+            scanBarcode(item);
+        });
         dialog.show();
     }
 
@@ -426,21 +423,18 @@ public class MainActivity extends AppCompatActivity {
                         .setView(actions)
                         .setNegativeButton(R.string.cancel, null)
                         .create();
-        save.setOnClickListener(
-                view -> {
-                    dialog.dismiss();
-                    viewModel.updateItemBarcode(item, value);
-                });
-        copy.setOnClickListener(
-                view -> {
-                    dialog.dismiss();
-                    copyBarcode(value);
-                });
-        search.setOnClickListener(
-                view -> {
-                    dialog.dismiss();
-                    openBarcodeSearch(value);
-                });
+        save.setOnClickListener(view -> {
+            dialog.dismiss();
+            viewModel.updateItemBarcode(item, value);
+        });
+        copy.setOnClickListener(view -> {
+            dialog.dismiss();
+            copyBarcode(value);
+        });
+        search.setOnClickListener(view -> {
+            dialog.dismiss();
+            openBarcodeSearch(value);
+        });
         dialog.show();
     }
 
