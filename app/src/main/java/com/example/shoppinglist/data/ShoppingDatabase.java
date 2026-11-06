@@ -594,7 +594,8 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
                 ContentValues values = new ContentValues();
                 values.put("url", normalized);
                 if (firstId >= 0) {
-                    db.update("item_links", values, "id = ?", new String[] {String.valueOf(firstId)});
+                    db.update(
+                            "item_links", values, "id = ?", new String[] {String.valueOf(firstId)});
                 } else {
                     values.put("itemId", id);
                     values.put("storeName", "Без назви магазину");
