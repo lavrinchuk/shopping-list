@@ -58,16 +58,16 @@ public class ProductSearchUrlTest {
     }
 
     @Test
-    public void barcodeSearchPreservesLeadingZeroesAndQuotesIdentifier() {
+    public void barcodeSearchOpensVerifiedGs1Form() {
         assertEquals(
-                "https://www.google.com/search?q=%22012345678905%22+%D1%82%D0%BE%D0%B2%D0%B0%D1%80",
+                "https://gepir.gs1ua.org/search/gtin",
                 ProductSearchUrl.forBarcode(" 012345678905 "));
     }
 
     @Test
-    public void barcodeSearchEscapesSpecialCharacters() {
+    public void barcodeSearchDoesNotInventUnsupportedDeepLink() {
         assertEquals(
-                "https://www.google.com/search?q=%22AB%2B12%26C%22+%D1%82%D0%BE%D0%B2%D0%B0%D1%80",
+                "https://gepir.gs1ua.org/search/gtin",
                 ProductSearchUrl.forBarcode("AB+12&C"));
     }
 
