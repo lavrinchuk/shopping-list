@@ -47,9 +47,8 @@ public class ReceiptStoreTest {
 
     @After
     public void tearDown() {
-        String receipt = database.getList(listId).receiptFile;
-        if (receipt != null) {
-            receipts.remove(database, listId);
+        for (ReceiptAttachment attachment : database.getReceipts(listId)) {
+            receipts.remove(database, listId, attachment.id);
         }
         String filename = database.getDatabaseName();
         database.close();
@@ -73,6 +72,63 @@ public class ReceiptStoreTest {
         receipts.remove(database, listId);
         assertNull(database.getList(listId).receiptFile);
         assertNull(receipts.preview(second));
+    }
+
+    @Test
+    public void multipleImagesAndPdfAreImportedAsSeparateFiles() throws Exception {
+        File pdf = new File(context.getCacheDir(), UUID.randomUUID() + ".pdf");
+        android.graphics.pdf.PdfDocument document = new android.graphics.pdf.PdfDocument();
+        android.graphics.pdf.PdfDocument.Page page =
+                document.startPage(new android.graphics.pdf.PdfDocument.PageInfo.Builder(200, 300, 1).create());
+        document.finishPage(page);
+        try (FileOutputStream output = new FileOutputStream(pdf)) {
+            document.writeTo(output);
+        } finally {
+            document.close();
+        }
+        try {
+            receipts.add(
+                    database,
+                    listId,
+                    java.util.Arrays.asList(
+                            Uri.fromFile(source), Uri.fromFile(source), Uri.fromFile(pdf)));
+            java.util.List<ReceiptAttachment> all = database.getReceipts(listId);
+            assertEquals(3, all.size());
+            assertEquals("application/pdf", all.get(2).mimeType);
+            assertNotNull(receipts.preview(all.get(2)));
+            String first = all.get(0).fileName;
+            receipts.remove(database, listId, all.get(1).id);
+            assertEquals(2, database.getReceipts(listId).size());
+            assertEquals(first, database.getList(listId).receiptFile);
+            for (ReceiptAttachment receipt : database.getReceipts(listId)) {
+                receipts.remove(database, listId, receipt.id);
+            }
+            assertTrue(database.getReceipts(listId).isEmpty());
+        } finally {
+            pdf.delete();
+        }
+    }
+
+    @Test
+    public void failedBatchLeavesPreviousReceiptAndNoNewRows() throws IOException {
+        receipts.add(database, listId, java.util.Collections.singletonList(Uri.fromFile(source)));
+        String existing = database.getList(listId).receiptFile;
+        File invalid = new File(context.getCacheDir(), UUID.randomUUID() + ".txt");
+        try (FileOutputStream output = new FileOutputStream(invalid)) {
+            output.write("invalid".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        }
+        try {
+            receipts.add(
+                    database,
+                    listId,
+                    java.util.Arrays.asList(Uri.fromFile(source), Uri.fromFile(invalid)));
+            fail("Invalid second attachment must roll back batch");
+        } catch (android.database.sqlite.SQLiteException expected) {
+            assertEquals(1, database.getReceipts(listId).size());
+            assertEquals(existing, database.getReceipts(listId).get(0).fileName);
+        } finally {
+            invalid.delete();
+        }
     }
 
     @Test
