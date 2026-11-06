@@ -296,7 +296,8 @@ public class MainActivity extends AppCompatActivity {
                         .setTitle(R.string.receipt_gallery_title)
                         .setView(scroll)
                         .setNegativeButton(R.string.back, null)
-                        .setPositiveButton(R.string.receipt_add_more, (d, which) -> openReceiptPicker())
+                        .setPositiveButton(
+                                R.string.receipt_add_more, (d, which) -> openReceiptPicker())
                         .create();
         for (int i = 0; i < receipts.size(); i++) {
             ReceiptAttachment current = receipts.get(i);
@@ -325,7 +326,9 @@ public class MainActivity extends AppCompatActivity {
                         .setView(image)
                         .setPositiveButton(R.string.back, null)
                         .setNeutralButton(
-                                receipt.isPdf() ? R.string.receipt_open_pdf : R.string.receipt_add_more,
+                                receipt.isPdf()
+                                        ? R.string.receipt_open_pdf
+                                        : R.string.receipt_add_more,
                                 (ignored, which) -> {
                                     if (receipt.isPdf()) {
                                         openReceiptPdf(receipt);
@@ -348,7 +351,8 @@ public class MainActivity extends AppCompatActivity {
                     } else if (bitmap != null) {
                         image.setImageBitmap(bitmap);
                     } else {
-                        Toast.makeText(this, R.string.receipt_unavailable, Toast.LENGTH_LONG).show();
+                        Toast.makeText(this, R.string.receipt_unavailable, Toast.LENGTH_LONG)
+                                .show();
                         dialog.dismiss();
                     }
                 });
