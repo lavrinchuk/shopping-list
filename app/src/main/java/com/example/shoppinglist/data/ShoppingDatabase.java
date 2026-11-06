@@ -331,6 +331,39 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
         }
     }
 
+    /** Adds all selected files atomically, including the legacy first receipt pointer. */
+    public void addReceipts(long listId, java.util.List<ReceiptAttachment> files) {
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            ShoppingList list = getList(listId);
+            if (list.archivedAt == null || files.isEmpty()) {
+                throw new SQLiteException("Receipts require an archived list");
+            }
+            ContentValues changed = new ContentValues();
+            for (ReceiptAttachment file : files) {
+                ContentValues record = new ContentValues();
+                record.put("listId", listId);
+                record.put("fileName", file.fileName);
+                record.put("mimeType", file.mimeType);
+                record.put("createdAt", System.currentTimeMillis());
+                db.insertOrThrow("receipt_attachments", null, record);
+                if (list.receiptFile == null && !changed.containsKey("receiptFile")) {
+                    changed.put("receiptFile", file.fileName);
+                }
+            }
+            changed.put("updatedAt", nextTimestamp(list));
+            db.update(
+                    "shopping_lists",
+                    changed,
+                    "id = ?",
+                    new String[] {String.valueOf(listId)});
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
     /** Returns the deleted filename only after successful commit. */
     public String removeReceipt(long listId, long attachmentId) {
         SQLiteDatabase db = getWritableDatabase();
