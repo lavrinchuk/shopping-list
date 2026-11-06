@@ -20,6 +20,8 @@
     <string name="barcode_copied">Штрихкод скопійовано</string>
     <string name="barcode_remove">Очистити код</string>
     <string name="barcode_scan_again">Сканувати знову</string>
+    <string name="barcode_search_web">Шукати за штрихкодом в інтернеті</string>
+    <string name="barcode_scanned_message">Код: %1$s\n\nМожна зберегти код або пошукати товар у браузері. Штрихкод не гарантує, що в інтернеті є повна картка товару чи ціна.</string>
     <string name="barcode_unavailable">Не вдалося відкрити сканер. Перевір Google Play services та з’єднання для першого запуску.</string>
     <string name="barcode_invalid">Не вдалося прочитати штрихкод. Спробуй ще раз.</string>
     <string name="search_purchase">Шукати</string>

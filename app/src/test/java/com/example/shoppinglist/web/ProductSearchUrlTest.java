@@ -57,6 +57,25 @@ public class ProductSearchUrlTest {
         ProductSearchUrl.forPurchase("  ", "Київська область");
     }
 
+    @Test
+    public void barcodeSearchPreservesLeadingZeroesAndQuotesIdentifier() {
+        assertEquals(
+                "https://www.google.com/search?q=%22012345678905%22+%D1%82%D0%BE%D0%B2%D0%B0%D1%80",
+                ProductSearchUrl.forBarcode(" 012345678905 "));
+    }
+
+    @Test
+    public void barcodeSearchEscapesSpecialCharacters() {
+        assertEquals(
+                "https://www.google.com/search?q=%22AB%2B12%26C%22+%D1%82%D0%BE%D0%B2%D0%B0%D1%80",
+                ProductSearchUrl.forBarcode("AB+12&C"));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void rejectsBlankBarcodeSearch() {
+        ProductSearchUrl.forBarcode("  ");
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void rejectsBlankName() {
         ProductSearchUrl.forName("  ");
