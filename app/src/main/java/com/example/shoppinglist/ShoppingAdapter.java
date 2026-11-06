@@ -108,11 +108,12 @@ final class ShoppingAdapter extends ListAdapter<ShoppingItem, ShoppingAdapter.Ho
         holder.search.setContentDescription(
                 holder.itemView.getContext().getString(R.string.search_item, item.name));
         holder.search.setOnClickListener(view -> actions.search(item));
-        holder.editLink.setVisibility(readOnly ? View.GONE : View.VISIBLE);
+        holder.editLink.setVisibility(View.VISIBLE);
         holder.editLink.setContentDescription(
                 holder.itemView.getContext().getString(R.string.edit_item_link, item.name));
         holder.editLink.setOnClickListener(view -> actions.editLink(item));
         holder.openLink.setVisibility(item.url == null ? View.GONE : View.VISIBLE);
+        holder.openLink.setText(R.string.view_store_links);
         holder.openLink.setOnClickListener(view -> actions.openLink(item));
         holder.name.setTextColor(
                 MaterialColors.getColor(
