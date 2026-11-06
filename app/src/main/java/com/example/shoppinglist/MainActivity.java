@@ -359,7 +359,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void openReceiptPdf(ReceiptAttachment receipt) {
-        if (!receipt.isPdf() || !receipt.fileName.matches("[0-9a-f-]{36}\\\\.pdf")) {
+        if (!receipt.isPdf() || !receipt.fileName.matches("[0-9a-f-]{36}\\.pdf")) {
             return;
         }
         java.io.File file =
