@@ -153,7 +153,7 @@ final class ShoppingAdapter extends ListAdapter<ShoppingItem, ShoppingAdapter.Ho
         final View delete;
         final View search;
         final View editLink;
-        final View openLink;
+        final TextView openLink;
         final TextView barcode;
         final TextView barcodeValue;
 
