@@ -39,9 +39,7 @@ public class VoiceRecognitionResultTest {
         assertEquals(
                 Arrays.asList("Молоко", "Хліб", "Яблука"),
                 VoiceRecognitionResult.items(" молоко, хліб; яблука "));
-        assertEquals(
-                Arrays.asList("Сир", "Олія"),
-                VoiceRecognitionResult.items("сир\n\n олія"));
+        assertEquals(Arrays.asList("Сир", "Олія"), VoiceRecognitionResult.items("сир\n\n олія"));
     }
 
     @Test
@@ -53,9 +51,7 @@ public class VoiceRecognitionResultTest {
 
     @Test
     public void ignoresBlankPartsWithoutRemovingIntentionalDuplicates() {
-        assertEquals(
-                Arrays.asList("Хліб", "Хліб"),
-                VoiceRecognitionResult.items("хліб,,, хліб; "));
+        assertEquals(Arrays.asList("Хліб", "Хліб"), VoiceRecognitionResult.items("хліб,,, хліб; "));
         assertEquals(Collections.emptyList(), VoiceRecognitionResult.items(null));
     }
 
