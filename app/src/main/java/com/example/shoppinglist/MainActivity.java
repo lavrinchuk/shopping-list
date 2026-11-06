@@ -653,18 +653,26 @@ public class MainActivity extends AppCompatActivity {
             content.addView(address);
 
             LinearLayout actions = new LinearLayout(this);
+            actions.setOrientation(LinearLayout.HORIZONTAL);
+            int actionHeight = receiptPixels(56);
             MaterialButton open = new MaterialButton(this);
-            open.setText(R.string.open_item_link);
-            actions.addView(
-                    open,
-                    new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+            open.setText(R.string.store_link_open);
+            open.setContentDescription(getString(R.string.open_item_link));
+            open.setSingleLine(true);
+            LinearLayout.LayoutParams openParams =
+                    new LinearLayout.LayoutParams(0, actionHeight, 1f);
+            if (!archived) {
+                openParams.setMarginEnd(receiptPixels(4));
+            }
+            actions.addView(open, openParams);
             MaterialButton edit = new MaterialButton(this);
             edit.setText(R.string.store_link_edit);
+            edit.setSingleLine(true);
             if (!archived) {
-                actions.addView(
-                        edit,
-                        new LinearLayout.LayoutParams(
-                                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+                LinearLayout.LayoutParams editParams =
+                        new LinearLayout.LayoutParams(0, actionHeight, 1f);
+                editParams.setMarginStart(receiptPixels(4));
+                actions.addView(edit, editParams);
             }
             content.addView(actions);
             View divider = new View(this);
