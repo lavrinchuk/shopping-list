@@ -1,10 +1,10 @@
 package com.example.shoppinglist;
 
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
-import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -39,10 +39,10 @@ import com.example.shoppinglist.model.ShoppingItem;
 import com.example.shoppinglist.ui.AdaptiveFormLayoutController;
 import com.example.shoppinglist.voice.VoiceRecognitionResult;
 import com.example.shoppinglist.web.ProductSearchUrl;
-import com.google.mlkit.vision.codescanner.GmsBarcodeScanner;
-import com.google.mlkit.vision.codescanner.GmsBarcodeScanning;
-import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.mlkit.vision.codescanner.GmsBarcodeScanner;
+import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions;
+import com.google.mlkit.vision.codescanner.GmsBarcodeScanning;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -330,13 +330,11 @@ public class MainActivity extends AppCompatActivity {
                         .setTitle(getString(R.string.barcode_title, item.name))
                         .setMessage(current)
                         .setPositiveButton(
-                                R.string.barcode_copy,
-                                (dialog, which) -> copyBarcode(current))
+                                R.string.barcode_copy, (dialog, which) -> copyBarcode(current))
                         .setNegativeButton(R.string.back, null);
         if (!archived) {
             builder.setNeutralButton(
-                    R.string.barcode_scan_again,
-                    (dialog, which) -> scanBarcode(item));
+                    R.string.barcode_scan_again, (dialog, which) -> scanBarcode(item));
         }
         builder.show();
     }
@@ -345,7 +343,8 @@ public class MainActivity extends AppCompatActivity {
         ClipboardManager clipboard =
                 (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         if (clipboard != null) {
-            clipboard.setPrimaryClip(ClipData.newPlainText(getString(R.string.barcode_label), code));
+            clipboard.setPrimaryClip(
+                    ClipData.newPlainText(getString(R.string.barcode_label), code));
             Toast.makeText(this, R.string.barcode_copied, Toast.LENGTH_SHORT).show();
         }
     }
