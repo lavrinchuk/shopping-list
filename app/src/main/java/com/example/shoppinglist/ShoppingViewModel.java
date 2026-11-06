@@ -189,6 +189,7 @@ public final class ShoppingViewModel extends ViewModel {
 
     void finishShopping(boolean confirmed, boolean deleteEmpty) {
         if (finishing
+                || voiceAdding
                 || receiptOfferPending
                 || list == null
                 || list.archivedAt != null
