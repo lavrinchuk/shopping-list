@@ -9,8 +9,8 @@ import com.example.shoppinglist.data.ShoppingRepository;
 import com.example.shoppinglist.data.StoreLink;
 import com.example.shoppinglist.model.ShoppingItem;
 import com.example.shoppinglist.model.ShoppingList;
-import com.example.shoppinglist.voice.VoiceRecognitionResult;
 import com.example.shoppinglist.share.ShoppingListTextFormatter;
+import com.example.shoppinglist.voice.VoiceRecognitionResult;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -117,8 +117,7 @@ public final class ShoppingViewModel extends ViewModel {
         }
         List<String> selected = new ArrayList<>();
         for (String name : voiceDraft) {
-            selected.add(
-                    ShoppingItem.cleanName(VoiceRecognitionResult.capitalizeFirst(name)));
+            selected.add(ShoppingItem.cleanName(VoiceRecognitionResult.capitalizeFirst(name)));
         }
         voiceAdding = true;
         notifyStateChanged();
