@@ -43,6 +43,13 @@ public class VoiceRecognitionResultTest {
     }
 
     @Test
+    public void supportsSpokenCommaWhenRecognizerOmitsPunctuation() {
+        assertEquals(
+                Arrays.asList("Молоко", "Хліб", "Яблука"),
+                VoiceRecognitionResult.items("молоко кома хліб кома яблука"));
+    }
+
+    @Test
     public void doesNotGuessNaturalLanguageQuantityOrConjunctions() {
         assertEquals(
                 Collections.singletonList("Два літри молока й три батони"),
