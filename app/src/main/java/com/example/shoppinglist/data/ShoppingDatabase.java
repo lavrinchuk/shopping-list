@@ -15,7 +15,7 @@ import java.util.List;
 
 public class ShoppingDatabase extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "shopping.db";
-    private static final int DATABASE_VERSION = 8;
+    private static final int DATABASE_VERSION = 9;
     private static final String LEGACY_DEFAULT_LIST_NAME = "Мій список";
     private final Context context;
 
@@ -60,6 +60,18 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
         db.execSQL("CREATE INDEX items_list_order ON items(listId, purchased, id)");
         createReceiptTable(db);
         createItemLinksTable(db);
+        createTemplatesTables(db);
+    }
+
+    private void createTemplatesTables(SQLiteDatabase db) {
+        db.execSQL(
+                "CREATE TABLE shopping_templates (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL CHECK(length(trim(name)) > 0), createdAt INTEGER NOT NULL)");
+        db.execSQL(
+                "CREATE TABLE template_items (id INTEGER PRIMARY KEY AUTOINCREMENT, templateId INTEGER NOT NULL REFERENCES shopping_templates(id) ON DELETE CASCADE, name TEXT NOT NULL, quantity TEXT NOT NULL, barcode TEXT, url TEXT)");
+        db.execSQL("CREATE INDEX template_items_by_template ON template_items(templateId, id)");
+        db.execSQL(
+                "CREATE TABLE template_links (id INTEGER PRIMARY KEY AUTOINCREMENT, templateItemId INTEGER NOT NULL REFERENCES template_items(id) ON DELETE CASCADE, storeName TEXT NOT NULL, url TEXT NOT NULL)");
+        db.execSQL("CREATE INDEX template_links_by_item ON template_links(templateItemId, id)");
     }
 
     private void createItemLinksTable(SQLiteDatabase db) {
@@ -76,7 +88,7 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        if (oldVersion < 1 || oldVersion > 7 || newVersion != DATABASE_VERSION) {
+        if (oldVersion < 1 || oldVersion > 8 || newVersion != DATABASE_VERSION) {
             throw new SQLiteException("Unsupported database upgrade");
         }
         // SQLiteOpenHelper wraps schema migration and user_version in a transaction.
@@ -103,10 +115,13 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
                             + "SELECT id, receiptFile, 'image/jpeg', updatedAt FROM shopping_lists "
                             + "WHERE receiptFile IS NOT NULL");
         }
-        createItemLinksTable(db);
-        db.execSQL(
-                "INSERT INTO item_links(itemId, storeName, url) "
-                        + "SELECT id, 'Без назви магазину', url FROM items WHERE url IS NOT NULL");
+        if (oldVersion < 8) {
+            createItemLinksTable(db);
+            db.execSQL(
+                    "INSERT INTO item_links(itemId, storeName, url) "
+                            + "SELECT id, 'Без назви магазину', url FROM items WHERE url IS NOT NULL");
+        }
+        createTemplatesTables(db);
     }
 
     private void upgradeFromV1(SQLiteDatabase db) {
@@ -159,6 +174,130 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
                 ShoppingList.cleanName(name),
                 System.currentTimeMillis(),
                 ShoppingList.requireType(type));
+    }
+
+    /** Saves a detached snapshot of a nonempty shopping list, including archived sources. */
+    public long saveTemplate(long sourceListId, String name) {
+        String title = ShoppingList.cleanName(name);
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            ShoppingList source = getList(sourceListId);
+            if (source.isWish() || source.total == 0) {
+                throw new SQLiteException("Only nonempty shopping lists can become templates");
+            }
+            ContentValues template = new ContentValues();
+            template.put("name", title);
+            template.put("createdAt", System.currentTimeMillis());
+            long templateId = db.insertOrThrow("shopping_templates", null, template);
+            List<StoreLink> links = getStoreLinks(sourceListId);
+            for (ShoppingItem item : getItems(sourceListId)) {
+                ContentValues snapshot = new ContentValues();
+                snapshot.put("templateId", templateId);
+                snapshot.put("name", item.name);
+                snapshot.put("quantity", item.quantity);
+                snapshot.put("url", item.url);
+                snapshot.put("barcode", item.barcode);
+                long snapshotId = db.insertOrThrow("template_items", null, snapshot);
+                for (StoreLink link : links) {
+                    if (link.itemId == item.id) {
+                        ContentValues savedLink = new ContentValues();
+                        savedLink.put("templateItemId", snapshotId);
+                        savedLink.put("storeName", link.storeName);
+                        savedLink.put("url", link.url);
+                        db.insertOrThrow("template_links", null, savedLink);
+                    }
+                }
+            }
+            db.setTransactionSuccessful();
+            return templateId;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    public List<ShoppingTemplate> getTemplates() {
+        List<ShoppingTemplate> templates = new ArrayList<>();
+        try (Cursor c =
+                getReadableDatabase()
+                        .rawQuery(
+                                "SELECT t.id, t.name, COUNT(i.id) FROM shopping_templates t "
+                                        + "LEFT JOIN template_items i ON i.templateId = t.id "
+                                        + "GROUP BY t.id ORDER BY t.id DESC",
+                                null)) {
+            while (c.moveToNext()) {
+                templates.add(new ShoppingTemplate(c.getLong(0), c.getString(1), c.getInt(2)));
+            }
+        }
+        return templates;
+    }
+
+    /** Instantiates an independent active list. All items start unchecked; no receipts are copied. */
+    public long createFromTemplate(long templateId) {
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            String templateName;
+            try (Cursor t =
+                    db.rawQuery(
+                            "SELECT name FROM shopping_templates WHERE id = ?",
+                            new String[] {String.valueOf(templateId)})) {
+                if (!t.moveToFirst()) {
+                    throw new SQLiteException("Template not found");
+                }
+                templateName = t.getString(0);
+            }
+            long listId =
+                    insertList(
+                            db,
+                            templateName,
+                            System.currentTimeMillis(),
+                            ShoppingList.TYPE_SHOPPING);
+            try (Cursor source =
+                    db.rawQuery(
+                            "SELECT id, name, quantity, url, barcode FROM template_items "
+                                    + "WHERE templateId = ? ORDER BY id",
+                            new String[] {String.valueOf(templateId)})) {
+                while (source.moveToNext()) {
+                    ContentValues values = new ContentValues();
+                    values.put("listId", listId);
+                    values.put("name", source.getString(1));
+                    values.put("quantity", source.getString(2));
+                    values.put("url", source.getString(3));
+                    values.put("barcode", source.getString(4));
+                    long itemId = db.insertOrThrow("items", null, values);
+                    try (Cursor links =
+                            db.rawQuery(
+                                    "SELECT storeName, url FROM template_links "
+                                            + "WHERE templateItemId = ? ORDER BY id",
+                                    new String[] {String.valueOf(source.getLong(0))})) {
+                        while (links.moveToNext()) {
+                            ContentValues link = new ContentValues();
+                            link.put("itemId", itemId);
+                            link.put("storeName", links.getString(0));
+                            link.put("url", links.getString(1));
+                            db.insertOrThrow("item_links", null, link);
+                        }
+                    }
+                }
+            }
+            db.setTransactionSuccessful();
+            return listId;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    /** Deletes only the template snapshot, not its source or any lists created from it. */
+    public void deleteTemplate(long templateId) {
+        if (getWritableDatabase()
+                        .delete(
+                                "shopping_templates",
+                                "id = ?",
+                                new String[] {String.valueOf(templateId)})
+                != 1) {
+            throw new SQLiteException("Template not found");
+        }
     }
 
     public List<ShoppingList> getLists(boolean archived) {
