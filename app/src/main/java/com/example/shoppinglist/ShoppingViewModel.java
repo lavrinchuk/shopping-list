@@ -272,6 +272,13 @@ public final class ShoppingViewModel extends ViewModel {
             }
 
             @Override
+            public void storeLinksLoaded(List<StoreLink> links) {
+                if (!cleared) {
+                    storeLinks = links;
+                }
+            }
+
+            @Override
             public void failed(boolean reading) {
                 if (!cleared) {
                     receiptBusy = false;
