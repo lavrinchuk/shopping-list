@@ -129,8 +129,7 @@ final class ShoppingAdapter extends ListAdapter<ShoppingItem, ShoppingAdapter.Ho
         holder.quantity.setText(item.quantity);
         holder.quantity.setVisibility(item.quantity.isEmpty() ? View.GONE : View.VISIBLE);
         holder.barcode.setText(item.barcode == null ? R.string.barcode_scan : R.string.barcode_view);
-        holder.barcode.setVisibility(
-                readOnly && item.barcode == null ? View.GONE : View.VISIBLE);
+        holder.barcode.setVisibility(readOnly && item.barcode == null ? View.GONE : View.VISIBLE);
         holder.barcode.setContentDescription(
                 holder.itemView.getContext().getString(R.string.barcode_action_for, item.name));
         holder.barcode.setOnClickListener(view -> actions.barcode(item));
