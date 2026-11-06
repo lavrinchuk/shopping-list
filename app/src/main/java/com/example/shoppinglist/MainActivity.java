@@ -352,13 +352,15 @@ public class MainActivity extends AppCompatActivity {
         MaterialButton remove = new MaterialButton(this);
         remove.setId(R.id.receipt_preview_remove);
         remove.setText(R.string.receipt_remove);
-        actions.addView(
-                remove, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        LinearLayout.LayoutParams removeParams =
+                new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        actions.addView(remove, removeParams);
         MaterialButton back = new MaterialButton(this);
         back.setId(R.id.receipt_preview_back);
         back.setText(R.string.back);
-        actions.addView(
-                back, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        LinearLayout.LayoutParams backParams =
+                new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        actions.addView(back, backParams);
         content.addView(actions);
 
         androidx.appcompat.app.AlertDialog dialog =
