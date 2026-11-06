@@ -731,7 +731,11 @@ public class ShoppingDatabaseTest {
         assertTrue(db.getTemplates().isEmpty());
         assertEquals(2, db.getItems(created).size());
         assertNotNull(db.getList(source).archivedAt);
-        assertTrue(db.getItems(source).get(0).purchased);
+        assertTrue(
+                db.getItems(source).stream()
+                        .anyMatch(item -> item.id == milk && item.purchased));
+        assertEquals("Молоко", db.getItems(created).get(0).name);
+        assertEquals("Хліб", db.getItems(created).get(1).name);
     }
 
     @Test
