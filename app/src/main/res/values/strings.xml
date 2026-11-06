@@ -4,7 +4,7 @@
     <string name="quantity_hint">Кількість</string>
     <string name="add_item">Додати товар</string>
     <string name="voice_add_item">Продиктувати назву товару</string>
-    <string name="voice_prompt">Назви товари українською, розділяючи їх паузами або словами з комами</string>
+    <string name="voice_prompt">Назви товари українською, вимовляючи «кома» між ними</string>
     <string name="voice_confirmation_title">Розпізнано назву товару</string>
     <string name="voice_use_result">Використати</string>
     <string name="voice_unavailable">Розпізнавання мовлення недоступне. Перевір наявність мовного сервісу на пристрої.</string>
