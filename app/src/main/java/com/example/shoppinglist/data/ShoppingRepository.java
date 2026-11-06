@@ -182,8 +182,7 @@ public class ShoppingRepository {
         run(null, () -> readLists(archived, result), result);
     }
 
-    public void saveTemplate(
-            long sourceListId, String name, boolean archived, Result result) {
+    public void saveTemplate(long sourceListId, String name, boolean archived, Result result) {
         run(
                 () -> database.saveTemplate(sourceListId, name),
                 () -> readLists(archived, result),
@@ -201,10 +200,7 @@ public class ShoppingRepository {
     }
 
     public void deleteTemplate(long templateId, Result result) {
-        run(
-                () -> database.deleteTemplate(templateId),
-                () -> readLists(false, result),
-                result);
+        run(() -> database.deleteTemplate(templateId), () -> readLists(false, result), result);
     }
 
     public void create(String name, Result result) {
