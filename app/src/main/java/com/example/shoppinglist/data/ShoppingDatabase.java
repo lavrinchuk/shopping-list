@@ -15,7 +15,7 @@ import java.util.List;
 
 public class ShoppingDatabase extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "shopping.db";
-    private static final int DATABASE_VERSION = 7;
+    private static final int DATABASE_VERSION = 8;
     private static final String LEGACY_DEFAULT_LIST_NAME = "Мій список";
     private final Context context;
 
@@ -59,6 +59,13 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
         createItems(db, "items");
         db.execSQL("CREATE INDEX items_list_order ON items(listId, purchased, id)");
         createReceiptTable(db);
+        createItemLinksTable(db);
+    }
+
+    private void createItemLinksTable(SQLiteDatabase db) {
+        db.execSQL(
+                "CREATE TABLE item_links (id INTEGER PRIMARY KEY AUTOINCREMENT, itemId INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE, storeName TEXT NOT NULL, url TEXT NOT NULL, UNIQUE(itemId, url))");
+        db.execSQL("CREATE INDEX item_links_item_order ON item_links(itemId, id)");
     }
 
     private void createReceiptTable(SQLiteDatabase db) {
@@ -69,7 +76,7 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        if (oldVersion < 1 || oldVersion > 6 || newVersion != DATABASE_VERSION) {
+        if (oldVersion < 1 || oldVersion > 7 || newVersion != DATABASE_VERSION) {
             throw new SQLiteException("Unsupported database upgrade");
         }
         // SQLiteOpenHelper wraps schema migration and user_version in a transaction.
@@ -89,11 +96,17 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
         if (oldVersion >= 2 && oldVersion < 6) {
             db.execSQL("ALTER TABLE items ADD COLUMN barcode TEXT");
         }
-        createReceiptTable(db);
+        if (oldVersion < 7) {
+            createReceiptTable(db);
+            db.execSQL(
+                    "INSERT INTO receipt_attachments(listId, fileName, mimeType, createdAt) "
+                            + "SELECT id, receiptFile, 'image/jpeg', updatedAt FROM shopping_lists "
+                            + "WHERE receiptFile IS NOT NULL");
+        }
+        createItemLinksTable(db);
         db.execSQL(
-                "INSERT INTO receipt_attachments(listId, fileName, mimeType, createdAt) "
-                        + "SELECT id, receiptFile, 'image/jpeg', updatedAt FROM shopping_lists "
-                        + "WHERE receiptFile IS NOT NULL");
+                "INSERT INTO item_links(itemId, storeName, url) "
+                        + "SELECT id, 'Без назви магазину', url FROM items WHERE url IS NOT NULL");
     }
 
     private void upgradeFromV1(SQLiteDatabase db) {
@@ -505,30 +518,154 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
         }
     }
 
+    private void requireItem(SQLiteDatabase db, long listId, long itemId) {
+        try (Cursor c =
+                db.rawQuery(
+                        "SELECT id FROM items WHERE id = ? AND listId = ?",
+                        new String[] {String.valueOf(itemId), String.valueOf(listId)})) {
+            if (!c.moveToFirst()) {
+                throw new SQLiteException("Item not found");
+            }
+        }
+    }
+
+    private StoreLink requireStoreLink(SQLiteDatabase db, long listId, long linkId) {
+        try (Cursor c =
+                db.rawQuery(
+                        "SELECT li.id, li.itemId, li.storeName, li.url FROM item_links li "
+                                + "JOIN items i ON li.itemId = i.id "
+                                + "WHERE li.id = ? AND i.listId = ?",
+                        new String[] {String.valueOf(linkId), String.valueOf(listId)})) {
+            if (!c.moveToFirst()) {
+                throw new SQLiteException("Store link not found");
+            }
+            return new StoreLink(c.getLong(0), c.getLong(1), c.getString(2), c.getString(3));
+        }
+    }
+
+    private void syncPrimaryLink(SQLiteDatabase db, long itemId) {
+        String url = null;
+        try (Cursor c =
+                db.rawQuery(
+                        "SELECT url FROM item_links WHERE itemId = ? ORDER BY id LIMIT 1",
+                        new String[] {String.valueOf(itemId)})) {
+            if (c.moveToFirst()) {
+                url = c.getString(0);
+            }
+        }
+        ContentValues values = new ContentValues();
+        if (url == null) {
+            values.putNull("url");
+        } else {
+            values.put("url", url);
+        }
+        db.update("items", values, "id = ?", new String[] {String.valueOf(itemId)});
+    }
+
+    /**
+     * Compatibility with LINK-01. Replaces all links because the old API has one URL field.
+     * LINK-02 UI uses add/update/deleteStoreLink instead.
+     */
     public void setItemUrl(long listId, long id, String url) {
         String normalized = ItemLink.normalize(url);
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
         try {
             ShoppingList list = requireActive(listId);
-            ContentValues values = new ContentValues();
-            if (normalized == null) {
-                values.putNull("url");
-            } else {
-                values.put("url", normalized);
+            requireItem(db, listId, id);
+            try (Cursor c =
+                    db.rawQuery(
+                            "SELECT url FROM items WHERE listId = ? AND id = ?",
+                            new String[] {String.valueOf(listId), String.valueOf(id)})) {
+                if (c.moveToFirst() && java.util.Objects.equals(c.getString(0), normalized)) {
+                    db.setTransactionSuccessful();
+                    return;
+                }
             }
-            String where =
-                    normalized == null
-                            ? "listId = ? AND id = ? AND url IS NOT NULL"
-                            : "listId = ? AND id = ? AND (url IS NULL OR url != ?)";
-            String[] args =
-                    normalized == null
-                            ? new String[] {String.valueOf(listId), String.valueOf(id)}
-                            : new String[] {String.valueOf(listId), String.valueOf(id), normalized};
-            int changed = db.update("items", values, where, args);
-            if (changed > 0) {
+            db.delete("item_links", "itemId = ?", new String[] {String.valueOf(id)});
+            if (normalized != null) {
+                ContentValues link = new ContentValues();
+                link.put("itemId", id);
+                link.put("storeName", "Без назви магазину");
+                link.put("url", normalized);
+                db.insertOrThrow("item_links", null, link);
+            }
+            syncPrimaryLink(db, id);
+            touch(db, list);
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    public List<StoreLink> getStoreLinks(long listId) {
+        List<StoreLink> links = new ArrayList<>();
+        try (Cursor c =
+                getReadableDatabase()
+                        .rawQuery(
+                                "SELECT li.id, li.itemId, li.storeName, li.url FROM item_links li "
+                                        + "JOIN items i ON li.itemId = i.id "
+                                        + "WHERE i.listId = ? ORDER BY li.itemId, li.id",
+                                new String[] {String.valueOf(listId)})) {
+            while (c.moveToNext()) {
+                links.add(
+                        new StoreLink(
+                                c.getLong(0), c.getLong(1), c.getString(2), c.getString(3)));
+            }
+        }
+        return links;
+    }
+
+    public void addStoreLink(long listId, long itemId, String storeName, String url) {
+        StoreLink link = new StoreLink(0, itemId, storeName, url);
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            ShoppingList list = requireActive(listId);
+            requireItem(db, listId, itemId);
+            ContentValues values = new ContentValues();
+            values.put("itemId", itemId);
+            values.put("storeName", link.storeName);
+            values.put("url", link.url);
+            db.insertOrThrow("item_links", null, values);
+            syncPrimaryLink(db, itemId);
+            touch(db, list);
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    public void updateStoreLink(long listId, long linkId, String storeName, String url) {
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            ShoppingList list = requireActive(listId);
+            StoreLink old = requireStoreLink(db, listId, linkId);
+            StoreLink changed = new StoreLink(linkId, old.itemId, storeName, url);
+            if (!old.storeName.equals(changed.storeName) || !old.url.equals(changed.url)) {
+                ContentValues values = new ContentValues();
+                values.put("storeName", changed.storeName);
+                values.put("url", changed.url);
+                db.update("item_links", values, "id = ?", new String[] {String.valueOf(linkId)});
+                syncPrimaryLink(db, old.itemId);
                 touch(db, list);
             }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    public void deleteStoreLink(long listId, long linkId) {
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            ShoppingList list = requireActive(listId);
+            StoreLink link = requireStoreLink(db, listId, linkId);
+            db.delete("item_links", "id = ?", new String[] {String.valueOf(linkId)});
+            syncPrimaryLink(db, link.itemId);
+            touch(db, list);
             db.setTransactionSuccessful();
         } finally {
             db.endTransaction();
