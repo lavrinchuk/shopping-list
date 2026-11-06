@@ -338,28 +338,30 @@ public class MainActivity extends AppCompatActivity {
                 new LinearLayout.LayoutParams(
                         LinearLayout.LayoutParams.MATCH_PARENT, previewHeight));
 
+        // Uniform-height buttons are outside the photo scroller, even for tall receipts.
+        int actionHeight = receiptPixels(56);
         MaterialButton more = new MaterialButton(this);
         more.setId(R.id.receipt_preview_more);
         more.setText(receipt.isPdf() ? R.string.receipt_open_pdf : R.string.receipt_add_more);
+        more.setSingleLine(true);
         content.addView(
                 more,
                 new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT));
+                        LinearLayout.LayoutParams.MATCH_PARENT, actionHeight));
 
         LinearLayout actions = new LinearLayout(this);
         actions.setOrientation(LinearLayout.HORIZONTAL);
         MaterialButton remove = new MaterialButton(this);
         remove.setId(R.id.receipt_preview_remove);
         remove.setText(R.string.receipt_remove);
-        LinearLayout.LayoutParams removeParams =
-                new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        remove.setSingleLine(true);
+        LinearLayout.LayoutParams removeParams = new LinearLayout.LayoutParams(0, actionHeight, 1f);
         actions.addView(remove, removeParams);
         MaterialButton back = new MaterialButton(this);
         back.setId(R.id.receipt_preview_back);
         back.setText(R.string.back);
-        LinearLayout.LayoutParams backParams =
-                new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        back.setSingleLine(true);
+        LinearLayout.LayoutParams backParams = new LinearLayout.LayoutParams(0, actionHeight, 1f);
         actions.addView(back, backParams);
         content.addView(actions);
 
