@@ -272,13 +272,6 @@ public final class ShoppingViewModel extends ViewModel {
             }
 
             @Override
-            public void storeLinksLoaded(List<StoreLink> links) {
-                if (!cleared) {
-                    storeLinks = links;
-                }
-            }
-
-            @Override
             public void failed(boolean reading) {
                 if (!cleared) {
                     receiptBusy = false;
@@ -370,6 +363,13 @@ public final class ShoppingViewModel extends ViewModel {
             public void receiptsLoaded(List<ReceiptAttachment> attachments) {
                 if (!cleared) {
                     receiptAttachments = attachments;
+                }
+            }
+
+            @Override
+            public void storeLinksLoaded(List<StoreLink> links) {
+                if (!cleared) {
+                    storeLinks = links;
                 }
             }
 
