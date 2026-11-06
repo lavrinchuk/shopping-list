@@ -16,6 +16,16 @@
                 android:text="@string/open_item_link" android:clickable="true" android:focusable="true"
                 android:textAppearance="?attr/textAppearanceBodyMedium"
                 android:textColor="?attr/colorPrimary" android:visibility="gone" />
+            <TextView android:id="@+id/barcode_value" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:paddingStart="32dp" android:paddingEnd="8dp"
+                android:textAppearance="?attr/textAppearanceBodySmall"
+                android:textColor="?attr/colorOnSurfaceVariant" android:visibility="gone" />
+            <TextView android:id="@+id/barcode_action" android:layout_width="wrap_content"
+                android:layout_height="wrap_content" android:paddingStart="32dp" android:paddingEnd="8dp"
+                android:minHeight="48dp" android:gravity="center_vertical" android:clickable="true"
+                android:focusable="true" android:text="@string/barcode_scan"
+                android:textAppearance="?attr/textAppearanceLabelLarge"
+                android:textColor="?attr/colorPrimary" />
             <TextView android:id="@+id/item_quantity" android:layout_width="match_parent"
                 android:layout_height="wrap_content" android:paddingStart="32dp" android:paddingEnd="8dp"
                 android:textAppearance="?attr/textAppearanceBodyMedium" android:textColor="?attr/colorOnSurfaceVariant" />

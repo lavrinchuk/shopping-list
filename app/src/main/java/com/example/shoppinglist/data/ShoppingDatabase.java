@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import com.example.shoppinglist.model.ItemLink;
+import com.example.shoppinglist.model.ProductBarcode;
 import com.example.shoppinglist.model.ShoppingItem;
 import com.example.shoppinglist.model.ShoppingList;
 import java.util.ArrayList;
@@ -14,7 +15,7 @@ import java.util.List;
 
 public class ShoppingDatabase extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "shopping.db";
-    private static final int DATABASE_VERSION = 5;
+    private static final int DATABASE_VERSION = 6;
     private static final String LEGACY_DEFAULT_LIST_NAME = "Мій список";
     private final Context context;
 
@@ -49,7 +50,7 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
         db.execSQL(
                 "CREATE TABLE "
                         + table
-                        + " (id INTEGER PRIMARY KEY AUTOINCREMENT, listId INTEGER NOT NULL REFERENCES shopping_lists(id) ON DELETE RESTRICT, name TEXT NOT NULL, quantity TEXT NOT NULL, purchased INTEGER NOT NULL DEFAULT 0 CHECK(purchased IN (0,1)), url TEXT)");
+                        + " (id INTEGER PRIMARY KEY AUTOINCREMENT, listId INTEGER NOT NULL REFERENCES shopping_lists(id) ON DELETE RESTRICT, name TEXT NOT NULL, quantity TEXT NOT NULL, purchased INTEGER NOT NULL DEFAULT 0 CHECK(purchased IN (0,1)), url TEXT, barcode TEXT)");
     }
 
     @Override
@@ -61,7 +62,7 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        if (oldVersion < 1 || oldVersion > 4 || newVersion != DATABASE_VERSION) {
+        if (oldVersion < 1 || oldVersion > 5 || newVersion != DATABASE_VERSION) {
             throw new SQLiteException("Unsupported database upgrade");
         }
         // SQLiteOpenHelper wraps schema migration and user_version in a transaction.
@@ -75,8 +76,11 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
             db.execSQL(
                     "ALTER TABLE shopping_lists ADD COLUMN type TEXT NOT NULL DEFAULT 'shopping' CHECK(type IN ('shopping','wish'))");
         }
-        if (oldVersion >= 2) {
+        if (oldVersion >= 2 && oldVersion < 5) {
             db.execSQL("ALTER TABLE shopping_lists ADD COLUMN receiptFile TEXT");
+        }
+        if (oldVersion >= 2) {
+            db.execSQL("ALTER TABLE items ADD COLUMN barcode TEXT");
         }
     }
 
@@ -392,6 +396,40 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
         }
     }
 
+    public void setItemBarcode(long listId, long id, String code) {
+        String normalized = ProductBarcode.normalize(code);
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            ShoppingList list = requireActive(listId);
+            ContentValues values = new ContentValues();
+            if (normalized == null) {
+                values.putNull("barcode");
+            } else {
+                values.put("barcode", normalized);
+            }
+            int changed =
+                    db.update(
+                            "items",
+                            values,
+                            "id = ? AND listId = ? AND "
+                                    + (normalized == null
+                                            ? "barcode IS NOT NULL"
+                                            : "(barcode IS NULL OR barcode != ?)"),
+                            normalized == null
+                                    ? new String[] {String.valueOf(id), String.valueOf(listId)}
+                                    : new String[] {
+                                        String.valueOf(id), String.valueOf(listId), normalized
+                                    });
+            if (changed > 0) {
+                touch(db, list);
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
     public List<ShoppingItem> getItems(long listId) {
         List<ShoppingItem> items = new ArrayList<>();
         try (Cursor c =
@@ -412,7 +450,8 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
                                 c.getString(c.getColumnIndexOrThrow("name")),
                                 c.getString(c.getColumnIndexOrThrow("quantity")),
                                 c.getInt(c.getColumnIndexOrThrow("purchased")) != 0,
-                                c.getString(c.getColumnIndexOrThrow("url"))));
+                                c.getString(c.getColumnIndexOrThrow("url")),
+                                c.getString(c.getColumnIndexOrThrow("barcode"))));
             }
         }
         return items;
