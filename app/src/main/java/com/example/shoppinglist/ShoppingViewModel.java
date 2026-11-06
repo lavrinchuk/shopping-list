@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
 import com.example.shoppinglist.data.ShoppingRepository;
+import com.example.shoppinglist.data.ReceiptAttachment;
 import com.example.shoppinglist.model.ShoppingItem;
 import com.example.shoppinglist.model.ShoppingList;
 import com.example.shoppinglist.share.ShoppingListTextFormatter;
@@ -21,6 +22,7 @@ public final class ShoppingViewModel extends ViewModel {
     final long listId;
     ShoppingList list;
     List<ShoppingItem> items = new ArrayList<>();
+    List<ReceiptAttachment> receiptAttachments = new ArrayList<>();
     String name = "";
     String quantity = "";
     boolean adding;
@@ -151,6 +153,29 @@ public final class ShoppingViewModel extends ViewModel {
         }
     }
 
+    void attachReceipts(List<Uri> sources) {
+        if (receiptBusy || sources == null || sources.isEmpty()
+                || list == null || list.archivedAt == null) {
+            return;
+        }
+        receiptBusy = true;
+        notifyStateChanged();
+        repository.addReceipts(listId, sources, receiptCallback());
+    }
+
+    void removeReceipt(ReceiptAttachment attachment) {
+        if (receiptBusy || attachment == null || list == null || list.archivedAt == null) {
+            return;
+        }
+        receiptBusy = true;
+        notifyStateChanged();
+        repository.removeReceipt(listId, attachment.id, receiptCallback());
+    }
+
+    void previewReceipt(ReceiptAttachment item, ShoppingRepository.ReceiptPreview callback) {
+        repository.previewReceipt(item, callback);
+    }
+
     void attachReceipt(Uri photo) {
         if (receiptBusy || photo == null || list == null || list.archivedAt == null) {
             return;
@@ -191,6 +216,13 @@ public final class ShoppingViewModel extends ViewModel {
             public void listLoaded(ShoppingList updated) {
                 if (!cleared) {
                     list = updated;
+                }
+            }
+
+            @Override
+            public void receiptsLoaded(List<ReceiptAttachment> attachments) {
+                if (!cleared) {
+                    receiptAttachments = attachments;
                 }
             }
 
