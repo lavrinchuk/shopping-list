@@ -232,7 +232,9 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
         return templates;
     }
 
-    /** Instantiates an independent active list. All items start unchecked; no receipts are copied. */
+    /**
+     * Instantiates an independent active list. All items start unchecked; no receipts are copied.
+     */
     public long createFromTemplate(long templateId) {
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
