@@ -156,7 +156,9 @@ public final class ReceiptStore {
                 BitmapFactory.Options bounds = new BitmapFactory.Options();
                 bounds.inJustDecodeBounds = true;
                 BitmapFactory.decodeFile(temp.getAbsolutePath(), bounds);
-                if (bounds.outWidth <= 0 || bounds.outHeight <= 0 || temp.length() > 8L * 1024 * 1024) {
+                if (bounds.outWidth <= 0
+                        || bounds.outHeight <= 0
+                        || temp.length() > 8L * 1024 * 1024) {
                     throw new IOException("Invalid or oversized receipt image");
                 }
                 mime = bounds.outMimeType;
