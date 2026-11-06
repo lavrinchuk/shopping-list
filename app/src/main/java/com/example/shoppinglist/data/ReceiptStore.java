@@ -179,10 +179,8 @@ public final class ReceiptStore {
             throw failure;
         } finally {
             temp.delete();
-            // A successful rename removes temp. If import fails after rename, delete the target.
-            if (target != null && target.exists() && temp.exists()) {
-                target.delete();
-            }
+            // Every successful rename is followed immediately by an attachment record.
+            // A failed write before rename leaves only the temporary file.
         }
     }
 
@@ -209,7 +207,7 @@ public final class ReceiptStore {
         if (!receipt.isPdf()) {
             return preview(receipt.fileName);
         }
-        if (!receipt.fileName.matches("[0-9a-f-]{36}\\\\.pdf")) {
+        if (!receipt.fileName.matches("[0-9a-f-]{36}\\.pdf")) {
             return null;
         }
         File file = new File(directory, receipt.fileName);
@@ -237,7 +235,7 @@ public final class ReceiptStore {
     }
 
     private void deleteOld(String name) {
-        if (name != null && name.matches("[0-9a-f-]{36}\\.img")) {
+        if (name != null && name.matches("[0-9a-f-]{36}\\.(img|pdf)")) {
             new File(directory, name).delete();
         }
     }
