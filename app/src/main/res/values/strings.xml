@@ -56,6 +56,17 @@
     <string name="finish_wish_list">Завершити список бажань</string>
 
     <string name="receipt_title">Фото чека</string>
+    <string name="receipt_add_title">Додати чек</string>
+    <string name="receipt_choose_photos">Вибрати фото (до 10)</string>
+    <string name="receipt_choose_pdf">Вибрати PDF</string>
+    <string name="receipt_add_more">Додати ще</string>
+    <string name="receipt_gallery_title">Прикріплені чеки</string>
+    <string name="receipt_count_button">Переглянути чеки (%1$d)</string>
+    <string name="receipt_photo_number">Фото %1$d</string>
+    <string name="receipt_pdf_number">PDF %1$d</string>
+    <string name="receipt_pdf_preview">PDF: перша сторінка</string>
+    <string name="receipt_open_pdf">Відкрити PDF</string>
+    <string name="receipt_pdf_unavailable">Немає застосунку для відкриття PDF.</string>
     <string name="receipt_offer_title">Покупки завершено</string>
     <string name="receipt_offer_message">Додати фото чека до завершеного списку?</string>
     <string name="receipt_offer_skip">Не зараз</string>
@@ -66,7 +77,7 @@
     <string name="receipt_replace">Замінити фото</string>
     <string name="receipt_remove">Видалити фото</string>
     <string name="receipt_remove_confirmation">Видалити прикріплене фото чека?</string>
-    <string name="receipt_error">Не вдалося зберегти фото чека. Обери зображення до 8 МБ.</string>
+    <string name="receipt_error">Не вдалося додати чек. Фото мають бути до 8 МБ, PDF до 20 МБ.</string>
     <string name="receipt_unavailable">Не вдалося відкрити фото чека.</string>
     <string name="archive">Архів</string>
     <string name="new_list">Новий список</string>
