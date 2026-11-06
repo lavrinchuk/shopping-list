@@ -563,8 +563,8 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
     }
 
     /**
-     * Compatibility with LINK-01. Replaces all links because the old API has one URL field. LINK-02
-     * UI uses add/update/deleteStoreLink instead.
+     * Compatibility with LINK-01: changes only the first store link and retains other options.
+     * LINK-02's main UI uses the scoped store-link methods below.
      */
     public void setItemUrl(long listId, long id, String url) {
         String normalized = ItemLink.normalize(url);
@@ -573,22 +573,33 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
         try {
             ShoppingList list = requireActive(listId);
             requireItem(db, listId, id);
+            long firstId = -1;
+            String previous = null;
             try (Cursor c =
                     db.rawQuery(
-                            "SELECT url FROM items WHERE listId = ? AND id = ?",
-                            new String[] {String.valueOf(listId), String.valueOf(id)})) {
-                if (c.moveToFirst() && java.util.Objects.equals(c.getString(0), normalized)) {
-                    db.setTransactionSuccessful();
-                    return;
+                            "SELECT id, url FROM item_links WHERE itemId = ? ORDER BY id LIMIT 1",
+                            new String[] {String.valueOf(id)})) {
+                if (c.moveToFirst()) {
+                    firstId = c.getLong(0);
+                    previous = c.getString(1);
                 }
             }
-            db.delete("item_links", "itemId = ?", new String[] {String.valueOf(id)});
-            if (normalized != null) {
-                ContentValues link = new ContentValues();
-                link.put("itemId", id);
-                link.put("storeName", "Без назви магазину");
-                link.put("url", normalized);
-                db.insertOrThrow("item_links", null, link);
+            if (java.util.Objects.equals(previous, normalized)) {
+                db.setTransactionSuccessful();
+                return;
+            }
+            if (normalized == null) {
+                db.delete("item_links", "id = ?", new String[] {String.valueOf(firstId)});
+            } else {
+                ContentValues values = new ContentValues();
+                values.put("url", normalized);
+                if (firstId >= 0) {
+                    db.update("item_links", values, "id = ?", new String[] {String.valueOf(firstId)});
+                } else {
+                    values.put("itemId", id);
+                    values.put("storeName", "Без назви магазину");
+                    db.insertOrThrow("item_links", null, values);
+                }
             }
             syncPrimaryLink(db, id);
             touch(db, list);
