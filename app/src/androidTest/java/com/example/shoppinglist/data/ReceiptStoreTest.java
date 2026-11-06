@@ -1,18 +1,12 @@
 package com.example.shoppinglist.data;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 import java.io.File;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.UUID;
@@ -20,6 +14,12 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 @RunWith(AndroidJUnit4.class)
 public class ReceiptStoreTest {
@@ -79,7 +79,9 @@ public class ReceiptStoreTest {
         File pdf = new File(context.getCacheDir(), UUID.randomUUID() + ".pdf");
         android.graphics.pdf.PdfDocument document = new android.graphics.pdf.PdfDocument();
         android.graphics.pdf.PdfDocument.Page page =
-                document.startPage(new android.graphics.pdf.PdfDocument.PageInfo.Builder(200, 300, 1).create());
+                document.startPage(
+                        new android.graphics.pdf.PdfDocument.PageInfo.Builder(200, 300, 1)
+                                .create());
         document.finishPage(page);
         try (FileOutputStream output = new FileOutputStream(pdf)) {
             document.writeTo(output);
