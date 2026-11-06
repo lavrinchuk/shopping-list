@@ -9,6 +9,7 @@ import com.example.shoppinglist.data.ShoppingRepository;
 import com.example.shoppinglist.data.StoreLink;
 import com.example.shoppinglist.model.ShoppingItem;
 import com.example.shoppinglist.model.ShoppingList;
+import com.example.shoppinglist.voice.VoiceRecognitionResult;
 import com.example.shoppinglist.share.ShoppingListTextFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +18,7 @@ public final class ShoppingViewModel extends ViewModel {
     private static final String STATE_ITEM_NAME = "name";
     private static final String STATE_ITEM_QUANTITY = "quantity";
     private static final String STATE_RECEIPT_OFFER = "receiptOffer";
+    private static final String STATE_VOICE_DRAFT = "voiceDraft";
     final MutableLiveData<Integer> changes = new MutableLiveData<>(0);
     private final ShoppingRepository repository;
     private final SavedStateHandle saved;
@@ -25,9 +27,11 @@ public final class ShoppingViewModel extends ViewModel {
     List<ShoppingItem> items = new ArrayList<>();
     List<ReceiptAttachment> receiptAttachments = new ArrayList<>();
     List<StoreLink> storeLinks = new ArrayList<>();
+    ArrayList<String> voiceDraft = new ArrayList<>();
     String name = "";
     String quantity = "";
     boolean adding;
+    boolean voiceAdding;
     boolean sharing;
     boolean receiptBusy;
     boolean finishing;
@@ -46,6 +50,10 @@ public final class ShoppingViewModel extends ViewModel {
         name = saved.contains(STATE_ITEM_NAME) ? saved.get(STATE_ITEM_NAME) : "";
         quantity = saved.contains(STATE_ITEM_QUANTITY) ? saved.get(STATE_ITEM_QUANTITY) : "";
         receiptOfferPending = Boolean.TRUE.equals(saved.get(STATE_RECEIPT_OFFER));
+        ArrayList<String> previousVoiceDraft = saved.get(STATE_VOICE_DRAFT);
+        if (previousVoiceDraft != null) {
+            voiceDraft = new ArrayList<>(previousVoiceDraft);
+        }
         reload();
     }
 
@@ -60,7 +68,7 @@ public final class ShoppingViewModel extends ViewModel {
     }
 
     void add() {
-        if (adding || list == null || list.archivedAt != null) {
+        if (adding || voiceAdding || list == null || list.archivedAt != null) {
             return;
         }
         String clean = ShoppingItem.cleanName(name);
@@ -69,6 +77,52 @@ public final class ShoppingViewModel extends ViewModel {
         notifyStateChanged();
         repository.add(
                 listId, clean, quantity, createRepositoryCallback(true, submittedDraftRevision));
+    }
+
+    void prepareVoiceDraft(List<String> names) {
+        if (voiceAdding || list == null || list.archivedAt != null) {
+            return;
+        }
+        voiceDraft = new ArrayList<>(names);
+        saveVoiceDraft();
+        notifyStateChanged();
+    }
+
+    void editVoiceDraft(int index, String value) {
+        voiceDraft.set(index, value);
+        saveVoiceDraft();
+    }
+
+    void removeVoiceDraft(int index) {
+        voiceDraft.remove(index);
+        saveVoiceDraft();
+        notifyStateChanged();
+    }
+
+    void cancelVoiceDraft() {
+        if (!voiceAdding) {
+            voiceDraft.clear();
+            saved.remove(STATE_VOICE_DRAFT);
+            notifyStateChanged();
+        }
+    }
+
+    private void saveVoiceDraft() {
+        saved.set(STATE_VOICE_DRAFT, new ArrayList<>(voiceDraft));
+    }
+
+    void addVoiceDraft() {
+        if (voiceAdding || voiceDraft.isEmpty() || list == null || list.archivedAt != null) {
+            return;
+        }
+        List<String> selected = new ArrayList<>();
+        for (String name : voiceDraft) {
+            selected.add(
+                    ShoppingItem.cleanName(VoiceRecognitionResult.capitalizeFirst(name)));
+        }
+        voiceAdding = true;
+        notifyStateChanged();
+        repository.addItems(listId, selected, createRepositoryCallback(false, 0, true));
     }
 
     void purchased(ShoppingItem item, boolean checked) {
@@ -339,6 +393,11 @@ public final class ShoppingViewModel extends ViewModel {
     }
 
     private ShoppingRepository.Result createRepositoryCallback(boolean add, long revision) {
+        return createRepositoryCallback(add, revision, false);
+    }
+
+    private ShoppingRepository.Result createRepositoryCallback(
+            boolean add, long revision, boolean voiceBatch) {
         return new ShoppingRepository.Result() {
             @Override
             public void written() {
@@ -350,6 +409,11 @@ public final class ShoppingViewModel extends ViewModel {
                     if (draftEditRevision == revision) {
                         draft("", "");
                     }
+                }
+                if (voiceBatch) {
+                    voiceAdding = false;
+                    voiceDraft.clear();
+                    saved.remove(STATE_VOICE_DRAFT);
                 }
                 notifyStateChanged();
             }
@@ -390,6 +454,9 @@ public final class ShoppingViewModel extends ViewModel {
                 }
                 if (add && !reading) {
                     adding = false;
+                }
+                if (voiceBatch) {
+                    voiceAdding = false;
                 }
                 if (reading) {
                     readFailed = true;

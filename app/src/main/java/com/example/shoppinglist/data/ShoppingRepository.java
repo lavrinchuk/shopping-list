@@ -56,6 +56,10 @@ public class ShoppingRepository {
         run(() -> database.add(listId, name, quantity), () -> readItems(listId, result), result);
     }
 
+    public void addItems(long listId, List<String> names, Result result) {
+        run(() -> database.addItems(listId, names), () -> readItems(listId, result), result);
+    }
+
     public void purchased(long listId, long id, boolean checked, Result result) {
         run(
                 () -> database.setPurchased(listId, id, checked),

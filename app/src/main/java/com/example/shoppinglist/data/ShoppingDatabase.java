@@ -476,6 +476,36 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
         }
     }
 
+    /**
+     * Inserts every confirmed name in one transaction. A failed insert cannot leave a partial
+     * shopping list; the regular item form remains untouched.
+     */
+    public void addItems(long listId, List<String> names) {
+        if (names == null || names.isEmpty() || names.size() > 20) {
+            throw new IllegalArgumentException("Expected 1 to 20 items");
+        }
+        List<ShoppingItem> validated = new ArrayList<>();
+        for (String name : names) {
+            validated.add(new ShoppingItem(0, listId, name, "", false));
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            ShoppingList list = requireActive(listId);
+            for (ShoppingItem item : validated) {
+                ContentValues values = new ContentValues();
+                values.put("listId", listId);
+                values.put("name", item.name);
+                values.put("quantity", item.quantity);
+                db.insertOrThrow("items", null, values);
+            }
+            touch(db, list);
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
     public void setPurchased(long listId, long id, boolean purchased) {
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
