@@ -37,6 +37,8 @@
     <string name="store_name_invalid">Введи назву магазину (до 80 символів)</string>
     <string name="store_link_add">Додати магазин</string>
     <string name="store_link_edit">Змінити</string>
+    <string name="store_link_delete">Видалити</string>
+    <string name="store_link_delete_confirmation">Видалити це посилання на магазин?</string>
     <string name="view_store_links">Переглянути магазини</string>
     <string name="item_link_title">Посилання: %1$s</string>
     <string name="item_link_hint">https://магазин.example/товар</string>
