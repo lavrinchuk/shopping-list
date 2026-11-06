@@ -19,10 +19,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import com.google.android.material.button.MaterialButton;
-import com.example.shoppinglist.data.ReceiptAttachment;
-import java.util.Collections;
-import java.util.List;
 import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
@@ -39,6 +35,7 @@ import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.example.shoppinglist.data.ReceiptAttachment;
 import com.example.shoppinglist.data.ShoppingRepository;
 import com.example.shoppinglist.model.ItemLink;
 import com.example.shoppinglist.model.ProductBarcode;
@@ -46,6 +43,7 @@ import com.example.shoppinglist.model.ShoppingItem;
 import com.example.shoppinglist.ui.AdaptiveFormLayoutController;
 import com.example.shoppinglist.voice.VoiceRecognitionResult;
 import com.example.shoppinglist.web.ProductSearchUrl;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
@@ -54,6 +52,8 @@ import com.google.mlkit.vision.codescanner.GmsBarcodeScanner;
 import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions;
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     static final String EXTRA_LIST_ID = "listId";
@@ -318,7 +318,10 @@ public class MainActivity extends AppCompatActivity {
         image.setScaleType(ImageView.ScaleType.FIT_CENTER);
         androidx.appcompat.app.AlertDialog dialog =
                 new MaterialAlertDialogBuilder(this)
-                        .setTitle(receipt.isPdf() ? R.string.receipt_pdf_preview : R.string.receipt_title)
+                        .setTitle(
+                                receipt.isPdf()
+                                        ? R.string.receipt_pdf_preview
+                                        : R.string.receipt_title)
                         .setView(image)
                         .setPositiveButton(R.string.back, null)
                         .setNeutralButton(
