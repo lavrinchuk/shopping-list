@@ -171,8 +171,7 @@ public class ShoppingScreenTest {
     @Test
     public void cancelledVoiceBatchDoesNotWriteItems() {
         screen.onActivity(activity ->
-                activity.viewModel.prepareVoiceDraft(
-                        java.util.Arrays.asList("Молоко", "Хліб")));
+                activity.viewModel.prepareVoiceDraft(java.util.Arrays.asList("Молоко", "Хліб")));
         onView(withId(R.id.voice_batch_editor)).check(matches(isDisplayed()));
         onView(withText(R.string.cancel)).perform(click());
         assertTrue(app.database.getItems(app.listId).isEmpty());
