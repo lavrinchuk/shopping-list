@@ -609,8 +609,7 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
                                 new String[] {String.valueOf(listId)})) {
             while (c.moveToNext()) {
                 links.add(
-                        new StoreLink(
-                                c.getLong(0), c.getLong(1), c.getString(2), c.getString(3)));
+                        new StoreLink(c.getLong(0), c.getLong(1), c.getString(2), c.getString(3)));
             }
         }
         return links;
