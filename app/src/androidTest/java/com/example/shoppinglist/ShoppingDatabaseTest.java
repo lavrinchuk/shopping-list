@@ -613,10 +613,8 @@ public class ShoppingDatabaseTest {
         db = new ShoppingDatabase(context, file);
         assertEquals(2, db.getStoreLinks(listId).size());
         db.archive(listId, true);
-        assertRejected(
-                () -> db.addStoreLink(listId, itemId, "Інший", "https://example.org"));
-        assertRejected(
-                () -> db.deleteStoreLink(listId, secondId));
+        assertRejected(() -> db.addStoreLink(listId, itemId, "Інший", "https://example.org"));
+        assertRejected(() -> db.deleteStoreLink(listId, secondId));
         db.restore(listId);
         db.deleteStoreLink(listId, db.getStoreLinks(listId).get(0).id);
         assertEquals(1, db.getStoreLinks(listId).size());
@@ -635,8 +633,7 @@ public class ShoppingDatabaseTest {
         long link = db.getStoreLinks(first).get(0).id;
         assertRejected(() -> db.addStoreLink(second, item, "Чужий", "https://example.org"));
         assertRejected(() -> db.deleteStoreLink(second, link));
-        assertRejected(
-                () -> db.updateStoreLink(second, link, "Чужий", "https://example.org"));
+        assertRejected(() -> db.updateStoreLink(second, link, "Чужий", "https://example.org"));
         assertRejected(
                 () -> db.addStoreLink(first, item, "Дубль", "https://shop.example.ua/cheese"));
         assertEquals(1, db.getStoreLinks(first).size());
