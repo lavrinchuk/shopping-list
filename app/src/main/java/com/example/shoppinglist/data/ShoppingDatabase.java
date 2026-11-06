@@ -191,7 +191,11 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
             template.put("createdAt", System.currentTimeMillis());
             long templateId = db.insertOrThrow("shopping_templates", null, template);
             List<StoreLink> links = getStoreLinks(sourceListId);
-            for (ShoppingItem item : getItems(sourceListId)) {
+            // UI order groups unchecked items first. A reusable template must retain
+            // the original item order regardless of which products were purchased.
+            List<ShoppingItem> items = getItems(sourceListId);
+            items.sort(java.util.Comparator.comparingLong(item -> item.id));
+            for (ShoppingItem item : items) {
                 ContentValues snapshot = new ContentValues();
                 snapshot.put("templateId", templateId);
                 snapshot.put("name", item.name);
@@ -265,6 +269,7 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
                     values.put("listId", listId);
                     values.put("name", source.getString(1));
                     values.put("quantity", source.getString(2));
+                    values.put("purchased", 0);
                     values.put("url", source.getString(3));
                     values.put("barcode", source.getString(4));
                     long itemId = db.insertOrThrow("items", null, values);
