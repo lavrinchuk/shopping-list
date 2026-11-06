@@ -375,7 +375,7 @@ public class ShoppingDatabaseTest {
         assertEquals("Молоко", item.name);
         assertEquals("2 л", item.quantity);
         assertNull(item.url);
-        assertEquals(7, db.getReadableDatabase().getVersion());
+        assertEquals(8, db.getReadableDatabase().getVersion());
     }
 
     @Test
@@ -389,7 +389,7 @@ public class ShoppingDatabaseTest {
         long itemId = db.getItems(list.id).get(0).id;
         db.setItemUrl(list.id, itemId, "https://example.com/bread");
         assertEquals("https://example.com/bread", db.getItems(list.id).get(0).url);
-        assertEquals(7, db.getReadableDatabase().getVersion());
+        assertEquals(8, db.getReadableDatabase().getVersion());
     }
 
     @Test
@@ -439,7 +439,7 @@ public class ShoppingDatabaseTest {
         assertEquals(33L, item.id);
         assertEquals("https://example.com/coffee", item.url);
         assertTrue(item.purchased);
-        assertEquals(7, db.getReadableDatabase().getVersion());
+        assertEquals(8, db.getReadableDatabase().getVersion());
     }
 
     @Test
@@ -481,7 +481,7 @@ public class ShoppingDatabaseTest {
         assertEquals(Long.valueOf(120L), db.getList(21).archivedAt);
         assertEquals("https://example.com/coffee", db.getItems(21).get(0).url);
         assertEquals(72L, db.getItems(21).get(0).id);
-        assertEquals(7, db.getReadableDatabase().getVersion());
+        assertEquals(8, db.getReadableDatabase().getVersion());
     }
 
     @Test
@@ -537,7 +537,7 @@ public class ShoppingDatabaseTest {
             old.setVersion(5);
         }
         db = new ShoppingDatabase(context, file);
-        assertEquals(7, db.getReadableDatabase().getVersion());
+        assertEquals(8, db.getReadableDatabase().getVersion());
         assertEquals("receipt.img", db.getList(1).receiptFile);
         ShoppingItem item = db.getItems(1).get(0);
         assertEquals(3L, item.id);
@@ -560,7 +560,7 @@ public class ShoppingDatabaseTest {
             old.setVersion(6);
         }
         db = new ShoppingDatabase(context, file);
-        assertEquals(7, db.getReadableDatabase().getVersion());
+        assertEquals(8, db.getReadableDatabase().getVersion());
         assertEquals("existing.img", db.getList(42).receiptFile);
         assertEquals(1, db.getReceipts(42).size());
         assertEquals("existing.img", db.getReceipts(42).get(0).fileName);
@@ -594,6 +594,82 @@ public class ShoppingDatabaseTest {
                         java.util.Collections.singletonList(
                                 new com.example.shoppinglist.data.ReceiptAttachment(
                                         0, id, "third.img", "image/png"))));
+    }
+
+    @Test
+    public void multipleStoreLinksSurviveRestartAndArchiveAndDeleteIndependently() {
+        long listId = db.createList("Покупки");
+        db.add(listId, "Молоко", "2 л");
+        long itemId = db.getItems(listId).get(0).id;
+        db.addStoreLink(listId, itemId, "Сільпо", "https://silpo.ua/milk");
+        db.addStoreLink(listId, itemId, "АТБ", "https://atbmarket.com/milk");
+        assertEquals(2, db.getStoreLinks(listId).size());
+        assertEquals("https://silpo.ua/milk", db.getItems(listId).get(0).url);
+        long secondId = db.getStoreLinks(listId).get(1).id;
+        db.updateStoreLink(listId, secondId, "Метро", "https://metro.ua/milk");
+        assertEquals("Метро", db.getStoreLinks(listId).get(1).storeName);
+        assertEquals("https://metro.ua/milk", db.getStoreLinks(listId).get(1).url);
+        db.close();
+        db = new ShoppingDatabase(context, file);
+        assertEquals(2, db.getStoreLinks(listId).size());
+        db.archive(listId, true);
+        assertRejected(
+                () -> db.addStoreLink(listId, itemId, "Інший", "https://example.org"));
+        assertRejected(
+                () -> db.deleteStoreLink(listId, secondId));
+        db.restore(listId);
+        db.deleteStoreLink(listId, db.getStoreLinks(listId).get(0).id);
+        assertEquals(1, db.getStoreLinks(listId).size());
+        assertEquals("https://metro.ua/milk", db.getItems(listId).get(0).url);
+        db.delete(listId, itemId);
+        assertTrue(db.getStoreLinks(listId).isEmpty());
+    }
+
+    @Test
+    public void storeLinksCannotBeChangedAcrossListsOrDuplicated() {
+        long first = db.createList("Перший");
+        long second = db.createList("Другий");
+        db.add(first, "Сир", "1");
+        long item = db.getItems(first).get(0).id;
+        db.addStoreLink(first, item, "Магазин", "https://shop.example.ua/cheese");
+        long link = db.getStoreLinks(first).get(0).id;
+        assertRejected(() -> db.addStoreLink(second, item, "Чужий", "https://example.org"));
+        assertRejected(() -> db.deleteStoreLink(second, link));
+        assertRejected(
+                () -> db.updateStoreLink(second, link, "Чужий", "https://example.org"));
+        assertRejected(
+                () -> db.addStoreLink(first, item, "Дубль", "https://shop.example.ua/cheese"));
+        assertEquals(1, db.getStoreLinks(first).size());
+        assertEquals("Магазин", db.getStoreLinks(first).get(0).storeName);
+    }
+
+    @Test
+    public void migrationFromVersionSevenPreservesLinksBarcodeAndReceipts() {
+        db.close();
+        try (SQLiteDatabase old = context.openOrCreateDatabase(file, 0, null)) {
+            old.execSQL(
+                    "CREATE TABLE shopping_lists (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL, archivedAt INTEGER, type TEXT NOT NULL DEFAULT 'shopping', receiptFile TEXT)");
+            old.execSQL(
+                    "CREATE TABLE items (id INTEGER PRIMARY KEY AUTOINCREMENT, listId INTEGER NOT NULL REFERENCES shopping_lists(id), name TEXT NOT NULL, quantity TEXT NOT NULL, purchased INTEGER NOT NULL, url TEXT, barcode TEXT)");
+            old.execSQL(
+                    "CREATE TABLE receipt_attachments (id INTEGER PRIMARY KEY AUTOINCREMENT, listId INTEGER NOT NULL REFERENCES shopping_lists(id), fileName TEXT NOT NULL UNIQUE, mimeType TEXT NOT NULL, createdAt INTEGER NOT NULL)");
+            old.execSQL(
+                    "INSERT INTO shopping_lists VALUES (7, 'Архів', 100, 120, 120, 'shopping', 'existing.img')");
+            old.execSQL(
+                    "INSERT INTO items VALUES (17, 7, 'Кава', '2', 1, 'https://shop.example.ua/coffee', '012345678905')");
+            old.execSQL(
+                    "INSERT INTO receipt_attachments VALUES (1, 7, 'existing.img', 'image/jpeg', 120)");
+            old.setVersion(7);
+        }
+        db = new ShoppingDatabase(context, file);
+        assertEquals(8, db.getReadableDatabase().getVersion());
+        assertEquals("https://shop.example.ua/coffee", db.getItems(7).get(0).url);
+        assertEquals("012345678905", db.getItems(7).get(0).barcode);
+        assertEquals("existing.img", db.getReceipts(7).get(0).fileName);
+        assertEquals(1, db.getStoreLinks(7).size());
+        assertEquals("Без назви магазину", db.getStoreLinks(7).get(0).storeName);
+        assertEquals("https://shop.example.ua/coffee", db.getStoreLinks(7).get(0).url);
+        assertNotNull(db.getList(7).archivedAt);
     }
 
     private void assertRejected(Runnable action) {
