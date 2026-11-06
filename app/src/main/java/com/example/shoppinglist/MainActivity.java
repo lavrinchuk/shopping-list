@@ -325,31 +325,39 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         boolean archived = viewModel.list == null || viewModel.list.archivedAt != null;
-        String[] actions =
-                archived
-                        ? new String[] {
-                            getString(R.string.barcode_copy), getString(R.string.barcode_search_web)
-                        }
-                        : new String[] {
-                            getString(R.string.barcode_copy),
-                            getString(R.string.barcode_search_web),
-                            getString(R.string.barcode_scan_again)
-                        };
-        new MaterialAlertDialogBuilder(this)
-                .setTitle(getString(R.string.barcode_code_title, current))
-                .setItems(
-                        actions,
-                        (dialog, which) -> {
-                            if (which == 0) {
-                                copyBarcode(current);
-                            } else if (which == 1) {
-                                openBarcodeSearch(current);
-                            } else {
-                                scanBarcode(item);
-                            }
-                        })
-                .setNegativeButton(R.string.back, null)
-                .show();
+        View actions = getLayoutInflater().inflate(R.layout.dialog_barcode_actions, null);
+        com.google.android.material.button.MaterialButton save =
+                actions.findViewById(R.id.barcode_dialog_save);
+        com.google.android.material.button.MaterialButton copy =
+                actions.findViewById(R.id.barcode_dialog_copy);
+        com.google.android.material.button.MaterialButton search =
+                actions.findViewById(R.id.barcode_dialog_search);
+        com.google.android.material.button.MaterialButton rescan =
+                actions.findViewById(R.id.barcode_dialog_rescan);
+        save.setVisibility(View.GONE);
+        rescan.setVisibility(archived ? View.GONE : View.VISIBLE);
+        androidx.appcompat.app.AlertDialog dialog =
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle(getString(R.string.barcode_code_title, current))
+                        .setView(actions)
+                        .setNegativeButton(R.string.back, null)
+                        .create();
+        copy.setOnClickListener(
+                view -> {
+                    dialog.dismiss();
+                    copyBarcode(current);
+                });
+        search.setOnClickListener(
+                view -> {
+                    dialog.dismiss();
+                    openBarcodeSearch(current);
+                });
+        rescan.setOnClickListener(
+                view -> {
+                    dialog.dismiss();
+                    scanBarcode(item);
+                });
+        dialog.show();
     }
 
     private void copyBarcode(String code) {
@@ -404,25 +412,36 @@ public class MainActivity extends AppCompatActivity {
         if (viewModel.list == null || viewModel.list.archivedAt != null) {
             return;
         }
-        new MaterialAlertDialogBuilder(this)
-                .setTitle(getString(R.string.barcode_scanned_code_title, value))
-                .setItems(
-                        new String[] {
-                            getString(R.string.save),
-                            getString(R.string.barcode_copy),
-                            getString(R.string.barcode_search_web)
-                        },
-                        (dialog, which) -> {
-                            if (which == 0) {
-                                viewModel.updateItemBarcode(item, value);
-                            } else if (which == 1) {
-                                copyBarcode(value);
-                            } else {
-                                openBarcodeSearch(value);
-                            }
-                        })
-                .setNegativeButton(R.string.cancel, null)
-                .show();
+        View actions = getLayoutInflater().inflate(R.layout.dialog_barcode_actions, null);
+        com.google.android.material.button.MaterialButton save =
+                actions.findViewById(R.id.barcode_dialog_save);
+        com.google.android.material.button.MaterialButton copy =
+                actions.findViewById(R.id.barcode_dialog_copy);
+        com.google.android.material.button.MaterialButton search =
+                actions.findViewById(R.id.barcode_dialog_search);
+        actions.findViewById(R.id.barcode_dialog_rescan).setVisibility(View.GONE);
+        androidx.appcompat.app.AlertDialog dialog =
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle(getString(R.string.barcode_scanned_code_title, value))
+                        .setView(actions)
+                        .setNegativeButton(R.string.cancel, null)
+                        .create();
+        save.setOnClickListener(
+                view -> {
+                    dialog.dismiss();
+                    viewModel.updateItemBarcode(item, value);
+                });
+        copy.setOnClickListener(
+                view -> {
+                    dialog.dismiss();
+                    copyBarcode(value);
+                });
+        search.setOnClickListener(
+                view -> {
+                    dialog.dismiss();
+                    openBarcodeSearch(value);
+                });
+        dialog.show();
     }
 
     private void openBarcodeSearch(String code) {
@@ -430,6 +449,7 @@ public class MainActivity extends AppCompatActivity {
                 new Intent(Intent.ACTION_VIEW, Uri.parse(ProductSearchUrl.forBarcode(code)));
         try {
             startActivity(search);
+            copyBarcode(code);
         } catch (ActivityNotFoundException | SecurityException error) {
             Toast.makeText(this, R.string.search_unavailable, Toast.LENGTH_LONG).show();
         }
