@@ -725,9 +725,27 @@ public class MainActivity extends AppCompatActivity {
                         .setTitle(link == null ? R.string.store_link_add : R.string.store_link_edit)
                         .setView(container)
                         .setNegativeButton(R.string.cancel, null)
+                        .setNeutralButton(
+                                link == null ? R.string.cancel : R.string.store_link_delete,
+                                (d, which) -> {
+                                    if (link != null) {
+                                        new MaterialAlertDialogBuilder(this)
+                                                .setMessage(R.string.store_link_delete_confirmation)
+                                                .setNegativeButton(R.string.cancel, null)
+                                                .setPositiveButton(
+                                                        R.string.store_link_delete,
+                                                        (confirm, button) ->
+                                                                viewModel.deleteStoreLink(link))
+                                                .show();
+                                    }
+                                })
                         .setPositiveButton(R.string.save, null)
                         .create();
         dialog.setOnShowListener(ignored -> {
+            if (link == null) {
+                dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEUTRAL)
+                        .setVisibility(View.GONE);
+            }
             dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
                     .setOnClickListener(button -> {
                         try {
