@@ -360,8 +360,10 @@ public class MainActivity extends AppCompatActivity {
                         this, new GmsBarcodeScannerOptions.Builder().enableAutoZoom().build());
         scanner.startScan()
                 .addOnSuccessListener(
-                        this,
                         barcode -> {
+                            if (isFinishing() || isDestroyed()) {
+                                return;
+                            }
                             scanningBarcode = false;
                             String value;
                             try {
@@ -376,10 +378,12 @@ public class MainActivity extends AppCompatActivity {
                             }
                             confirmScannedBarcode(item, value);
                         })
-                .addOnCanceledListener(this, () -> scanningBarcode = false)
+                .addOnCanceledListener(() -> scanningBarcode = false)
                 .addOnFailureListener(
-                        this,
                         error -> {
+                            if (isFinishing() || isDestroyed()) {
+                                return;
+                            }
                             scanningBarcode = false;
                             Toast.makeText(this, R.string.barcode_unavailable, Toast.LENGTH_LONG)
                                     .show();
