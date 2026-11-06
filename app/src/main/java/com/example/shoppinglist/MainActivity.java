@@ -328,8 +328,7 @@ public class MainActivity extends AppCompatActivity {
         String[] actions =
                 archived
                         ? new String[] {
-                            getString(R.string.barcode_copy),
-                            getString(R.string.barcode_search_web)
+                            getString(R.string.barcode_copy), getString(R.string.barcode_search_web)
                         }
                         : new String[] {
                             getString(R.string.barcode_copy),
