@@ -40,12 +40,12 @@ import com.example.shoppinglist.ui.AdaptiveFormLayoutController;
 import com.example.shoppinglist.voice.VoiceRecognitionResult;
 import com.example.shoppinglist.web.ProductSearchUrl;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.mlkit.vision.codescanner.GmsBarcodeScanner;
-import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions;
-import com.google.mlkit.vision.codescanner.GmsBarcodeScanning;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.mlkit.vision.codescanner.GmsBarcodeScanner;
+import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions;
+import com.google.mlkit.vision.codescanner.GmsBarcodeScanning;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
@@ -340,8 +340,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void copyBarcode(String code) {
-        ClipboardManager clipboard =
-                (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         if (clipboard != null) {
             clipboard.setPrimaryClip(
                     ClipData.newPlainText(getString(R.string.barcode_label), code));
@@ -358,35 +357,34 @@ public class MainActivity extends AppCompatActivity {
                 GmsBarcodeScanning.getClient(
                         this, new GmsBarcodeScannerOptions.Builder().enableAutoZoom().build());
         scanner.startScan()
-                .addOnSuccessListener(
-                        barcode -> {
-                            if (isFinishing() || isDestroyed()) {
-                                return;
-                            }
-                            scanningBarcode = false;
-                            String value;
-                            try {
-                                value = ProductBarcode.normalize(barcode.getRawValue());
-                            } catch (IllegalArgumentException error) {
-                                value = null;
-                            }
-                            if (value == null) {
-                                Toast.makeText(this, R.string.barcode_invalid, Toast.LENGTH_LONG)
-                                        .show();
-                                return;
-                            }
-                            confirmScannedBarcode(item, value);
-                        })
+                .addOnSuccessListener(barcode -> scannedBarcode(item, barcode.getRawValue()))
                 .addOnCanceledListener(() -> scanningBarcode = false)
-                .addOnFailureListener(
-                        error -> {
-                            if (isFinishing() || isDestroyed()) {
-                                return;
-                            }
-                            scanningBarcode = false;
-                            Toast.makeText(this, R.string.barcode_unavailable, Toast.LENGTH_LONG)
-                                    .show();
-                        });
+                .addOnFailureListener(error -> barcodeScanFailed());
+    }
+
+    private void scannedBarcode(ShoppingItem item, String rawValue) {
+        if (isFinishing() || isDestroyed()) {
+            return;
+        }
+        scanningBarcode = false;
+        String value;
+        try {
+            value = ProductBarcode.normalize(rawValue);
+        } catch (IllegalArgumentException error) {
+            value = null;
+        }
+        if (value == null) {
+            Toast.makeText(this, R.string.barcode_invalid, Toast.LENGTH_LONG).show();
+            return;
+        }
+        confirmScannedBarcode(item, value);
+    }
+
+    private void barcodeScanFailed() {
+        if (!isFinishing() && !isDestroyed()) {
+            scanningBarcode = false;
+            Toast.makeText(this, R.string.barcode_unavailable, Toast.LENGTH_LONG).show();
+        }
     }
 
     private void confirmScannedBarcode(ShoppingItem item, String value) {
