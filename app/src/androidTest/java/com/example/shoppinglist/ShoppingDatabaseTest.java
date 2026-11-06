@@ -530,7 +530,8 @@ public class ShoppingDatabaseTest {
                     "CREATE TABLE shopping_lists (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL, archivedAt INTEGER, type TEXT NOT NULL DEFAULT 'shopping', receiptFile TEXT)");
             old.execSQL(
                     "CREATE TABLE items (id INTEGER PRIMARY KEY AUTOINCREMENT, listId INTEGER NOT NULL REFERENCES shopping_lists(id), name TEXT NOT NULL, quantity TEXT NOT NULL, purchased INTEGER NOT NULL, url TEXT)");
-            old.execSQL("INSERT INTO shopping_lists VALUES (1, 'Завершений', 100, 200, 200, 'shopping', 'receipt.img')");
+            old.execSQL(
+                    "INSERT INTO shopping_lists VALUES (1, 'Завершений', 100, 200, 200, 'shopping', 'receipt.img')");
             old.execSQL(
                     "INSERT INTO items VALUES (3, 1, 'Кава', '2', 1, 'https://example.com/item')");
             old.setVersion(5);
