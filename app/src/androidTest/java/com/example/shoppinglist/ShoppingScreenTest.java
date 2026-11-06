@@ -154,6 +154,31 @@ public class ShoppingScreenTest {
     }
 
     @Test
+    public void voiceBatchCanBeEditedAndOnlyConfirmedItemsArePersisted() {
+        screen.onActivity(activity ->
+                activity.viewModel.prepareVoiceDraft(
+                        java.util.Arrays.asList("Молоко", "Хліб", "Яблука")));
+        onView(withId(R.id.voice_batch_editor)).check(matches(isDisplayed()));
+        onView(withId(R.id.voice_batch_editor))
+                .perform(replaceText("Молоко\nБатон"), closeSoftKeyboard());
+        onView(withText(R.string.voice_batch_add)).perform(click());
+        onView(withText("Молоко")).check(matches(isDisplayed()));
+        onView(withText("Батон")).check(matches(isDisplayed()));
+        onView(withText("Хліб")).check(doesNotExist());
+        assertEquals(2, app.database.getItems(app.listId).size());
+    }
+
+    @Test
+    public void cancelledVoiceBatchDoesNotWriteItems() {
+        screen.onActivity(activity ->
+                activity.viewModel.prepareVoiceDraft(
+                        java.util.Arrays.asList("Молоко", "Хліб")));
+        onView(withId(R.id.voice_batch_editor)).check(matches(isDisplayed()));
+        onView(withText(R.string.cancel)).perform(click());
+        assertTrue(app.database.getItems(app.listId).isEmpty());
+    }
+
+    @Test
     public void storedBarcodeIsDisplayedAndCanBeCopied() {
         add("Молоко");
         main(() ->
