@@ -15,7 +15,7 @@ import java.util.List;
 
 public class ShoppingDatabase extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "shopping.db";
-    private static final int DATABASE_VERSION = 6;
+    private static final int DATABASE_VERSION = 7;
     private static final String LEGACY_DEFAULT_LIST_NAME = "Мій список";
     private final Context context;
 
@@ -58,11 +58,18 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
         createLists(db);
         createItems(db, "items");
         db.execSQL("CREATE INDEX items_list_order ON items(listId, purchased, id)");
+        createReceiptTable(db);
+    }
+
+    private void createReceiptTable(SQLiteDatabase db) {
+        db.execSQL(
+                "CREATE TABLE receipt_attachments (id INTEGER PRIMARY KEY AUTOINCREMENT, listId INTEGER NOT NULL REFERENCES shopping_lists(id) ON DELETE CASCADE, fileName TEXT NOT NULL UNIQUE, mimeType TEXT NOT NULL CHECK(mimeType IN ('image/jpeg','image/png','image/webp','application/pdf')), createdAt INTEGER NOT NULL)");
+        db.execSQL("CREATE INDEX receipts_by_list ON receipt_attachments(listId, id)");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        if (oldVersion < 1 || oldVersion > 5 || newVersion != DATABASE_VERSION) {
+        if (oldVersion < 1 || oldVersion > 6 || newVersion != DATABASE_VERSION) {
             throw new SQLiteException("Unsupported database upgrade");
         }
         // SQLiteOpenHelper wraps schema migration and user_version in a transaction.
@@ -79,9 +86,15 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
         if (oldVersion >= 2 && oldVersion < 5) {
             db.execSQL("ALTER TABLE shopping_lists ADD COLUMN receiptFile TEXT");
         }
-        if (oldVersion >= 2) {
+        if (oldVersion >= 2 && oldVersion < 6) {
             db.execSQL("ALTER TABLE items ADD COLUMN barcode TEXT");
         }
+        createReceiptTable(db);
+        db.execSQL(
+                "INSERT INTO receipt_attachments(listId, fileName, mimeType, createdAt) "
+                        + "SELECT id, receiptFile, 'image/jpeg', updatedAt FROM shopping_lists "
+                        + "WHERE receiptFile IS NOT NULL");
+
     }
 
     private void upgradeFromV1(SQLiteDatabase db) {
@@ -274,6 +287,95 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
         }
     }
 
+    public java.util.List<ReceiptAttachment> getReceipts(long listId) {
+        java.util.List<ReceiptAttachment> result = new java.util.ArrayList<>();
+        try (Cursor c =
+                getReadableDatabase()
+                        .rawQuery(
+                                "SELECT id, listId, fileName, mimeType FROM receipt_attachments "
+                                        + "WHERE listId = ? ORDER BY id",
+                                new String[] {String.valueOf(listId)})) {
+            while (c.moveToNext()) {
+                result.add(
+                        new ReceiptAttachment(
+                                c.getLong(0), c.getLong(1), c.getString(2), c.getString(3)));
+            }
+        }
+        return result;
+    }
+
+    /** Add a receipt in the same transaction as the legacy first-receipt pointer update. */
+    public void addReceipt(long listId, String name, String mimeType) {
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            ShoppingList list = getList(listId);
+            if (list.archivedAt == null) {
+                throw new SQLiteException("Receipts require an archived list");
+            }
+            ContentValues record = new ContentValues();
+            record.put("listId", listId);
+            record.put("fileName", name);
+            record.put("mimeType", mimeType);
+            record.put("createdAt", System.currentTimeMillis());
+            db.insertOrThrow("receipt_attachments", null, record);
+            ContentValues values = new ContentValues();
+            if (list.receiptFile == null) {
+                values.put("receiptFile", name);
+            }
+            values.put("updatedAt", nextTimestamp(list));
+            db.update("shopping_lists", values, "id = ?", new String[] {String.valueOf(listId)});
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    /** Returns the deleted filename only after successful commit. */
+    public String removeReceipt(long listId, long attachmentId) {
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            ShoppingList list = getList(listId);
+            if (list.archivedAt == null) {
+                throw new SQLiteException("Receipts require an archived list");
+            }
+            String name;
+            try (Cursor cursor =
+                    db.rawQuery(
+                            "SELECT fileName FROM receipt_attachments WHERE id = ? AND listId = ?",
+                            new String[] {String.valueOf(attachmentId), String.valueOf(listId)})) {
+                if (!cursor.moveToFirst()) {
+                    throw new SQLiteException("Receipt not found");
+                }
+                name = cursor.getString(0);
+            }
+            db.delete(
+                    "receipt_attachments",
+                    "id = ? AND listId = ?",
+                    new String[] {String.valueOf(attachmentId), String.valueOf(listId)});
+            ContentValues values = new ContentValues();
+            if (name.equals(list.receiptFile)) {
+                try (Cursor next =
+                        db.rawQuery(
+                                "SELECT fileName FROM receipt_attachments WHERE listId = ? ORDER BY id LIMIT 1",
+                                new String[] {String.valueOf(listId)})) {
+                    if (next.moveToFirst()) {
+                        values.put("receiptFile", next.getString(0));
+                    } else {
+                        values.putNull("receiptFile");
+                    }
+                }
+            }
+            values.put("updatedAt", nextTimestamp(list));
+            db.update("shopping_lists", values, "id = ?", new String[] {String.valueOf(listId)});
+            db.setTransactionSuccessful();
+            return name;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
     /** Receipts can only be modified on archived lists; returns previous file after commit. */
     public String setReceipt(long listId, String filename) {
         SQLiteDatabase db = getWritableDatabase();
@@ -288,6 +390,18 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
                 values.putNull("receiptFile");
             } else {
                 values.put("receiptFile", filename);
+            }
+            db.delete(
+                    "receipt_attachments",
+                    "listId = ?",
+                    new String[] {String.valueOf(listId)});
+            if (filename != null) {
+                ContentValues record = new ContentValues();
+                record.put("listId", listId);
+                record.put("fileName", filename);
+                record.put("mimeType", "image/jpeg");
+                record.put("createdAt", System.currentTimeMillis());
+                db.insertOrThrow("receipt_attachments", null, record);
             }
             values.put("updatedAt", nextTimestamp(list));
             int changed =
