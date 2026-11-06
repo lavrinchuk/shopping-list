@@ -12,12 +12,36 @@ public final class VoiceRecognitionResult {
         }
         for (String candidate : matches) {
             if (candidate != null && !candidate.trim().isEmpty()) {
-                String name = candidate.trim();
-                int firstCharacterEnd = name.offsetByCodePoints(0, 1);
-                return name.substring(0, firstCharacterEnd).toUpperCase(Locale.forLanguageTag("uk"))
-                        + name.substring(firstCharacterEnd);
+                return capitalizeFirst(candidate);
             }
         }
         return null;
+    }
+
+    /** Splits only explicit separators; quantity and natural-language parsing belongs to VOICE-03. */
+    public static List<String> items(String recognized) {
+        if (recognized == null || recognized.isBlank()) {
+            return List.of();
+        }
+        List<String> names = new java.util.ArrayList<>();
+        for (String part : recognized.split("[,;\\n]+")) {
+            if (!part.isBlank()) {
+                names.add(capitalizeFirst(part));
+            }
+            if (names.size() > 20) {
+                throw new IllegalArgumentException("Too many spoken items");
+            }
+        }
+        return names;
+    }
+
+    public static String capitalizeFirst(String value) {
+        String name = value.trim();
+        if (name.isEmpty()) {
+            return name;
+        }
+        int firstCharacterEnd = name.offsetByCodePoints(0, 1);
+        return name.substring(0, firstCharacterEnd).toUpperCase(Locale.forLanguageTag("uk"))
+                + name.substring(firstCharacterEnd);
     }
 }
