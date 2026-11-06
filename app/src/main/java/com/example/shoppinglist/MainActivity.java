@@ -1,6 +1,9 @@
 package com.example.shoppinglist;
 
 import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
@@ -31,10 +34,14 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.shoppinglist.data.ShoppingRepository;
 import com.example.shoppinglist.model.ItemLink;
+import com.example.shoppinglist.model.ProductBarcode;
 import com.example.shoppinglist.model.ShoppingItem;
 import com.example.shoppinglist.ui.AdaptiveFormLayoutController;
 import com.example.shoppinglist.voice.VoiceRecognitionResult;
 import com.example.shoppinglist.web.ProductSearchUrl;
+import com.google.android.gms.vision.barcode.GmsBarcodeScanner;
+import com.google.android.gms.vision.barcode.GmsBarcodeScanning;
+import com.google.android.gms.vision.barcode.GmsBarcodeScannerOptions;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
@@ -50,6 +57,7 @@ public class MainActivity extends AppCompatActivity {
     ShoppingAdapter adapter;
     private Snackbar retry;
     private boolean rendering;
+    private boolean scanningBarcode;
     private androidx.appcompat.app.AlertDialog receiptOfferDialog;
     private final ActivityResultLauncher<PickVisualMediaRequest> receiptPicker =
             registerForActivityResult(
@@ -293,6 +301,15 @@ public class MainActivity extends AppCompatActivity {
                             }
 
                             @Override
+                            public void barcode(ShoppingItem item) {
+                                if (item.barcode == null) {
+                                    scanBarcode(item);
+                                } else {
+                                    showSavedBarcode(item);
+                                }
+                            }
+
+                            @Override
                             public void openLink(ShoppingItem item) {
                                 openItemLink(item);
                             }
@@ -300,6 +317,87 @@ public class MainActivity extends AppCompatActivity {
         RecyclerView list = findViewById(R.id.items);
         list.setLayoutManager(new LinearLayoutManager(this));
         list.setAdapter(adapter);
+    }
+
+    private void showSavedBarcode(ShoppingItem item) {
+        String current = item.barcode;
+        if (current == null) {
+            return;
+        }
+        boolean archived = viewModel.list == null || viewModel.list.archivedAt != null;
+        MaterialAlertDialogBuilder builder =
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle(getString(R.string.barcode_title, item.name))
+                        .setMessage(current)
+                        .setPositiveButton(
+                                R.string.barcode_copy,
+                                (dialog, which) -> copyBarcode(current))
+                        .setNegativeButton(R.string.back, null);
+        if (!archived) {
+            builder.setNeutralButton(
+                    R.string.barcode_scan_again,
+                    (dialog, which) -> scanBarcode(item));
+        }
+        builder.show();
+    }
+
+    private void copyBarcode(String code) {
+        ClipboardManager clipboard =
+                (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        if (clipboard != null) {
+            clipboard.setPrimaryClip(ClipData.newPlainText(getString(R.string.barcode_label), code));
+            Toast.makeText(this, R.string.barcode_copied, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void scanBarcode(ShoppingItem item) {
+        if (scanningBarcode || viewModel.list == null || viewModel.list.archivedAt != null) {
+            return;
+        }
+        scanningBarcode = true;
+        GmsBarcodeScanner scanner =
+                GmsBarcodeScanning.getClient(
+                        this, new GmsBarcodeScannerOptions.Builder().enableAutoZoom().build());
+        scanner.startScan()
+                .addOnSuccessListener(
+                        barcode -> {
+                            scanningBarcode = false;
+                            String value;
+                            try {
+                                value = ProductBarcode.normalize(barcode.getRawValue());
+                            } catch (IllegalArgumentException error) {
+                                value = null;
+                            }
+                            if (value == null) {
+                                Toast.makeText(this, R.string.barcode_invalid, Toast.LENGTH_LONG)
+                                        .show();
+                                return;
+                            }
+                            confirmScannedBarcode(item, value);
+                        })
+                .addOnCanceledListener(() -> scanningBarcode = false)
+                .addOnFailureListener(
+                        error -> {
+                            scanningBarcode = false;
+                            Toast.makeText(this, R.string.barcode_unavailable, Toast.LENGTH_LONG)
+                                    .show();
+                        });
+    }
+
+    private void confirmScannedBarcode(ShoppingItem item, String value) {
+        if (viewModel.list == null || viewModel.list.archivedAt != null) {
+            return;
+        }
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.barcode_scanned_title)
+                .setMessage(value)
+                .setNegativeButton(R.string.cancel, null)
+                .setNeutralButton(
+                        R.string.barcode_copy, (dialog, which) -> copyBarcode(value))
+                .setPositiveButton(
+                        R.string.save,
+                        (dialog, which) -> viewModel.updateItemBarcode(item, value))
+                .show();
     }
 
     private void showLinkEditor(ShoppingItem item) {
