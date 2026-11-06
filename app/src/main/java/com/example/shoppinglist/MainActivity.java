@@ -706,14 +706,14 @@ public class MainActivity extends AppCompatActivity {
         container.setOrientation(LinearLayout.VERTICAL);
         container.setPadding(pad, 0, pad, 0);
         TextInputLayout storeField = new TextInputLayout(this);
-        storeField.setHint(R.string.store_name_hint);
+        storeField.setHint(getString(R.string.store_name_hint));
         TextInputEditText storeInput = new TextInputEditText(storeField.getContext());
         storeInput.setSingleLine(true);
         storeInput.setText(link == null ? "" : link.storeName);
         storeField.addView(storeInput);
         container.addView(storeField);
         TextInputLayout urlField = new TextInputLayout(this);
-        urlField.setHint(R.string.item_link_hint);
+        urlField.setHint(getString(R.string.item_link_hint));
         TextInputEditText urlInput = new TextInputEditText(urlField.getContext());
         urlInput.setSingleLine(true);
         urlInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
