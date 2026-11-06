@@ -21,7 +21,7 @@ public final class VoiceRecognitionResult {
     /** Splits only explicit separators; quantity and natural-language parsing belongs to VOICE-03. */
     public static List<String> items(String recognized) {
         if (recognized == null || recognized.isBlank()) {
-            return List.of();
+            return java.util.Collections.emptyList();
         }
         List<String> names = new java.util.ArrayList<>();
         for (String part : recognized.split("[,;\\n]+")) {
