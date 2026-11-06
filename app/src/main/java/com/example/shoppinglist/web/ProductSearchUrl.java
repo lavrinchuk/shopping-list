@@ -1,5 +1,6 @@
 package com.example.shoppinglist.web;
 
+import com.example.shoppinglist.model.ProductBarcode;
 import com.example.shoppinglist.model.ShoppingItem;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -22,6 +23,15 @@ public final class ProductSearchUrl {
             query += " " + region.trim();
         }
         return encodeQuery(query);
+    }
+
+    /** Web search only: a valid barcode does not guarantee a catalog match. */
+    public static String forBarcode(String barcode) {
+        String code = ProductBarcode.normalize(barcode);
+        if (code == null) {
+            throw new IllegalArgumentException("Barcode is required");
+        }
+        return encodeQuery("\"" + code + "\" товар");
     }
 
     private static String encodeQuery(String query) {

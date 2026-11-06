@@ -325,18 +325,33 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         boolean archived = viewModel.list == null || viewModel.list.archivedAt != null;
-        MaterialAlertDialogBuilder builder =
-                new MaterialAlertDialogBuilder(this)
-                        .setTitle(getString(R.string.barcode_title, item.name))
-                        .setMessage(current)
-                        .setPositiveButton(
-                                R.string.barcode_copy, (dialog, which) -> copyBarcode(current))
-                        .setNegativeButton(R.string.back, null);
-        if (!archived) {
-            builder.setNeutralButton(
-                    R.string.barcode_scan_again, (dialog, which) -> scanBarcode(item));
-        }
-        builder.show();
+        String[] actions =
+                archived
+                        ? new String[] {
+                            getString(R.string.barcode_copy),
+                            getString(R.string.barcode_search_web)
+                        }
+                        : new String[] {
+                            getString(R.string.barcode_copy),
+                            getString(R.string.barcode_search_web),
+                            getString(R.string.barcode_scan_again)
+                        };
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(getString(R.string.barcode_title, item.name))
+                .setMessage(current)
+                .setItems(
+                        actions,
+                        (dialog, which) -> {
+                            if (which == 0) {
+                                copyBarcode(current);
+                            } else if (which == 1) {
+                                openBarcodeSearch(current);
+                            } else {
+                                scanBarcode(item);
+                            }
+                        })
+                .setNegativeButton(R.string.back, null)
+                .show();
     }
 
     private void copyBarcode(String code) {
@@ -393,12 +408,34 @@ public class MainActivity extends AppCompatActivity {
         }
         new MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.barcode_scanned_title)
-                .setMessage(value)
+                .setMessage(getString(R.string.barcode_scanned_message, value))
+                .setItems(
+                        new String[] {
+                            getString(R.string.save),
+                            getString(R.string.barcode_copy),
+                            getString(R.string.barcode_search_web)
+                        },
+                        (dialog, which) -> {
+                            if (which == 0) {
+                                viewModel.updateItemBarcode(item, value);
+                            } else if (which == 1) {
+                                copyBarcode(value);
+                            } else {
+                                openBarcodeSearch(value);
+                            }
+                        })
                 .setNegativeButton(R.string.cancel, null)
-                .setNeutralButton(R.string.barcode_copy, (dialog, which) -> copyBarcode(value))
-                .setPositiveButton(
-                        R.string.save, (dialog, which) -> viewModel.updateItemBarcode(item, value))
                 .show();
+    }
+
+    private void openBarcodeSearch(String code) {
+        Intent search =
+                new Intent(Intent.ACTION_VIEW, Uri.parse(ProductSearchUrl.forBarcode(code)));
+        try {
+            startActivity(search);
+        } catch (ActivityNotFoundException | SecurityException error) {
+            Toast.makeText(this, R.string.search_unavailable, Toast.LENGTH_LONG).show();
+        }
     }
 
     private void showLinkEditor(ShoppingItem item) {

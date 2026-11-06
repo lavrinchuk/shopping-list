@@ -114,6 +114,7 @@ public class ShoppingScreenTest {
         onView(withId(R.id.barcode_value)).check(matches(withText("Штрихкод: 012345678905")));
         onView(withId(R.id.barcode_action)).perform(click());
         onView(withText("012345678905")).check(matches(isDisplayed()));
+        onView(withText(R.string.barcode_search_web)).check(matches(isDisplayed()));
         onView(withText(R.string.barcode_copy)).perform(click());
         android.content.ClipboardManager clipboard =
                 (android.content.ClipboardManager)
