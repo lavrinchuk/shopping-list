@@ -111,8 +111,7 @@ public class ListsActivity extends AppCompatActivity {
     }
 
     private void configureActions(boolean archived) {
-        findViewById(R.id.lists_bottom_bar)
-                .setVisibility(archived ? View.GONE : View.VISIBLE);
+        findViewById(R.id.lists_bottom_bar).setVisibility(archived ? View.GONE : View.VISIBLE);
         findViewById(R.id.open_archive).setVisibility(archived ? View.GONE : View.VISIBLE);
         findViewById(R.id.open_archive)
                 .setOnClickListener(view ->
