@@ -110,6 +110,37 @@ public class ListsNavigationTest {
     }
 
     @Test
+    public void homeBottomBarOpensTemplatesAndArchiveAndSurvivesRotation() {
+        onView(withId(R.id.lists_toolbar))
+                .check(matches(withEffectiveVisibility(Visibility.GONE)));
+        onView(withId(R.id.lists_bottom_bar)).check(matches(isDisplayed()));
+        onView(withId(R.id.open_templates))
+                .check(matches(isDisplayed()))
+                .check(matches(withContentDescription(R.string.templates_title)));
+        onView(withId(R.id.create_list))
+                .check(matches(isDisplayed()))
+                .check(matches(withContentDescription(R.string.new_list)));
+        onView(withId(R.id.open_archive))
+                .check(matches(isDisplayed()))
+                .check(matches(withContentDescription(R.string.archive)));
+
+        home.recreate();
+        onView(withId(R.id.lists_bottom_bar)).check(matches(isDisplayed()));
+        onView(withId(R.id.open_templates)).perform(click());
+        onView(withText(R.string.templates_title)).check(matches(isDisplayed()));
+        onView(withText(R.string.back)).perform(click());
+
+        onView(withId(R.id.open_archive)).perform(click());
+        onView(withId(R.id.lists_toolbar)).check(matches(isDisplayed()));
+        onView(withId(R.id.lists_bottom_bar))
+                .check(matches(withEffectiveVisibility(Visibility.GONE)));
+        onView(withId(R.id.open_templates))
+                .check(matches(withEffectiveVisibility(Visibility.GONE)));
+        onView(withContentDescription(R.string.back)).perform(click());
+        onView(withId(R.id.lists_bottom_bar)).check(matches(isDisplayed()));
+    }
+
+    @Test
     public void createRotateRenameAndKeepListsIndependent() throws Exception {
         onView(withId(R.id.create_list)).perform(click());
         onView(withText(R.string.save)).perform(click());
