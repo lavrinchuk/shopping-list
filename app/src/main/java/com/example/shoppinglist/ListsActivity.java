@@ -328,7 +328,6 @@ public class ListsActivity extends AppCompatActivity {
                 ColorStateList.valueOf(
                         MaterialColors.getColor(
                                 button, com.google.android.material.R.attr.colorOnSurface)));
-        ViewCompat.setTooltipText(button, description);
         return button;
     }
 
