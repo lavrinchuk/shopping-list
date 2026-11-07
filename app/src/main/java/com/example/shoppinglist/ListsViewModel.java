@@ -287,6 +287,22 @@ final class ListsViewModel extends ViewModel {
                 });
     }
 
+    void loadTemplateItems(long templateId, ShoppingRepository.TemplateItemsResult result) {
+        if (!busy && !archived) {
+            repository.templateItems(templateId, result);
+        }
+    }
+
+    void updateTemplate(long templateId, String name, List<String[]> items) {
+        if (busy || archived) {
+            return;
+        }
+        String clean = ShoppingList.cleanName(name);
+        busy = true;
+        notifyStateChanged();
+        repository.updateTemplate(templateId, clean, items, createRepositoryCallback(false));
+    }
+
     void deleteTemplate(long templateId) {
         if (busy || archived) {
             return;
