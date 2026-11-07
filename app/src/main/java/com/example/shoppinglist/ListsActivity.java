@@ -14,6 +14,9 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.EditText;
+import java.util.ArrayList;
+import java.util.List;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Spinner;
@@ -282,11 +285,16 @@ public class ListsActivity extends AppCompatActivity {
                     templateActionButton(
                             R.drawable.ic_add,
                             getString(R.string.template_create_action, template.name));
+            ImageButton edit =
+                    templateActionButton(
+                            R.drawable.ic_edit,
+                            getString(R.string.template_edit_action, template.name));
             ImageButton delete =
                     templateActionButton(
                             R.drawable.ic_delete,
                             getString(R.string.template_delete_action, template.name));
             row.addView(create, new LinearLayout.LayoutParams(touchSize, touchSize));
+            row.addView(edit, new LinearLayout.LayoutParams(touchSize, touchSize));
             row.addView(delete, new LinearLayout.LayoutParams(touchSize, touchSize));
             content.addView(
                     row,
@@ -297,6 +305,10 @@ public class ListsActivity extends AppCompatActivity {
             create.setOnClickListener(view -> {
                 dialog.dismiss();
                 viewModel.createFromTemplate(template.id);
+            });
+            edit.setOnClickListener(view -> {
+                dialog.dismiss();
+                editTemplate(template);
             });
             delete.setOnClickListener(view ->
                     new MaterialAlertDialogBuilder(this)
@@ -311,6 +323,119 @@ public class ListsActivity extends AppCompatActivity {
                             .show());
         }
         dialog.show();
+    }
+
+    private void editTemplate(ShoppingTemplate template) {
+        viewModel.loadTemplateItems(
+                template.id,
+                new ShoppingRepository.TemplateItemsResult() {
+                    @Override
+                    public void loaded(List<String[]> items) {
+                        if (!isFinishing() && !isDestroyed()) {
+                            showTemplateEditor(template, items);
+                        }
+                    }
+
+                    @Override
+                    public void failed() {
+                        Toast.makeText(ListsActivity.this, R.string.read_error,
+                                Toast.LENGTH_LONG).show();
+                    }
+                });
+    }
+
+    private void showTemplateEditor(ShoppingTemplate template, List<String[]> items) {
+        int padding = Math.round(16 * getResources().getDisplayMetrics().density);
+        LinearLayout form = new LinearLayout(this);
+        form.setOrientation(LinearLayout.VERTICAL);
+        form.setPadding(padding, padding, padding, padding);
+        EditText name = new EditText(this);
+        name.setId(R.id.template_name_input);
+        name.setSingleLine(true);
+        name.setHint(R.string.template_name_hint);
+        name.setText(template.name);
+        form.addView(name);
+        TextView heading = new TextView(this);
+        heading.setText(R.string.template_items_heading);
+        form.addView(heading);
+
+        LinearLayout products = new LinearLayout(this);
+        products.setOrientation(LinearLayout.VERTICAL);
+        form.addView(products);
+        List<EditText[]> fields = new ArrayList<>();
+        for (String[] item : items) {
+            addTemplateItemRow(products, fields, item[0], item[1]);
+        }
+
+        MaterialButton add = new MaterialButton(this);
+        add.setText(R.string.template_add_item);
+        add.setOnClickListener(v -> addTemplateItemRow(products, fields, "", "1"));
+        form.addView(add);
+        ScrollView scroll = new ScrollView(this);
+        scroll.addView(form);
+        AlertDialog editor =
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle(R.string.template_edit_title)
+                        .setView(scroll)
+                        .setNegativeButton(R.string.cancel, null)
+                        .setPositiveButton(R.string.save, null)
+                        .create();
+        editor.setOnShowListener(ignored ->
+                editor.getButton(AlertDialog.BUTTON_POSITIVE)
+                        .setOnClickListener(button -> {
+                            List<String[]> updated = new ArrayList<>();
+                            for (EditText[] pair : fields) {
+                                String productName = pair[0].getText().toString().trim();
+                                if (productName.isEmpty()) {
+                                    pair[0].setError(getString(R.string.list_name_required));
+                                    pair[0].requestFocus();
+                                    return;
+                                }
+                                updated.add(new String[] {
+                                        productName, pair[1].getText().toString().trim()});
+                            }
+                            if (name.getText().toString().trim().isEmpty()) {
+                                name.setError(getString(R.string.list_name_required));
+                                return;
+                            }
+                            if (updated.isEmpty()) {
+                                Toast.makeText(this, R.string.template_requires_items,
+                                        Toast.LENGTH_SHORT).show();
+                                return;
+                            }
+                            viewModel.updateTemplate(template.id, name.getText().toString(), updated);
+                            editor.dismiss();
+                        }));
+        editor.show();
+    }
+
+    private void addTemplateItemRow(LinearLayout products, List<EditText[]> fields,
+                                    String productName, String quantity) {
+        LinearLayout row = new LinearLayout(this);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        EditText product = new EditText(this);
+        product.setSingleLine(true);
+        product.setHint(R.string.template_product_name);
+        product.setText(productName);
+        row.addView(product, new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 2f));
+        EditText amount = new EditText(this);
+        amount.setSingleLine(true);
+        amount.setHint(R.string.template_quantity);
+        amount.setText(quantity);
+        row.addView(amount, new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        EditText[] pair = {product, amount};
+        fields.add(pair);
+        ImageButton remove = templateActionButton(R.drawable.ic_delete,
+                getString(R.string.template_remove_item));
+        int size = Math.round(48 * getResources().getDisplayMetrics().density);
+        row.addView(remove, new LinearLayout.LayoutParams(size, size));
+        remove.setOnClickListener(v -> {
+            fields.remove(pair);
+            products.removeView(row);
+        });
+        products.addView(row);
     }
 
     private ImageButton templateActionButton(int icon, String description) {
