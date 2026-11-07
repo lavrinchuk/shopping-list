@@ -742,8 +742,10 @@ public class ShoppingDatabaseTest {
         db.add(source, "Milk", "2");
         long template = db.saveTemplate(source, "Weekly");
         long before = db.createFromTemplate(template);
-        db.updateTemplate(template, "Updated", java.util.Arrays.asList(
-                new String[] {"Bread", "3"}, new String[] {"Eggs", "6"}));
+        db.updateTemplate(
+                template,
+                "Updated",
+                java.util.Arrays.asList(new String[] {"Bread", "3"}, new String[] {"Eggs", "6"}));
         long after = db.createFromTemplate(template);
         assertEquals("Updated", db.getTemplates().get(0).name);
         assertEquals(2, db.getTemplates().get(0).itemCount);
