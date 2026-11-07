@@ -718,15 +718,14 @@ public class ShoppingDatabaseTest {
         assertNotEquals(source, created);
         assertNull(db.getList(created).archivedAt);
         assertEquals(0, db.getList(created).purchased);
-        assertEquals("Щотижневі покупки", db.getList(created).name);
+        assertTrue(db.getList(created).name.matches("Щотижневі покупки \\d{2}\\.\\d{2}\\.\\d{4}"));
         assertNull(db.getList(created).receiptFile);
         assertEquals(2, db.getItems(created).size());
         assertEquals("2 л", db.getItems(created).get(0).quantity);
-        assertEquals("012345678905", db.getItems(created).get(0).barcode);
+        assertNull(db.getItems(created).get(0).barcode);
+        assertNull(db.getItems(created).get(0).url);
         assertFalse(db.getItems(created).get(0).purchased);
-        assertEquals(2, db.getStoreLinks(created).size());
-        assertEquals("Сільпо", db.getStoreLinks(created).get(0).storeName);
-        assertEquals("АТБ", db.getStoreLinks(created).get(1).storeName);
+        assertTrue(db.getStoreLinks(created).isEmpty());
         db.deleteTemplate(templateId);
         assertTrue(db.getTemplates().isEmpty());
         assertEquals(2, db.getItems(created).size());
@@ -735,6 +734,24 @@ public class ShoppingDatabaseTest {
                 db.getItems(source).stream().anyMatch(item -> item.id == milk && item.purchased));
         assertEquals("Молоко", db.getItems(created).get(0).name);
         assertEquals("Хліб", db.getItems(created).get(1).name);
+    }
+
+    @Test
+    public void editingTemplateUpdatesFutureListsOnly() {
+        long source = db.createList("Original");
+        db.add(source, "Milk", "2");
+        long template = db.saveTemplate(source, "Weekly");
+        long before = db.createFromTemplate(template);
+        db.updateTemplate(template, "Updated", java.util.Arrays.asList(
+                new String[] {"Bread", "3"}, new String[] {"Eggs", "6"}));
+        long after = db.createFromTemplate(template);
+        assertEquals("Updated", db.getTemplates().get(0).name);
+        assertEquals(2, db.getTemplates().get(0).itemCount);
+        assertEquals("Milk", db.getItems(before).get(0).name);
+        assertEquals("Milk", db.getItems(source).get(0).name);
+        assertEquals(2, db.getItems(after).size());
+        assertEquals("Bread", db.getItems(after).get(0).name);
+        assertEquals("3", db.getItems(after).get(0).quantity);
     }
 
     @Test
