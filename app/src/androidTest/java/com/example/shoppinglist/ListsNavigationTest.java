@@ -165,7 +165,7 @@ public class ListsNavigationTest {
         home.onActivity(activity -> {
             long copies =
                     activity.viewModel.lists.stream()
-                            .filter(list -> list.name.equals("Щотижневий"))
+                            .filter(list -> list.name.matches("Щотижневий \\d{2}\\.\\d{2}\\.\\d{4}"))
                             .count();
             assertEquals(1, copies);
         });
