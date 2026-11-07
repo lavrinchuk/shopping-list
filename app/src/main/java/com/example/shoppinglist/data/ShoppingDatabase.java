@@ -10,7 +10,10 @@ import com.example.shoppinglist.model.ItemLink;
 import com.example.shoppinglist.model.ProductBarcode;
 import com.example.shoppinglist.model.ShoppingItem;
 import com.example.shoppinglist.model.ShoppingList;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
 import java.util.List;
 
 public class ShoppingDatabase extends SQLiteOpenHelper {
@@ -256,12 +259,12 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
             long listId =
                     insertList(
                             db,
-                            templateName,
+                            templateName + " " + new SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(new Date()),
                             System.currentTimeMillis(),
                             ShoppingList.TYPE_SHOPPING);
             try (Cursor source =
                     db.rawQuery(
-                            "SELECT id, name, quantity, url, barcode FROM template_items "
+                            "SELECT id, name, quantity FROM template_items "
                                     + "WHERE templateId = ? ORDER BY id",
                             new String[] {String.valueOf(templateId)})) {
                 while (source.moveToNext()) {
@@ -270,26 +273,63 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
                     values.put("name", source.getString(1));
                     values.put("quantity", source.getString(2));
                     values.put("purchased", 0);
-                    values.put("url", source.getString(3));
-                    values.put("barcode", source.getString(4));
-                    long itemId = db.insertOrThrow("items", null, values);
-                    try (Cursor links =
-                            db.rawQuery(
-                                    "SELECT storeName, url FROM template_links "
-                                            + "WHERE templateItemId = ? ORDER BY id",
-                                    new String[] {String.valueOf(source.getLong(0))})) {
-                        while (links.moveToNext()) {
-                            ContentValues link = new ContentValues();
-                            link.put("itemId", itemId);
-                            link.put("storeName", links.getString(0));
-                            link.put("url", links.getString(1));
-                            db.insertOrThrow("item_links", null, link);
-                        }
-                    }
+                    db.insertOrThrow("items", null, values);
                 }
             }
             db.setTransactionSuccessful();
             return listId;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    /** Loads editable names and quantities without linking the original shopping list. */
+    public List<String[]> getTemplateItems(long templateId) {
+        List<String[]> result = new ArrayList<>();
+        try (Cursor cursor = getReadableDatabase().rawQuery(
+                "SELECT name, quantity FROM template_items WHERE templateId = ? ORDER BY id",
+                new String[] {String.valueOf(templateId)})) {
+            while (cursor.moveToNext()) {
+                result.add(new String[] {cursor.getString(0), cursor.getString(1)});
+            }
+        }
+        return result;
+    }
+
+    /** Updates the template atomically; existing shopping lists are never changed. */
+    public void updateTemplate(long templateId, String name, List<String[]> products) {
+        String title = ShoppingList.cleanName(name);
+        if (products.isEmpty()) {
+            throw new SQLiteException("Template must contain at least one item");
+        }
+        List<String[]> cleaned = new ArrayList<>();
+        for (String[] item : products) {
+            String productName = item[0] == null ? "" : item[0].trim();
+            String quantity = item[1] == null ? "" : item[1].trim();
+            if (productName.isEmpty()) {
+                throw new SQLiteException("Product name required");
+            }
+            cleaned.add(new String[] {productName, quantity.isEmpty() ? "1" : quantity});
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            ContentValues values = new ContentValues();
+            values.put("name", title);
+            if (db.update("shopping_templates", values, "id = ?",
+                    new String[] {String.valueOf(templateId)}) != 1) {
+                throw new SQLiteException("Template not found");
+            }
+            db.delete("template_items", "templateId = ?",
+                    new String[] {String.valueOf(templateId)});
+            for (String[] item : cleaned) {
+                ContentValues product = new ContentValues();
+                product.put("templateId", templateId);
+                product.put("name", item[0]);
+                product.put("quantity", item[1]);
+                db.insertOrThrow("template_items", null, product);
+            }
+            db.setTransactionSuccessful();
         } finally {
             db.endTransaction();
         }
