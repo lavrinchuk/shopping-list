@@ -105,6 +105,14 @@
     <string name="template_create_action">Створити список із шаблону «%1$s»</string>
     <string name="template_delete_action">Видалити шаблон «%1$s»</string>
     <string name="template_delete_confirm">Видалити шаблон «%1$s»? Створені раніше списки залишаться.</string>
+    <string name="template_edit_action">Редагувати шаблон «%1$s»</string>
+    <string name="template_edit_title">Редагувати шаблон</string>
+    <string name="template_items_heading">Товари шаблону</string>
+    <string name="template_add_item">Додати товар</string>
+    <string name="template_product_name">Назва товару</string>
+    <string name="template_quantity">Кількість</string>
+    <string name="template_remove_item">Видалити товар</string>
+    <string name="template_requires_items">Додай хоча б один товар</string>
     <string name="template_saved">Шаблон збережено</string>
     <string name="new_list">Новий список</string>
     <string name="rename_list">Перейменувати</string>
