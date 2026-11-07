@@ -101,8 +101,9 @@ public class ListsActivity extends AppCompatActivity {
 
     private void configureToolbar(boolean archived) {
         MaterialToolbar toolbar = findViewById(R.id.lists_toolbar);
-        toolbar.setTitle(archived ? R.string.archive : R.string.all_lists);
+        toolbar.setVisibility(archived ? View.VISIBLE : View.GONE);
         if (archived) {
+            toolbar.setTitle(R.string.archive);
             toolbar.setNavigationIcon(R.drawable.ic_back);
             toolbar.setNavigationContentDescription(R.string.back);
             toolbar.setNavigationOnClickListener(view -> finish());
@@ -110,6 +111,8 @@ public class ListsActivity extends AppCompatActivity {
     }
 
     private void configureActions(boolean archived) {
+        findViewById(R.id.lists_bottom_bar)
+                .setVisibility(archived ? View.GONE : View.VISIBLE);
         findViewById(R.id.open_archive).setVisibility(archived ? View.GONE : View.VISIBLE);
         findViewById(R.id.open_archive)
                 .setOnClickListener(view ->
