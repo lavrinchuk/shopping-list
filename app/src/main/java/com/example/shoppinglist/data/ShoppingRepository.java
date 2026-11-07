@@ -201,6 +201,7 @@ public class ShoppingRepository {
 
     public interface TemplateItemsResult {
         void loaded(List<String[]> items);
+
         void failed();
     }
 
@@ -217,8 +218,7 @@ public class ShoppingRepository {
     }
 
     public void updateTemplate(long id, String name, List<String[]> items, Result result) {
-        run(() -> database.updateTemplate(id, name, items),
-                () -> readLists(false, result), result);
+        run(() -> database.updateTemplate(id, name, items), () -> readLists(false, result), result);
     }
 
     public void deleteTemplate(long templateId, Result result) {

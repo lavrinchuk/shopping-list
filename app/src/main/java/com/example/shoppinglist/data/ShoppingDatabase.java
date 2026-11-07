@@ -13,8 +13,8 @@ import com.example.shoppinglist.model.ShoppingList;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Locale;
 import java.util.List;
+import java.util.Locale;
 
 public class ShoppingDatabase extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "shopping.db";
@@ -259,7 +259,10 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
             long listId =
                     insertList(
                             db,
-                            templateName + " " + new SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(new Date()),
+                            templateName
+                                    + " "
+                                    + new SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
+                                            .format(new Date()),
                             System.currentTimeMillis(),
                             ShoppingList.TYPE_SHOPPING);
             try (Cursor source =
@@ -286,9 +289,11 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
     /** Loads editable names and quantities without linking the original shopping list. */
     public List<String[]> getTemplateItems(long templateId) {
         List<String[]> result = new ArrayList<>();
-        try (Cursor cursor = getReadableDatabase().rawQuery(
-                "SELECT name, quantity FROM template_items WHERE templateId = ? ORDER BY id",
-                new String[] {String.valueOf(templateId)})) {
+        try (Cursor cursor =
+                getReadableDatabase()
+                        .rawQuery(
+                                "SELECT name, quantity FROM template_items WHERE templateId = ? ORDER BY id",
+                                new String[] {String.valueOf(templateId)})) {
             while (cursor.moveToNext()) {
                 result.add(new String[] {cursor.getString(0), cursor.getString(1)});
             }
@@ -316,12 +321,16 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
         try {
             ContentValues values = new ContentValues();
             values.put("name", title);
-            if (db.update("shopping_templates", values, "id = ?",
-                    new String[] {String.valueOf(templateId)}) != 1) {
+            if (db.update(
+                            "shopping_templates",
+                            values,
+                            "id = ?",
+                            new String[] {String.valueOf(templateId)})
+                    != 1) {
                 throw new SQLiteException("Template not found");
             }
-            db.delete("template_items", "templateId = ?",
-                    new String[] {String.valueOf(templateId)});
+            db.delete(
+                    "template_items", "templateId = ?", new String[] {String.valueOf(templateId)});
             for (String[] item : cleaned) {
                 ContentValues product = new ContentValues();
                 product.put("templateId", templateId);

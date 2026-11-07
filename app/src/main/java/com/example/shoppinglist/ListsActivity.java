@@ -3,20 +3,18 @@ package com.example.shoppinglist;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.util.TypedValue;
 import android.view.Gravity;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.EditText;
-import java.util.ArrayList;
-import java.util.List;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Spinner;
@@ -44,6 +42,8 @@ import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ListsActivity extends AppCompatActivity {
     private static final String EXTRA_ARCHIVED = "archived";
@@ -339,8 +339,8 @@ public class ListsActivity extends AppCompatActivity {
 
                     @Override
                     public void failed() {
-                        Toast.makeText(ListsActivity.this, R.string.read_error,
-                                Toast.LENGTH_LONG).show();
+                        Toast.makeText(ListsActivity.this, R.string.read_error, Toast.LENGTH_LONG)
+                                .show();
                     }
                 });
     }
@@ -392,44 +392,51 @@ public class ListsActivity extends AppCompatActivity {
                                     pair[0].requestFocus();
                                     return;
                                 }
-                                updated.add(new String[] {
-                                        productName, pair[1].getText().toString().trim()});
+                                updated.add(
+                                        new String[] {
+                                            productName, pair[1].getText().toString().trim()
+                                        });
                             }
                             if (name.getText().toString().trim().isEmpty()) {
                                 name.setError(getString(R.string.list_name_required));
                                 return;
                             }
                             if (updated.isEmpty()) {
-                                Toast.makeText(this, R.string.template_requires_items,
-                                        Toast.LENGTH_SHORT).show();
+                                Toast.makeText(
+                                                this,
+                                                R.string.template_requires_items,
+                                                Toast.LENGTH_SHORT)
+                                        .show();
                                 return;
                             }
-                            viewModel.updateTemplate(template.id, name.getText().toString(), updated);
+                            viewModel.updateTemplate(
+                                    template.id, name.getText().toString(), updated);
                             editor.dismiss();
                         }));
         editor.show();
     }
 
-    private void addTemplateItemRow(LinearLayout products, List<EditText[]> fields,
-                                    String productName, String quantity) {
+    private void addTemplateItemRow(
+            LinearLayout products, List<EditText[]> fields, String productName, String quantity) {
         LinearLayout row = new LinearLayout(this);
         row.setGravity(Gravity.CENTER_VERTICAL);
         EditText product = new EditText(this);
         product.setSingleLine(true);
         product.setHint(R.string.template_product_name);
         product.setText(productName);
-        row.addView(product, new LinearLayout.LayoutParams(0,
-                ViewGroup.LayoutParams.WRAP_CONTENT, 2f));
+        row.addView(
+                product, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 2f));
         EditText amount = new EditText(this);
         amount.setSingleLine(true);
         amount.setHint(R.string.template_quantity);
         amount.setText(quantity);
-        row.addView(amount, new LinearLayout.LayoutParams(0,
-                ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        row.addView(
+                amount, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         EditText[] pair = {product, amount};
         fields.add(pair);
-        ImageButton remove = templateActionButton(R.drawable.ic_delete,
-                getString(R.string.template_remove_item));
+        ImageButton remove =
+                templateActionButton(
+                        R.drawable.ic_delete, getString(R.string.template_remove_item));
         int size = Math.round(48 * getResources().getDisplayMetrics().density);
         row.addView(remove, new LinearLayout.LayoutParams(size, size));
         remove.setOnClickListener(v -> {
@@ -445,8 +452,9 @@ public class ListsActivity extends AppCompatActivity {
         button.setContentDescription(description);
         button.setScaleType(ImageView.ScaleType.CENTER);
         TypedValue background = new TypedValue();
-        if (getTheme().resolveAttribute(
-                        android.R.attr.selectableItemBackgroundBorderless, background, true)
+        if (getTheme()
+                        .resolveAttribute(
+                                android.R.attr.selectableItemBackgroundBorderless, background, true)
                 && background.resourceId != 0) {
             button.setBackgroundResource(background.resourceId);
         }
