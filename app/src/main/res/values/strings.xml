@@ -102,6 +102,8 @@
     <string name="template_details">%1$s (%2$d товарів)</string>
     <string name="create_from_template">Створити список</string>
     <string name="template_delete">Видалити</string>
+    <string name="template_create_action">Створити список із шаблону «%1$s»</string>
+    <string name="template_delete_action">Видалити шаблон «%1$s»</string>
     <string name="template_delete_confirm">Видалити шаблон «%1$s»? Створені раніше списки залишаться.</string>
     <string name="template_saved">Шаблон збережено</string>
     <string name="new_list">Новий список</string>
