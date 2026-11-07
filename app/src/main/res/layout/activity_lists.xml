@@ -36,7 +36,7 @@
                 android:padding="16dp"
                 android:scaleType="centerInside"
                 android:src="@drawable/ic_templates"
-                android:tint="?attr/colorOnSurface" />
+                app:tint="?attr/colorOnSurface" />
         </FrameLayout>
         <FrameLayout android:layout_width="0dp" android:layout_height="56dp" android:layout_weight="1">
             <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -60,7 +60,7 @@
                 android:padding="16dp"
                 android:scaleType="centerInside"
                 android:src="@drawable/ic_archive"
-                android:tint="?attr/colorOnSurface" />
+                app:tint="?attr/colorOnSurface" />
         </FrameLayout>
     </LinearLayout>
 </LinearLayout>
