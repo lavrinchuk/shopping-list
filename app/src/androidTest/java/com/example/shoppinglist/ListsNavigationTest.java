@@ -157,7 +157,9 @@ public class ListsNavigationTest {
                 .perform(replaceText("Щотижневий"), closeSoftKeyboard());
         onView(withText(R.string.save)).perform(click());
         onView(withId(R.id.open_templates)).perform(click());
-        onView(withText(R.string.create_from_template)).perform(click());
+        onView(withContentDescription("Створити список із шаблону «Щотижневий»"))
+                .check(matches(isDisplayed()))
+                .perform(click());
         onView(withText("Молоко")).check(matches(isDisplayed()));
         back();
         home.onActivity(activity -> {
