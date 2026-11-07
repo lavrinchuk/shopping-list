@@ -178,6 +178,10 @@ public class ListsNavigationTest {
 
     @Test
     public void createShoppingListFromSavedTemplateAndKeepSourceIndependent() {
+        onView(withId(R.id.lists_bottom_bar)).check(matches(isDisplayed()));
+        onView(withId(R.id.open_templates)).check(matches(isDisplayed()));
+        onView(withId(R.id.create_list)).check(matches(isDisplayed()));
+        onView(withId(R.id.open_archive)).check(matches(isDisplayed()));
         create("Продукти на тиждень");
         onView(withText("Продукти на тиждень")).perform(click());
         onView(withId(R.id.name)).perform(replaceText("Молоко"), closeSoftKeyboard());
