@@ -199,6 +199,28 @@ public class ShoppingRepository {
                 result);
     }
 
+    public interface TemplateItemsResult {
+        void loaded(List<String[]> items);
+        void failed();
+    }
+
+    public void templateItems(long templateId, TemplateItemsResult callback) {
+        worker.execute(() -> {
+            try {
+                List<String[]> items = database.getTemplateItems(templateId);
+                main.post(() -> callback.loaded(items));
+            } catch (RuntimeException error) {
+                Log.e("ShoppingRepository", "Cannot load template", error);
+                main.post(callback::failed);
+            }
+        });
+    }
+
+    public void updateTemplate(long id, String name, List<String[]> items, Result result) {
+        run(() -> database.updateTemplate(id, name, items),
+                () -> readLists(false, result), result);
+    }
+
     public void deleteTemplate(long templateId, Result result) {
         run(() -> database.deleteTemplate(templateId), () -> readLists(false, result), result);
     }
