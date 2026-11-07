@@ -146,6 +146,35 @@ public class ListsNavigationTest {
     }
 
     @Test
+    public void createShoppingListFromSavedTemplateAndKeepSourceIndependent() {
+        create("Продукти на тиждень");
+        onView(withText("Продукти на тиждень")).perform(click());
+        onView(withId(R.id.name)).perform(replaceText("Молоко"), closeSoftKeyboard());
+        onView(withId(R.id.add)).perform(click());
+        back();
+        menu("Продукти на тиждень", R.string.save_as_template);
+        onView(withId(R.id.template_name_input))
+                .perform(replaceText("Щотижневий"), closeSoftKeyboard());
+        onView(withText(R.string.save)).perform(click());
+        onView(withId(R.id.open_templates)).perform(click());
+        onView(withContentDescription("Створити список із шаблону «Щотижневий»"))
+                .check(matches(isDisplayed()))
+                .perform(click());
+        onView(withText("Молоко")).check(matches(isDisplayed()));
+        back();
+        home.onActivity(activity -> {
+            long copies =
+                    activity.viewModel.lists.stream()
+                            .filter(list -> list.name.equals("Щотижневий"))
+                            .count();
+            assertEquals(1, copies);
+        });
+        onView(withText("Продукти на тиждень")).perform(click());
+        onView(withText("Молоко")).check(matches(isDisplayed()));
+        back();
+    }
+
+    @Test
     public void createWishArchiveWithoutAllCheckedAndRestore() {
         onView(withId(R.id.create_list)).perform(click());
         onView(withId(R.id.list_name_input))

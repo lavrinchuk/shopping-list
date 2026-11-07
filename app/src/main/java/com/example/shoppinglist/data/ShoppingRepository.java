@@ -31,6 +31,8 @@ public class ShoppingRepository {
 
         default void listsLoaded(List<ShoppingList> lists) {}
 
+        default void templatesLoaded(List<ShoppingTemplate> templates) {}
+
         default void confirmationRequired() {
             failed(false);
         }
@@ -180,6 +182,27 @@ public class ShoppingRepository {
         run(null, () -> readLists(archived, result), result);
     }
 
+    public void saveTemplate(long sourceListId, String name, boolean archived, Result result) {
+        run(
+                () -> database.saveTemplate(sourceListId, name),
+                () -> readLists(archived, result),
+                result);
+    }
+
+    public void createFromTemplate(long templateId, Result result) {
+        run(
+                () -> {
+                    long created = database.createFromTemplate(templateId);
+                    main.post(() -> result.created(created));
+                },
+                () -> readLists(false, result),
+                result);
+    }
+
+    public void deleteTemplate(long templateId, Result result) {
+        run(() -> database.deleteTemplate(templateId), () -> readLists(false, result), result);
+    }
+
     public void create(String name, Result result) {
         create(name, ShoppingList.TYPE_SHOPPING, result);
     }
@@ -216,7 +239,12 @@ public class ShoppingRepository {
 
     private void readLists(boolean archived, Result result) {
         List<ShoppingList> lists = database.getLists(archived);
-        main.post(() -> result.listsLoaded(lists));
+        List<ShoppingTemplate> templates =
+                archived ? java.util.Collections.emptyList() : database.getTemplates();
+        main.post(() -> {
+            result.templatesLoaded(templates);
+            result.listsLoaded(lists);
+        });
     }
 
     // Exposed for isolated instrumentation setup; production uses scoped methods above.
