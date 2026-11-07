@@ -1,13 +1,19 @@
 package com.example.shoppinglist;
 
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Spinner;
@@ -30,7 +36,7 @@ import com.example.shoppinglist.data.ShoppingRepository;
 import com.example.shoppinglist.data.ShoppingTemplate;
 import com.example.shoppinglist.model.ShoppingList;
 import com.google.android.material.appbar.MaterialToolbar;
-import com.google.android.material.button.MaterialButton;
+import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -243,6 +249,7 @@ public class ListsActivity extends AppCompatActivity {
         LinearLayout content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
         int pad = Math.round(12 * getResources().getDisplayMetrics().density);
+        int touchSize = Math.round(48 * getResources().getDisplayMetrics().density);
         content.setPadding(pad, pad, pad, pad);
         ScrollView scroll = new ScrollView(this);
         scroll.addView(content);
@@ -258,19 +265,35 @@ public class ListsActivity extends AppCompatActivity {
             content.addView(empty);
         }
         for (ShoppingTemplate template : viewModel.templates) {
+            LinearLayout row = new LinearLayout(this);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+
             TextView title = new TextView(this);
             title.setText(getString(R.string.template_details, template.name, template.itemCount));
             title.setTextAppearance(
                     com.google.android.material.R.style.TextAppearance_Material3_TitleMedium);
-            content.addView(title);
-            LinearLayout buttons = new LinearLayout(this);
-            MaterialButton create = new MaterialButton(this);
-            create.setText(R.string.create_from_template);
-            buttons.addView(create, new LinearLayout.LayoutParams(0, pad * 5, 1f));
-            MaterialButton delete = new MaterialButton(this);
-            delete.setText(R.string.template_delete);
-            buttons.addView(delete, new LinearLayout.LayoutParams(0, pad * 5, 1f));
-            content.addView(buttons);
+            title.setMaxLines(2);
+            title.setEllipsize(TextUtils.TruncateAt.END);
+            row.addView(
+                    title,
+                    new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+            ImageButton create =
+                    templateActionButton(
+                            R.drawable.ic_add,
+                            getString(R.string.template_create_action, template.name));
+            ImageButton delete =
+                    templateActionButton(
+                            R.drawable.ic_delete,
+                            getString(R.string.template_delete_action, template.name));
+            row.addView(create, new LinearLayout.LayoutParams(touchSize, touchSize));
+            row.addView(delete, new LinearLayout.LayoutParams(touchSize, touchSize));
+            content.addView(
+                    row,
+                    new LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.WRAP_CONTENT));
+
             create.setOnClickListener(view -> {
                 dialog.dismiss();
                 viewModel.createFromTemplate(template.id);
@@ -288,6 +311,25 @@ public class ListsActivity extends AppCompatActivity {
                             .show());
         }
         dialog.show();
+    }
+
+    private ImageButton templateActionButton(int icon, String description) {
+        ImageButton button = new ImageButton(this);
+        button.setImageResource(icon);
+        button.setContentDescription(description);
+        button.setScaleType(ImageView.ScaleType.CENTER);
+        TypedValue background = new TypedValue();
+        if (getTheme().resolveAttribute(
+                        android.R.attr.selectableItemBackgroundBorderless, background, true)
+                && background.resourceId != 0) {
+            button.setBackgroundResource(background.resourceId);
+        }
+        button.setImageTintList(
+                ColorStateList.valueOf(
+                        MaterialColors.getColor(
+                                button, com.google.android.material.R.attr.colorOnSurface)));
+        ViewCompat.setTooltipText(button, description);
+        return button;
     }
 
     private void confirmEmptyListDeletion(long id) {
