@@ -67,6 +67,7 @@ public class ListsActivity extends AppCompatActivity {
         configureToolbar(archived);
         configureActions(archived);
         configureLists();
+        updateTemplatesVisibility();
         viewModel.changes.observe(this, ignored -> render());
     }
 
