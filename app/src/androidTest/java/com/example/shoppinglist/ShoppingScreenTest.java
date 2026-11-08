@@ -190,8 +190,11 @@ public class ShoppingScreenTest {
                         throw error;
                     }
                     assertTrue(view instanceof com.google.android.material.button.MaterialButton);
-                    assertEquals(48, Math.round(view.getWidth() /
-                            view.getResources().getDisplayMetrics().density));
+                    assertEquals(
+                            48,
+                            Math.round(
+                                    view.getWidth()
+                                            / view.getResources().getDisplayMetrics().density));
                     android.view.ViewGroup actions = (android.view.ViewGroup) view.getParent();
                     assertNotNull(actions.findViewById(R.id.search_item));
                     assertNotNull(actions.findViewById(R.id.edit_item_link));
