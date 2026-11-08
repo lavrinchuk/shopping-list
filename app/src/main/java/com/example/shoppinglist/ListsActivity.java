@@ -21,6 +21,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -49,6 +50,13 @@ public class ListsActivity extends AppCompatActivity {
     private static final String EXTRA_ARCHIVED = "archived";
     private static final String STATE_TEMPLATES_OPEN = "templatesOpen";
     private boolean templatesOpen;
+    private final OnBackPressedCallback templatesBackCallback =
+            new OnBackPressedCallback(false) {
+                @Override
+                public void handleOnBackPressed() {
+                    closeTemplates();
+                }
+            };
     ListsViewModel viewModel;
     private ListsAdapter adapter;
     private AlertDialog nameDialog;
@@ -64,6 +72,7 @@ public class ListsActivity extends AppCompatActivity {
         boolean archived = getIntent().getBooleanExtra(EXTRA_ARCHIVED, false);
         initializeViewModel(state, archived);
         templatesOpen = !archived && state != null && state.getBoolean(STATE_TEMPLATES_OPEN);
+        getOnBackPressedDispatcher().addCallback(this, templatesBackCallback);
         configureToolbar(archived);
         configureActions(archived);
         configureLists();
@@ -107,15 +116,6 @@ public class ListsActivity extends AppCompatActivity {
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         outState.putBoolean(STATE_TEMPLATES_OPEN, templatesOpen);
         super.onSaveInstanceState(outState);
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (templatesOpen) {
-            closeTemplates();
-        } else {
-            super.onBackPressed();
-        }
     }
 
     private void configureToolbar(boolean archived) {
@@ -288,6 +288,7 @@ public class ListsActivity extends AppCompatActivity {
     }
 
     private void updateTemplatesVisibility() {
+        templatesBackCallback.setEnabled(templatesOpen);
         findViewById(R.id.lists_toolbar)
                 .setVisibility(viewModel.archived || templatesOpen ? View.VISIBLE : View.GONE);
         if (templatesOpen) {
