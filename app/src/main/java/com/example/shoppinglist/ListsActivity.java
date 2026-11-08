@@ -297,10 +297,8 @@ public class ListsActivity extends AppCompatActivity {
             toolbar.setNavigationContentDescription(R.string.back);
             toolbar.setNavigationOnClickListener(view -> closeTemplates());
         }
-        findViewById(R.id.lists_content)
-                .setVisibility(templatesOpen ? View.GONE : View.VISIBLE);
-        findViewById(R.id.templates_scroll)
-                .setVisibility(templatesOpen ? View.VISIBLE : View.GONE);
+        findViewById(R.id.lists_content).setVisibility(templatesOpen ? View.GONE : View.VISIBLE);
+        findViewById(R.id.templates_scroll).setVisibility(templatesOpen ? View.VISIBLE : View.GONE);
         findViewById(R.id.lists_bottom_bar)
                 .setVisibility(viewModel.archived || templatesOpen ? View.GONE : View.VISIBLE);
     }
