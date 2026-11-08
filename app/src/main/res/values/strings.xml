@@ -108,6 +108,10 @@
     <string name="template_edit_action">Редагувати шаблон «%1$s»</string>
     <string name="template_edit_title">Редагувати шаблон</string>
     <string name="template_items_heading">Товари шаблону</string>
+    <string name="template_edit_item_action">Редагувати товар «%1$s»</string>
+    <string name="template_delete_item_action">Видалити товар «%1$s»</string>
+    <string name="template_unsaved_item">Зміни товару в полях введення ще не додані до шаблону. Зберегти без них?</string>
+    <string name="template_discard_item">Зберегти без змін товару</string>
     <string name="template_add_item">Додати товар</string>
     <string name="template_product_name">Назва товару</string>
     <string name="template_quantity">Кількість</string>
