@@ -206,6 +206,7 @@ public class ShoppingRepository {
     }
 
     public void templateItems(long templateId, TemplateItemsResult callback) {
+        pending++;
         worker.execute(() -> {
             try {
                 List<String[]> items = database.getTemplateItems(templateId);
@@ -213,6 +214,13 @@ public class ShoppingRepository {
             } catch (RuntimeException error) {
                 Log.e("ShoppingRepository", "Cannot load template", error);
                 main.post(callback::failed);
+            } finally {
+                main.post(() -> {
+                    pending--;
+                    if (isIdle() && idleListener != null) {
+                        idleListener.run();
+                    }
+                });
             }
         });
     }
