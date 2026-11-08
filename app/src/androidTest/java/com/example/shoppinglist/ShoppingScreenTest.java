@@ -179,6 +179,32 @@ public class ShoppingScreenTest {
     }
 
     @Test
+    public void barcodeScannerIsAnAccessibleIconInTheItemActionRow() {
+        add("Молоко");
+        onView(withId(R.id.barcode_action))
+                .check(matches(isDisplayed()))
+                .check(matches(withContentDescription("Сканувати штрихкод: Молоко")));
+        onView(withId(R.id.barcode_action))
+                .check((view, error) -> {
+                    if (error != null) {
+                        throw error;
+                    }
+                    assertTrue(view instanceof com.google.android.material.button.MaterialButton);
+                    assertEquals(48, Math.round(view.getWidth() /
+                            view.getResources().getDisplayMetrics().density));
+                    android.view.ViewGroup actions = (android.view.ViewGroup) view.getParent();
+                    assertNotNull(actions.findViewById(R.id.search_item));
+                    assertNotNull(actions.findViewById(R.id.edit_item_link));
+                    assertNotNull(actions.findViewById(R.id.delete_item));
+                    int[] scan = new int[2];
+                    int[] search = new int[2];
+                    view.getLocationOnScreen(scan);
+                    actions.findViewById(R.id.search_item).getLocationOnScreen(search);
+                    assertEquals(search[1], scan[1]);
+                });
+    }
+
+    @Test
     public void storedBarcodeIsDisplayedAndCanBeCopied() {
         add("Молоко");
         main(() ->
@@ -190,7 +216,9 @@ public class ShoppingScreenTest {
                         noResult()));
         screen.onActivity(activity -> activity.viewModel.reload());
         onView(withId(R.id.barcode_value)).check(matches(withText("Штрихкод: 012345678905")));
-        onView(withId(R.id.barcode_action)).perform(click());
+        onView(withId(R.id.barcode_action))
+                .check(matches(withContentDescription("Переглянути штрихкод: Молоко")))
+                .perform(click());
         onView(withText("012345678905")).check(matches(isDisplayed()));
         onView(withText(R.string.barcode_search_web)).check(matches(isDisplayed()));
         onView(withText(R.string.barcode_scan_again)).check(matches(isDisplayed()));
