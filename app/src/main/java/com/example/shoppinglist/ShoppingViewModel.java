@@ -262,7 +262,7 @@ public final class ShoppingViewModel extends ViewModel {
         }
         receiptBusy = true;
         notifyStateChanged();
-        repository.removeReceipt(listId, attachment.id, receiptCallback(false));
+        repository.removeReceipt(listId, attachment.id, receiptCallback(true));
     }
 
     void previewReceipt(ReceiptAttachment item, ShoppingRepository.ReceiptPreview callback) {
@@ -311,7 +311,7 @@ public final class ShoppingViewModel extends ViewModel {
                 if (!cleared) {
                     receiptBusy = false;
                     items = updated;
-                    if (written && openGalleryAfterSuccess && !receiptAttachments.isEmpty()) {
+                    if (written && openGalleryAfterSuccess) {
                         receiptGalleryRequested = true;
                     }
                     notifyStateChanged();
