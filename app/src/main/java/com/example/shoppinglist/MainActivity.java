@@ -229,13 +229,28 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void confirmReceiptRemoval(ReceiptAttachment receipt) {
-        new MaterialAlertDialogBuilder(this)
-                .setMessage(R.string.receipt_remove_confirmation)
-                .setNegativeButton(R.string.cancel, null)
-                .setPositiveButton(
-                        R.string.receipt_remove,
-                        (dialog, which) -> viewModel.removeReceipt(receipt))
-                .show();
+        confirmReceiptRemoval(receipt, false);
+    }
+
+    private void confirmReceiptRemoval(ReceiptAttachment receipt, boolean fromGallery) {
+        final boolean[] deleted = {false};
+        androidx.appcompat.app.AlertDialog confirmation =
+                new MaterialAlertDialogBuilder(this)
+                        .setMessage(R.string.receipt_remove_confirmation)
+                        .setNegativeButton(R.string.cancel, null)
+                        .setPositiveButton(
+                                R.string.receipt_remove,
+                                (dialog, which) -> {
+                                    deleted[0] = true;
+                                    viewModel.removeReceipt(receipt);
+                                })
+                        .create();
+        confirmation.setOnDismissListener(ignored -> {
+            if (fromGallery && !deleted[0] && !isFinishing() && !isDestroyed()) {
+                showReceiptGallery();
+            }
+        });
+        confirmation.show();
     }
 
     private void showReceiptOfferIfNeeded() {
@@ -319,7 +334,7 @@ public class MainActivity extends AppCompatActivity {
                 if (receiptGalleryDialog != null) {
                     receiptGalleryDialog.dismiss();
                 }
-                showReceiptPreview(attachment);
+                showReceiptPreview(attachment, true);
             });
             viewModel.previewReceipt(
                     attachment,
@@ -351,14 +366,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     void showReceiptPreview(ReceiptAttachment receipt) {
+        showReceiptPreview(receipt, false);
+    }
+
+    private void showReceiptPreview(ReceiptAttachment receipt, boolean fromGallery) {
         ImageView image = new ImageView(this);
         int padding = receiptPixels(16);
         image.setPadding(padding, padding, padding, padding);
         image.setAdjustViewBounds(true);
         image.setScaleType(ImageView.ScaleType.FIT_CENTER);
 
-        // The scroll area has a measured height inside a vertical container.
-        // The fixed action panel is a sibling, so a tall image cannot push it off screen.
         LinearLayout content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
         content.setPadding(padding, 0, padding, padding);
@@ -377,31 +394,26 @@ public class MainActivity extends AppCompatActivity {
                 new LinearLayout.LayoutParams(
                         LinearLayout.LayoutParams.MATCH_PARENT, previewHeight));
 
-        // Uniform-height buttons are outside the photo scroller, even for tall receipts.
-        int actionHeight = receiptPixels(56);
-        MaterialButton more = new MaterialButton(this);
-        more.setId(R.id.receipt_preview_more);
-        more.setText(receipt.isPdf() ? R.string.receipt_open_pdf : R.string.receipt_add_more);
-        more.setSingleLine(true);
-        content.addView(
-                more,
-                new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT, actionHeight));
-
+        // Fixed-size icon actions are below the image, never inside its scroll area.
         LinearLayout actions = new LinearLayout(this);
         actions.setOrientation(LinearLayout.HORIZONTAL);
-        MaterialButton remove = new MaterialButton(this);
-        remove.setId(R.id.receipt_preview_remove);
-        remove.setText(R.string.receipt_remove);
-        remove.setSingleLine(true);
-        LinearLayout.LayoutParams removeParams = new LinearLayout.LayoutParams(0, actionHeight, 1f);
-        actions.addView(remove, removeParams);
-        MaterialButton back = new MaterialButton(this);
-        back.setId(R.id.receipt_preview_back);
-        back.setText(R.string.back);
-        back.setSingleLine(true);
-        LinearLayout.LayoutParams backParams = new LinearLayout.LayoutParams(0, actionHeight, 1f);
-        actions.addView(back, backParams);
+        actions.setGravity(android.view.Gravity.CENTER);
+        int actionHeight = receiptPixels(56);
+        MaterialButton more = receiptIconAction(
+                R.id.receipt_preview_more,
+                R.drawable.ic_add,
+                R.string.receipt_add_more);
+        MaterialButton remove = receiptIconAction(
+                R.id.receipt_preview_remove,
+                R.drawable.ic_delete,
+                R.string.receipt_remove);
+        MaterialButton back = receiptIconAction(
+                R.id.receipt_preview_back,
+                R.drawable.ic_back,
+                R.string.back);
+        actions.addView(more, new LinearLayout.LayoutParams(0, actionHeight, 1f));
+        actions.addView(remove, new LinearLayout.LayoutParams(0, actionHeight, 1f));
+        actions.addView(back, new LinearLayout.LayoutParams(0, actionHeight, 1f));
         content.addView(actions);
 
         androidx.appcompat.app.AlertDialog dialog =
@@ -412,19 +424,30 @@ public class MainActivity extends AppCompatActivity {
                                         : R.string.receipt_title)
                         .setView(content)
                         .create();
-        back.setOnClickListener(view -> dialog.dismiss());
-        remove.setOnClickListener(view -> {
-            dialog.dismiss();
-            confirmReceiptRemoval(receipt);
-        });
-        more.setOnClickListener(view -> {
-            dialog.dismiss();
-            if (receipt.isPdf()) {
-                openReceiptPdf(receipt);
-            } else {
-                openReceiptPicker();
+        // System Back and the toolbar-like icon share the same return destination.
+        final boolean[] openGalleryOnDismiss = {fromGallery};
+        dialog.setOnDismissListener(ignored -> {
+            if (openGalleryOnDismiss[0] && !isFinishing() && !isDestroyed()) {
+                showReceiptGallery();
             }
         });
+        back.setOnClickListener(view -> dialog.dismiss());
+        remove.setOnClickListener(view -> {
+            openGalleryOnDismiss[0] = false;
+            dialog.dismiss();
+            confirmReceiptRemoval(receipt, fromGallery);
+        });
+        more.setOnClickListener(view -> {
+            openGalleryOnDismiss[0] = fromGallery;
+            dialog.dismiss();
+            openReceiptPicker();
+        });
+        if (receipt.isPdf()) {
+            image.setContentDescription(getString(R.string.receipt_open_pdf));
+            image.setClickable(true);
+            image.setFocusable(true);
+            image.setOnClickListener(view -> openReceiptPdf(receipt));
+        }
         dialog.show();
         viewModel.previewReceipt(
                 receipt,
@@ -441,6 +464,26 @@ public class MainActivity extends AppCompatActivity {
                         dialog.dismiss();
                     }
                 });
+    }
+
+    private MaterialButton receiptIconAction(int id, int drawable, int description) {
+        MaterialButton button = new MaterialButton(
+                this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle);
+        button.setId(id);
+        button.setMinWidth(0);
+        button.setMinHeight(receiptPixels(48));
+        button.setInsetTop(0);
+        button.setInsetBottom(0);
+        button.setIconResource(drawable);
+        button.setIconSize(receiptPixels(24));
+        button.setIconPadding(0);
+        button.setIconGravity(MaterialButton.ICON_GRAVITY_TEXT_START);
+        button.setIconTint(
+                android.content.res.ColorStateList.valueOf(
+                        com.google.android.material.color.MaterialColors.getColor(
+                                button, com.google.android.material.R.attr.colorOnSurface)));
+        button.setContentDescription(getString(description));
+        return button;
     }
 
     private void openReceiptPdf(ReceiptAttachment receipt) {
