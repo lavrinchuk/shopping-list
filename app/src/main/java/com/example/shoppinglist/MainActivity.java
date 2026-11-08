@@ -179,7 +179,9 @@ public class MainActivity extends AppCompatActivity {
         toolbar.inflateMenu(R.menu.shopping_list);
         toolbar.setOnMenuItemClickListener(item -> {
             if (item.getItemId() == R.id.share_list) {
-                viewModel.share();
+                if (viewModel.list != null && viewModel.list.archivedAt == null) {
+                    viewModel.share();
+                }
                 return true;
             }
             return false;
@@ -1208,7 +1210,10 @@ public class MainActivity extends AppCompatActivity {
                             : getString(R.string.receipt_count_button, receiptCount));
             receiptButton.setEnabled(!viewModel.receiptBusy);
         }
-        toolbar.getMenu().findItem(R.id.share_list).setEnabled(!viewModel.sharing);
+        android.view.MenuItem share = toolbar.getMenu().findItem(R.id.share_list);
+        boolean activeList = viewModel.list != null && viewModel.list.archivedAt == null;
+        share.setVisible(activeList);
+        share.setEnabled(activeList && !viewModel.sharing);
         android.view.MenuItem receipt = toolbar.getMenu().findItem(R.id.receipt_actions);
         receipt.setVisible(false);
         receipt.setEnabled(!viewModel.receiptBusy);
