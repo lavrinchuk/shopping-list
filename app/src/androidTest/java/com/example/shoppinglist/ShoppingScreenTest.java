@@ -222,7 +222,7 @@ public class ShoppingScreenTest {
         onView(withId(R.id.barcode_action))
                 .check(matches(withContentDescription("Переглянути штрихкод: Молоко")))
                 .perform(click());
-        onView(withText("012345678905")).check(matches(isDisplayed()));
+        onView(withText("Штрихкод: 012345678905")).check(matches(isDisplayed()));
         onView(withText(R.string.barcode_search_web)).check(matches(isDisplayed()));
         onView(withText(R.string.barcode_scan_again)).check(matches(isDisplayed()));
         onView(withText(R.string.barcode_copy)).perform(click());
