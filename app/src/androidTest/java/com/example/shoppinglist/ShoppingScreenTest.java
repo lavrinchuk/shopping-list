@@ -208,6 +208,39 @@ public class ShoppingScreenTest {
     }
 
     @Test
+    public void archivedShoppingListHidesSearchLinksAndShareWithoutLosingData() {
+        add("Молоко");
+        onView(withId(R.id.search_item)).check(matches(isDisplayed()));
+        onView(withId(R.id.edit_item_link)).check(matches(isDisplayed()));
+        onView(withId(R.id.share_list)).check(matches(isDisplayed()));
+
+        main(() ->
+                repository.execute(
+                        () -> {
+                            long itemId = app.database.getItems(app.listId).get(0).id;
+                            app.database.addStoreLink(
+                                    app.listId, itemId, "Сільпо", "https://silpo.ua/milk");
+                            app.database.setItemBarcode(app.listId, itemId, "012345678905");
+                            app.database.archive(app.listId, true);
+                        },
+                        noResult()));
+        screen.onActivity(activity -> activity.viewModel.reload());
+        onView(withId(R.id.barcode_value))
+                .check(matches(withText("Штрихкод: 012345678905")));
+        onView(withId(R.id.search_item))
+                .check(matches(withEffectiveVisibility(Visibility.GONE)));
+        onView(withId(R.id.edit_item_link))
+                .check(matches(withEffectiveVisibility(Visibility.GONE)));
+        onView(withId(R.id.open_item_link))
+                .check(matches(withEffectiveVisibility(Visibility.GONE)));
+        onView(withId(R.id.share_list)).check(doesNotExist());
+        onView(withId(R.id.barcode_action)).check(matches(isDisplayed()));
+        onView(withId(R.id.receipt_bottom_action)).check(matches(isDisplayed()));
+        assertEquals("https://silpo.ua/milk", app.database.getItems(app.listId).get(0).url);
+        assertEquals(1, app.database.getStoreLinks(app.listId).size());
+    }
+
+    @Test
     public void storedBarcodeIsDisplayedAndCanBeCopied() {
         add("Молоко");
         main(() ->
