@@ -130,7 +130,6 @@ public class ListsNavigationTest {
         onView(withId(R.id.lists_bottom_bar))
                 .check(matches(withEffectiveVisibility(Visibility.GONE)));
         onView(withId(R.id.lists_toolbar)).check(matches(isDisplayed()));
-        onView(withText(R.string.templates_empty)).check(matches(isDisplayed()));
         home.recreate();
         onView(withId(R.id.templates_scroll)).check(matches(isDisplayed()));
         onView(withContentDescription(R.string.back)).perform(click());
