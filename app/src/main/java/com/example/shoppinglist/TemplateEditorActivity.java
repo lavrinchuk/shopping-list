@@ -244,8 +244,8 @@ public final class TemplateEditorActivity extends AppCompatActivity {
             new MaterialAlertDialogBuilder(this)
                     .setMessage(R.string.template_unsaved_item)
                     .setNegativeButton(R.string.cancel, null)
-                    .setPositiveButton(R.string.template_discard_item,
-                            (dialog, which) -> persist(title))
+                    .setPositiveButton(
+                            R.string.template_discard_item, (dialog, which) -> persist(title))
                     .show();
             return;
         }
@@ -262,7 +262,9 @@ public final class TemplateEditorActivity extends AppCompatActivity {
             snapshot.add(new String[] {item[0], item[1]});
         }
         repository.updateTemplate(
-                templateId, title, snapshot,
+                templateId,
+                title,
+                snapshot,
                 new ShoppingRepository.Result() {
                     @Override
                     public void written() {
