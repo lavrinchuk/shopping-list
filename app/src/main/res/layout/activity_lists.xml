@@ -9,12 +9,26 @@
     <com.google.android.material.button.MaterialButton android:id="@+id/retry_lists" style="@style/Widget.Material3.Button.TextButton"
         android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="48dp"
         android:text="@string/retry" android:visibility="gone" />
-    <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+    <FrameLayout android:id="@+id/lists_content" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
         <androidx.recyclerview.widget.RecyclerView android:id="@+id/lists" android:layout_width="match_parent" android:layout_height="match_parent"
             android:padding="16dp" android:clipToPadding="false" />
         <TextView android:id="@+id/lists_empty" android:layout_width="match_parent" android:layout_height="match_parent"
             android:padding="24dp" android:gravity="center" android:text="@string/no_lists" android:textAppearance="?attr/textAppearanceBodyLarge" android:visibility="gone" />
     </FrameLayout>
+    <ScrollView
+        android:id="@+id/templates_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true"
+        android:visibility="gone">
+        <LinearLayout
+            android:id="@+id/templates_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp" />
+    </ScrollView>
     <LinearLayout
         android:id="@+id/lists_bottom_bar"
         android:layout_width="match_parent"
