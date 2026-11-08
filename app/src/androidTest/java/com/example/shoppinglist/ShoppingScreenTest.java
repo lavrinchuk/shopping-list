@@ -301,6 +301,50 @@ public class ShoppingScreenTest {
     }
 
     @Test
+    public void attachingReceiptsOpensGalleryAndThumbnailOpensPreview() throws Exception {
+        java.util.concurrent.atomic.AtomicLong archived = new java.util.concurrent.atomic.AtomicLong();
+        main(() ->
+                repository.execute(
+                        () -> {
+                            long id = app.database.createList("Чеки для тесту");
+                            app.database.archive(id, true);
+                            archived.set(id);
+                        },
+                        noResult()));
+        onView(withId(R.id.add)).check(matches(isEnabled()));
+        screen.close();
+        screen =
+                ActivityScenario.launch(
+                        new android.content.Intent(app, MainActivity.class)
+                                .putExtra("listId", archived.get()));
+        screen.onActivity(activity -> idle.attach(activity));
+        onView(withId(R.id.receipt_bottom_action)).check(matches(isDisplayed()));
+
+        java.io.File photo = new java.io.File(app.getCacheDir(), "receipt-gallery-test.png");
+        android.graphics.Bitmap bitmap =
+                android.graphics.Bitmap.createBitmap(
+                        32, 64, android.graphics.Bitmap.Config.ARGB_8888);
+        try (java.io.FileOutputStream output = new java.io.FileOutputStream(photo)) {
+            assertTrue(bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, output));
+        } finally {
+            bitmap.recycle();
+        }
+        try {
+            screen.onActivity(activity ->
+                    activity.viewModel.attachReceipts(
+                            java.util.Collections.singletonList(android.net.Uri.fromFile(photo))));
+            onView(withText(R.string.receipt_gallery_title)).check(matches(isDisplayed()));
+            onView(withContentDescription("Відкрити Фото 1")).check(matches(isDisplayed()));
+            onView(withText(R.string.receipt_view)).check(doesNotExist());
+            onView(withContentDescription("Відкрити Фото 1")).perform(click());
+            onView(withId(R.id.receipt_preview_back)).check(matches(isDisplayed()));
+            onView(withId(R.id.receipt_preview_back)).perform(click());
+        } finally {
+            photo.delete();
+        }
+    }
+
+    @Test
     public void tallReceiptDoesNotPushPreviewActionsOffScreen() throws Exception {
         java.io.File directory = new java.io.File(app.getFilesDir(), "receipts");
         assertTrue(directory.isDirectory() || directory.mkdirs());
