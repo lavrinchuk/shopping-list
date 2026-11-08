@@ -314,7 +314,7 @@ public class ShoppingDatabase extends SQLiteOpenHelper {
             if (productName.isEmpty()) {
                 throw new SQLiteException("Product name required");
             }
-            cleaned.add(new String[] {productName, quantity.isEmpty() ? "1" : quantity});
+            cleaned.add(new String[] {productName, quantity});
         }
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
