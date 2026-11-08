@@ -241,8 +241,7 @@ public class ListsNavigationTest {
                 .perform(replaceText("Новий шаблон"), closeSoftKeyboard());
         onView(withId(R.id.template_product_input))
                 .perform(replaceText("Хліб"), closeSoftKeyboard());
-        onView(withId(R.id.template_quantity_input))
-                .perform(replaceText("2"), closeSoftKeyboard());
+        onView(withId(R.id.template_quantity_input)).perform(replaceText("2"), closeSoftKeyboard());
         onView(withId(R.id.template_add_item)).perform(click());
         onView(withText("Хліб · 2")).check(matches(isDisplayed()));
         onView(withContentDescription("Видалити товар «Молоко»")).perform(click());
