@@ -306,9 +306,7 @@ public class MainActivity extends AppCompatActivity {
             thumbnail.setClickable(true);
             thumbnail.setFocusable(true);
             android.util.TypedValue ripple = new android.util.TypedValue();
-            if (getTheme()
-                    .resolveAttribute(
-                            android.R.attr.selectableItemBackground, ripple, true)
+            if (getTheme().resolveAttribute(android.R.attr.selectableItemBackground, ripple, true)
                     && ripple.resourceId != 0) {
                 thumbnail.setBackgroundResource(ripple.resourceId);
             }
@@ -1184,8 +1182,7 @@ public class MainActivity extends AppCompatActivity {
                 && !viewModel.receiptBusy
                 && !viewModel.receiptOfferPending) {
             boolean requested = viewModel.consumeReceiptGalleryRequest();
-            if ((requested || restoreReceiptGallery)
-                    && !viewModel.receiptAttachments.isEmpty()) {
+            if ((requested || restoreReceiptGallery) && !viewModel.receiptAttachments.isEmpty()) {
                 restoreReceiptGallery = false;
                 showReceiptGallery();
             }
