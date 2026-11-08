@@ -338,8 +338,24 @@ public class ShoppingScreenTest {
             onView(withContentDescription("Відкрити Фото 1")).check(matches(isDisplayed()));
             onView(withText(R.string.receipt_view)).check(doesNotExist());
             onView(withContentDescription("Відкрити Фото 1")).perform(click());
-            onView(withId(R.id.receipt_preview_back)).check(matches(isDisplayed()));
-            onView(withId(R.id.receipt_preview_back)).perform(click());
+            onView(withId(R.id.receipt_preview_back))
+                    .check(matches(withContentDescription(R.string.back)))
+                    .perform(click());
+            onView(withText(R.string.receipt_gallery_title)).check(matches(isDisplayed()));
+            onView(withContentDescription("Відкрити Фото 1")).perform(click());
+            androidx.test.espresso.Espresso.pressBack();
+            onView(withText(R.string.receipt_gallery_title)).check(matches(isDisplayed()));
+            onView(withContentDescription("Відкрити Фото 1")).perform(click());
+            onView(withId(R.id.receipt_preview_remove))
+                    .check(matches(withContentDescription(R.string.receipt_remove)))
+                    .perform(click());
+            onView(withText(R.string.receipt_remove_confirmation)).check(matches(isDisplayed()));
+            onView(withText(R.string.cancel)).perform(click());
+            onView(withText(R.string.receipt_gallery_title)).check(matches(isDisplayed()));
+            onView(withContentDescription("Відкрити Фото 1")).perform(click());
+            onView(withId(R.id.receipt_preview_remove)).perform(click());
+            onView(withText(R.string.receipt_remove)).perform(click());
+            onView(withText(R.string.receipt_gallery_empty)).check(matches(isDisplayed()));
         } finally {
             photo.delete();
         }
@@ -365,7 +381,11 @@ public class ShoppingScreenTest {
                                     0, app.listId, source.getName(), "image/png")));
             onView(withId(R.id.receipt_preview_more)).check(matches(isDisplayed()));
             onView(withId(R.id.receipt_preview_remove))
-                    .check(matches(withText(R.string.receipt_remove)));
+                    .check(matches(withContentDescription(R.string.receipt_remove)));
+            onView(withId(R.id.receipt_preview_more))
+                    .check(matches(withContentDescription(R.string.receipt_add_more)));
+            onView(withId(R.id.receipt_preview_back))
+                    .check(matches(withContentDescription(R.string.back)));
             onView(withId(R.id.receipt_preview_remove))
                     .check((view, missing) -> {
                         if (missing != null) {
