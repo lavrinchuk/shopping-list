@@ -757,6 +757,19 @@ public class ShoppingDatabaseTest {
     }
 
     @Test
+    public void editedTemplatePreservesOptionalEmptyQuantity() {
+        long source = db.createList("Original");
+        db.add(source, "Milk", "");
+        long template = db.saveTemplate(source, "Weekly");
+        db.updateTemplate(
+                template,
+                "Weekly",
+                java.util.Collections.singletonList(new String[] {"Bread", ""}));
+        long list = db.createFromTemplate(template);
+        assertEquals("", db.getItems(list).get(0).quantity);
+    }
+
+    @Test
     public void recurringTemplateCanBeReusedWithoutCouplingCreatedLists() {
         long source = db.createList("Постійні покупки");
         db.add(source, "Кава", "1");
