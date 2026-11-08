@@ -38,13 +38,10 @@ import com.example.shoppinglist.data.ShoppingRepository;
 import com.example.shoppinglist.data.ShoppingTemplate;
 import com.example.shoppinglist.model.ShoppingList;
 import com.google.android.material.appbar.MaterialToolbar;
-import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
-import java.util.ArrayList;
-import java.util.List;
 
 public class ListsActivity extends AppCompatActivity {
     private static final String EXTRA_ARCHIVED = "archived";
