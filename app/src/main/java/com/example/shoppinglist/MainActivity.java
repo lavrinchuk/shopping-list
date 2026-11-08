@@ -68,6 +68,9 @@ public class MainActivity extends AppCompatActivity {
     private boolean scanningBarcode;
     private androidx.appcompat.app.AlertDialog receiptOfferDialog;
     private androidx.appcompat.app.AlertDialog voiceBatchDialog;
+    private androidx.appcompat.app.AlertDialog receiptGalleryDialog;
+    private static final String STATE_RECEIPT_GALLERY = "receiptGalleryOpen";
+    private boolean restoreReceiptGallery;
     private final ActivityResultLauncher<PickVisualMediaRequest> receiptPicker =
             registerForActivityResult(
                     new ActivityResultContracts.PickMultipleVisualMedia(10),
@@ -145,7 +148,18 @@ public class MainActivity extends AppCompatActivity {
         configureItemsList();
         configureItemForm();
         configureFinishAction();
+        restoreReceiptGallery =
+                savedInstanceState != null
+                        && savedInstanceState.getBoolean(STATE_RECEIPT_GALLERY, false);
         viewModel.changes.observe(this, ignored -> render());
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        outState.putBoolean(
+                STATE_RECEIPT_GALLERY,
+                receiptGalleryDialog != null && receiptGalleryDialog.isShowing());
+        super.onSaveInstanceState(outState);
     }
 
     private void configureSystemBars() {
@@ -262,13 +276,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showReceiptGallery() {
+        if (receiptGalleryDialog != null && receiptGalleryDialog.isShowing()) {
+            return;
+        }
         List<ReceiptAttachment> receipts = viewModel.receiptAttachments;
         if (receipts.isEmpty()) {
             openReceiptPicker();
-            return;
-        }
-        if (receipts.size() == 1) {
-            showReceiptPreview(receipts.get(0));
             return;
         }
         LinearLayout gallery = new LinearLayout(this);
@@ -288,15 +301,28 @@ public class MainActivity extends AppCompatActivity {
             entry.addView(title);
             ImageView thumbnail = new ImageView(this);
             thumbnail.setScaleType(ImageView.ScaleType.FIT_CENTER);
-            thumbnail.setContentDescription(title.getText());
+            thumbnail.setContentDescription(
+                    getString(R.string.receipt_open_preview, title.getText()));
+            thumbnail.setClickable(true);
+            thumbnail.setFocusable(true);
+            android.util.TypedValue ripple = new android.util.TypedValue();
+            if (getTheme()
+                    .resolveAttribute(
+                            android.R.attr.selectableItemBackground, ripple, true)
+                    && ripple.resourceId != 0) {
+                thumbnail.setBackgroundResource(ripple.resourceId);
+            }
             entry.addView(
                     thumbnail,
                     new LinearLayout.LayoutParams(
                             LinearLayout.LayoutParams.MATCH_PARENT, receiptPixels(108)));
-            MaterialButton open = new MaterialButton(this);
-            open.setText(R.string.receipt_view);
-            entry.addView(open);
             gallery.addView(entry);
+            thumbnail.setOnClickListener(view -> {
+                if (receiptGalleryDialog != null) {
+                    receiptGalleryDialog.dismiss();
+                }
+                showReceiptPreview(attachment);
+            });
             viewModel.previewReceipt(
                     attachment,
                     bitmap -> {
@@ -317,15 +343,12 @@ public class MainActivity extends AppCompatActivity {
                         .setPositiveButton(
                                 R.string.receipt_add_more, (d, which) -> openReceiptPicker())
                         .create();
-        for (int i = 0; i < receipts.size(); i++) {
-            ReceiptAttachment current = receipts.get(i);
-            LinearLayout entry = (LinearLayout) gallery.getChildAt(i);
-            MaterialButton open = (MaterialButton) entry.getChildAt(2);
-            open.setOnClickListener(view -> {
-                dialog.dismiss();
-                showReceiptPreview(current);
-            });
-        }
+        receiptGalleryDialog = dialog;
+        dialog.setOnDismissListener(ignored -> {
+            if (receiptGalleryDialog == dialog) {
+                receiptGalleryDialog = null;
+            }
+        });
         dialog.show();
     }
 
@@ -1156,6 +1179,17 @@ public class MainActivity extends AppCompatActivity {
         showPendingError();
         synchronizeReadError();
         showReceiptOfferIfNeeded();
+        if (viewModel.list != null
+                && viewModel.list.archivedAt != null
+                && !viewModel.receiptBusy
+                && !viewModel.receiptOfferPending) {
+            boolean requested = viewModel.consumeReceiptGalleryRequest();
+            if ((requested || restoreReceiptGallery)
+                    && !viewModel.receiptAttachments.isEmpty()) {
+                restoreReceiptGallery = false;
+                showReceiptGallery();
+            }
+        }
         showVoiceBatchEditorIfNeeded();
     }
 
