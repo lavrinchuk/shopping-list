@@ -78,6 +78,7 @@
     <string name="receipt_choose_pdf">Вибрати PDF</string>
     <string name="receipt_add_more">Додати ще</string>
     <string name="receipt_gallery_title">Прикріплені чеки</string>
+    <string name="receipt_gallery_empty">Чеків немає. Натисни «Додати ще», щоб прикріпити чек.</string>
     <string name="receipt_open_preview">Відкрити %1$s</string>
     <string name="receipt_count_button">Переглянути чеки (%1$d)</string>
     <string name="receipt_photo_number">Фото %1$d</string>
