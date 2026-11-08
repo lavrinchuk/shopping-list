@@ -401,18 +401,14 @@ public class MainActivity extends AppCompatActivity {
         actions.setOrientation(LinearLayout.HORIZONTAL);
         actions.setGravity(android.view.Gravity.CENTER);
         int actionHeight = receiptPixels(56);
-        MaterialButton more = receiptIconAction(
-                R.id.receipt_preview_more,
-                R.drawable.ic_add,
-                R.string.receipt_add_more);
-        MaterialButton remove = receiptIconAction(
-                R.id.receipt_preview_remove,
-                R.drawable.ic_delete,
-                R.string.receipt_remove);
-        MaterialButton back = receiptIconAction(
-                R.id.receipt_preview_back,
-                R.drawable.ic_back,
-                R.string.back);
+        MaterialButton more =
+                receiptIconAction(
+                        R.id.receipt_preview_more, R.drawable.ic_add, R.string.receipt_add_more);
+        MaterialButton remove =
+                receiptIconAction(
+                        R.id.receipt_preview_remove, R.drawable.ic_delete, R.string.receipt_remove);
+        MaterialButton back =
+                receiptIconAction(R.id.receipt_preview_back, R.drawable.ic_back, R.string.back);
         actions.addView(more, new LinearLayout.LayoutParams(0, actionHeight, 1f));
         actions.addView(remove, new LinearLayout.LayoutParams(0, actionHeight, 1f));
         actions.addView(back, new LinearLayout.LayoutParams(0, actionHeight, 1f));
@@ -469,8 +465,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private MaterialButton receiptIconAction(int id, int drawable, int description) {
-        MaterialButton button = new MaterialButton(
-                this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle);
+        MaterialButton button =
+                new MaterialButton(
+                        this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle);
         button.setId(id);
         button.setMinWidth(0);
         button.setMinHeight(receiptPixels(48));
