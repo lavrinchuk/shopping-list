@@ -126,8 +126,14 @@ public class ListsNavigationTest {
         home.recreate();
         onView(withId(R.id.lists_bottom_bar)).check(matches(isDisplayed()));
         onView(withId(R.id.open_templates)).perform(click());
-        onView(withText(R.string.templates_title)).check(matches(isDisplayed()));
-        onView(withText(R.string.back)).perform(click());
+        onView(withId(R.id.templates_scroll)).check(matches(isDisplayed()));
+        onView(withId(R.id.lists_bottom_bar))
+                .check(matches(withEffectiveVisibility(Visibility.GONE)));
+        onView(withId(R.id.lists_toolbar)).check(matches(isDisplayed()));
+        onView(withText(R.string.templates_empty)).check(matches(isDisplayed()));
+        home.recreate();
+        onView(withId(R.id.templates_scroll)).check(matches(isDisplayed()));
+        onView(withContentDescription(R.string.back)).perform(click());
 
         onView(withId(R.id.open_archive)).perform(click());
         onView(withId(R.id.lists_toolbar)).check(matches(isDisplayed()));
@@ -191,6 +197,9 @@ public class ListsNavigationTest {
                 .perform(replaceText("Щотижневий"), closeSoftKeyboard());
         onView(withText(R.string.save)).perform(click());
         onView(withId(R.id.open_templates)).perform(click());
+        onView(withId(R.id.templates_scroll)).check(matches(isDisplayed()));
+        onView(withId(R.id.lists_bottom_bar))
+                .check(matches(withEffectiveVisibility(Visibility.GONE)));
         onView(withContentDescription("Створити список із шаблону «Щотижневий»"))
                 .check(matches(isDisplayed()))
                 .perform(click());
