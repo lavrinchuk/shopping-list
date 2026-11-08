@@ -1,7 +1,6 @@
 package com.example.shoppinglist;
 
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
@@ -150,10 +149,14 @@ public final class TemplateEditorActivity extends AppCompatActivity {
                     label,
                     new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
 
-            ImageButton edit = action(R.drawable.ic_edit,
-                    getString(R.string.template_edit_item_action, item[0]));
-            ImageButton delete = action(R.drawable.ic_delete,
-                    getString(R.string.template_delete_item_action, item[0]));
+            ImageButton edit =
+                    action(
+                            R.drawable.ic_edit,
+                            getString(R.string.template_edit_item_action, item[0]));
+            ImageButton delete =
+                    action(
+                            R.drawable.ic_delete,
+                            getString(R.string.template_delete_item_action, item[0]));
             edit.setEnabled(!saving);
             delete.setEnabled(!saving);
             row.addView(edit, new LinearLayout.LayoutParams(iconSize, iconSize));
@@ -191,8 +194,8 @@ public final class TemplateEditorActivity extends AppCompatActivity {
         button.setContentDescription(description);
         android.util.TypedValue ripple = new android.util.TypedValue();
         if (getTheme()
-                .resolveAttribute(
-                        android.R.attr.selectableItemBackgroundBorderless, ripple, true)
+                        .resolveAttribute(
+                                android.R.attr.selectableItemBackgroundBorderless, ripple, true)
                 && ripple.resourceId != 0) {
             button.setBackgroundResource(ripple.resourceId);
         }
