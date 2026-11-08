@@ -382,7 +382,7 @@ public class ListsActivity extends AppCompatActivity {
                 new ShoppingRepository.TemplateItemsResult() {
                     @Override
                     public void loaded(List<String[]> items) {
-                        if (!isFinishing() && !isDestroyed()) {
+                        if (templatesOpen && !isFinishing() && !isDestroyed()) {
                             showTemplateEditor(template, items);
                         }
                     }
