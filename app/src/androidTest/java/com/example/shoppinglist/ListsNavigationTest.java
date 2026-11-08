@@ -132,7 +132,11 @@ public class ListsNavigationTest {
         onView(withId(R.id.lists_toolbar)).check(matches(isDisplayed()));
         home.recreate();
         onView(withId(R.id.templates_scroll)).check(matches(isDisplayed()));
+        androidx.test.espresso.Espresso.pressBack();
+        onView(withId(R.id.lists_bottom_bar)).check(matches(isDisplayed()));
+        onView(withId(R.id.open_templates)).perform(click());
         onView(withContentDescription(R.string.back)).perform(click());
+        onView(withId(R.id.lists_bottom_bar)).check(matches(isDisplayed()));
 
         onView(withId(R.id.open_archive)).perform(click());
         onView(withId(R.id.lists_toolbar)).check(matches(isDisplayed()));
