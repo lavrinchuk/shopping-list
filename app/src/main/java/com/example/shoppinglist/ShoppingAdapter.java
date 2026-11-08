@@ -129,11 +129,15 @@ final class ShoppingAdapter extends ListAdapter<ShoppingItem, ShoppingAdapter.Ho
                 (button, checked) -> actions.purchased(item, checked));
         holder.quantity.setText(item.quantity);
         holder.quantity.setVisibility(item.quantity.isEmpty() ? View.GONE : View.VISIBLE);
-        holder.barcode.setText(
-                item.barcode == null ? R.string.barcode_scan : R.string.barcode_view);
         holder.barcode.setVisibility(readOnly && item.barcode == null ? View.GONE : View.VISIBLE);
         holder.barcode.setContentDescription(
-                holder.itemView.getContext().getString(R.string.barcode_action_for, item.name));
+                holder.itemView
+                        .getContext()
+                        .getString(
+                                item.barcode == null
+                                        ? R.string.barcode_scan_item
+                                        : R.string.barcode_view_item,
+                                item.name));
         holder.barcode.setOnClickListener(view -> actions.barcode(item));
         holder.barcodeValue.setVisibility(item.barcode == null ? View.GONE : View.VISIBLE);
         holder.barcodeValue.setText(
@@ -154,7 +158,7 @@ final class ShoppingAdapter extends ListAdapter<ShoppingItem, ShoppingAdapter.Ho
         final View search;
         final View editLink;
         final TextView openLink;
-        final TextView barcode;
+        final View barcode;
         final TextView barcodeValue;
 
         Holder(View view) {
