@@ -209,7 +209,23 @@ public class ShoppingScreenTest {
 
     @Test
     public void archivedShoppingListHidesSearchLinksAndShareWithoutLosingData() {
-        add("Молоко");
+        java.util.concurrent.atomic.AtomicLong isolatedId = new java.util.concurrent.atomic.AtomicLong();
+        main(() ->
+                repository.execute(
+                        () -> isolatedId.set(app.database.createList("Архівний тест")),
+                        noResult()));
+        onView(withId(R.id.add)).check(matches(isEnabled()));
+        screen.close();
+        screen =
+                ActivityScenario.launch(
+                        new android.content.Intent(app, MainActivity.class)
+                                .putExtra("listId", isolatedId.get()));
+        screen.onActivity(activity -> idle.attach(activity));
+        onView(withId(R.id.add)).check(matches(isEnabled()));
+        onView(withId(R.id.name))
+                .perform(replaceText("Молоко"), closeSoftKeyboard());
+        onView(withId(R.id.add)).perform(click());
+        onView(withText("Молоко")).check(matches(isDisplayed()));
         onView(withId(R.id.search_item)).check(matches(isDisplayed()));
         onView(withId(R.id.edit_item_link)).check(matches(isDisplayed()));
         onView(withId(R.id.share_list)).check(matches(isDisplayed()));
@@ -217,11 +233,11 @@ public class ShoppingScreenTest {
         main(() ->
                 repository.execute(
                         () -> {
-                            long itemId = app.database.getItems(app.listId).get(0).id;
+                            long itemId = app.database.getItems(isolatedId.get()).get(0).id;
                             app.database.addStoreLink(
-                                    app.listId, itemId, "Сільпо", "https://silpo.ua/milk");
-                            app.database.setItemBarcode(app.listId, itemId, "012345678905");
-                            app.database.archive(app.listId, true);
+                                    isolatedId.get(), itemId, "Сільпо", "https://silpo.ua/milk");
+                            app.database.setItemBarcode(isolatedId.get(), itemId, "012345678905");
+                            app.database.archive(isolatedId.get(), true);
                         },
                         noResult()));
         screen.onActivity(activity -> activity.viewModel.reload());
@@ -236,8 +252,8 @@ public class ShoppingScreenTest {
         onView(withId(R.id.share_list)).check(doesNotExist());
         onView(withId(R.id.barcode_action)).check(matches(isDisplayed()));
         onView(withId(R.id.receipt_bottom_action)).check(matches(isDisplayed()));
-        assertEquals("https://silpo.ua/milk", app.database.getItems(app.listId).get(0).url);
-        assertEquals(1, app.database.getStoreLinks(app.listId).size());
+        assertEquals("https://silpo.ua/milk", app.database.getItems(isolatedId.get()).get(0).url);
+        assertEquals(1, app.database.getStoreLinks(isolatedId.get()).size());
     }
 
     @Test
