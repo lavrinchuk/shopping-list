@@ -222,6 +222,44 @@ public class ListsNavigationTest {
     }
 
     @Test
+    public void editTemplateFullScreenKeepsOriginalListIndependent() {
+        create("Оригінальний");
+        onView(withText("Оригінальний")).perform(click());
+        onView(withId(R.id.name)).perform(replaceText("Молоко"), closeSoftKeyboard());
+        onView(withId(R.id.add)).perform(click());
+        back();
+
+        menu("Оригінальний", R.string.save_as_template);
+        onView(withId(R.id.template_name_input))
+                .perform(replaceText("Щотижневий"), closeSoftKeyboard());
+        onView(withText(R.string.save)).perform(click());
+        onView(withId(R.id.open_templates)).perform(click());
+        onView(withContentDescription("Редагувати шаблон «Щотижневий»")).perform(click());
+
+        onView(withId(R.id.template_editor_toolbar)).check(matches(isDisplayed()));
+        onView(withId(R.id.template_name_input))
+                .perform(replaceText("Новий шаблон"), closeSoftKeyboard());
+        onView(withId(R.id.template_product_input))
+                .perform(replaceText("Хліб"), closeSoftKeyboard());
+        onView(withId(R.id.template_quantity_input))
+                .perform(replaceText("2"), closeSoftKeyboard());
+        onView(withId(R.id.template_add_item)).perform(click());
+        onView(withText("Хліб · 2")).check(matches(isDisplayed()));
+        onView(withContentDescription("Видалити товар «Молоко»")).perform(click());
+        onView(withId(R.id.template_save)).perform(click());
+
+        onView(withContentDescription("Створити список із шаблону «Новий шаблон»"))
+                .perform(click());
+        onView(withText("Хліб")).check(matches(isDisplayed()));
+        onView(withText("Молоко")).check(doesNotExist());
+        back();
+
+        onView(withText("Оригінальний")).perform(click());
+        onView(withText("Молоко")).check(matches(isDisplayed()));
+        back();
+    }
+
+    @Test
     public void createWishArchiveWithoutAllCheckedAndRestore() {
         onView(withId(R.id.create_list)).perform(click());
         onView(withId(R.id.list_name_input))
