@@ -34,6 +34,7 @@ public final class ShoppingViewModel extends ViewModel {
     boolean voiceAdding;
     boolean sharing;
     boolean receiptBusy;
+    boolean receiptGalleryRequested;
     boolean finishing;
     boolean closeAfterFinish;
     boolean receiptOfferPending;
@@ -252,7 +253,7 @@ public final class ShoppingViewModel extends ViewModel {
         }
         receiptBusy = true;
         notifyStateChanged();
-        repository.addReceipts(listId, sources, receiptCallback());
+        repository.addReceipts(listId, sources, receiptCallback(true));
     }
 
     void removeReceipt(ReceiptAttachment attachment) {
@@ -261,7 +262,7 @@ public final class ShoppingViewModel extends ViewModel {
         }
         receiptBusy = true;
         notifyStateChanged();
-        repository.removeReceipt(listId, attachment.id, receiptCallback());
+        repository.removeReceipt(listId, attachment.id, receiptCallback(false));
     }
 
     void previewReceipt(ReceiptAttachment item, ShoppingRepository.ReceiptPreview callback) {
@@ -274,7 +275,7 @@ public final class ShoppingViewModel extends ViewModel {
         }
         receiptBusy = true;
         notifyStateChanged();
-        repository.attachReceipt(listId, photo, receiptCallback());
+        repository.attachReceipt(listId, photo, receiptCallback(true));
     }
 
     void removeReceipt() {
@@ -283,23 +284,36 @@ public final class ShoppingViewModel extends ViewModel {
         }
         receiptBusy = true;
         notifyStateChanged();
-        repository.removeReceipt(listId, receiptCallback());
+        repository.removeReceipt(listId, receiptCallback(false));
     }
 
     void previewReceipt(ShoppingRepository.ReceiptPreview callback) {
         repository.previewReceipt(listId, callback);
     }
 
-    private ShoppingRepository.Result receiptCallback() {
+    boolean consumeReceiptGalleryRequest() {
+        boolean requested = receiptGalleryRequested;
+        receiptGalleryRequested = false;
+        return requested;
+    }
+
+    private ShoppingRepository.Result receiptCallback(boolean openGalleryAfterSuccess) {
         return new ShoppingRepository.Result() {
+            private boolean written;
+
             @Override
-            public void written() {}
+            public void written() {
+                written = true;
+            }
 
             @Override
             public void loaded(List<ShoppingItem> updated) {
                 if (!cleared) {
                     receiptBusy = false;
                     items = updated;
+                    if (written && openGalleryAfterSuccess && !receiptAttachments.isEmpty()) {
+                        receiptGalleryRequested = true;
+                    }
                     notifyStateChanged();
                 }
             }
