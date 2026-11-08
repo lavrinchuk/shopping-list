@@ -47,6 +47,8 @@ import java.util.List;
 
 public class ListsActivity extends AppCompatActivity {
     private static final String EXTRA_ARCHIVED = "archived";
+    private static final String STATE_TEMPLATES_OPEN = "templatesOpen";
+    private boolean templatesOpen;
     ListsViewModel viewModel;
     private ListsAdapter adapter;
     private AlertDialog nameDialog;
@@ -61,6 +63,7 @@ public class ListsActivity extends AppCompatActivity {
 
         boolean archived = getIntent().getBooleanExtra(EXTRA_ARCHIVED, false);
         initializeViewModel(state, archived);
+        templatesOpen = !archived && state != null && state.getBoolean(STATE_TEMPLATES_OPEN);
         configureToolbar(archived);
         configureActions(archived);
         configureLists();
@@ -99,14 +102,35 @@ public class ListsActivity extends AppCompatActivity {
                         .get(ListsViewModel.class);
     }
 
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        outState.putBoolean(STATE_TEMPLATES_OPEN, templatesOpen);
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (templatesOpen) {
+            closeTemplates();
+        } else {
+            super.onBackPressed();
+        }
+    }
+
     private void configureToolbar(boolean archived) {
         MaterialToolbar toolbar = findViewById(R.id.lists_toolbar);
-        toolbar.setVisibility(archived ? View.VISIBLE : View.GONE);
-        if (archived) {
-            toolbar.setTitle(R.string.archive);
+        toolbar.setVisibility(archived || templatesOpen ? View.VISIBLE : View.GONE);
+        toolbar.setTitle(archived ? R.string.archive : R.string.templates_title);
+        if (archived || templatesOpen) {
             toolbar.setNavigationIcon(R.drawable.ic_back);
             toolbar.setNavigationContentDescription(R.string.back);
-            toolbar.setNavigationOnClickListener(view -> finish());
+            toolbar.setNavigationOnClickListener(view -> {
+                if (templatesOpen) {
+                    closeTemplates();
+                } else {
+                    finish();
+                }
+            });
         }
     }
 
@@ -252,27 +276,53 @@ public class ListsActivity extends AppCompatActivity {
         if (viewModel.busy || viewModel.archived) {
             return;
         }
-        LinearLayout content = new LinearLayout(this);
-        content.setOrientation(LinearLayout.VERTICAL);
-        int pad = Math.round(12 * getResources().getDisplayMetrics().density);
+        templatesOpen = true;
+        updateTemplatesVisibility();
+        renderTemplates();
+    }
+
+    private void closeTemplates() {
+        templatesOpen = false;
+        updateTemplatesVisibility();
+    }
+
+    private void updateTemplatesVisibility() {
+        findViewById(R.id.lists_toolbar)
+                .setVisibility(viewModel.archived || templatesOpen ? View.VISIBLE : View.GONE);
+        if (templatesOpen) {
+            MaterialToolbar toolbar = findViewById(R.id.lists_toolbar);
+            toolbar.setTitle(R.string.templates_title);
+            toolbar.setNavigationIcon(R.drawable.ic_back);
+            toolbar.setNavigationContentDescription(R.string.back);
+            toolbar.setNavigationOnClickListener(view -> closeTemplates());
+        }
+        findViewById(R.id.lists_content)
+                .setVisibility(templatesOpen ? View.GONE : View.VISIBLE);
+        findViewById(R.id.templates_scroll)
+                .setVisibility(templatesOpen ? View.VISIBLE : View.GONE);
+        findViewById(R.id.lists_bottom_bar)
+                .setVisibility(viewModel.archived || templatesOpen ? View.GONE : View.VISIBLE);
+    }
+
+    private void renderTemplates() {
+        if (!templatesOpen) {
+            return;
+        }
+        ScrollView scroll = findViewById(R.id.templates_scroll);
+        int scrollPosition = scroll.getScrollY();
+        LinearLayout content = findViewById(R.id.templates_content);
+        content.removeAllViews();
         int touchSize = Math.round(48 * getResources().getDisplayMetrics().density);
-        content.setPadding(pad, pad, pad, pad);
-        ScrollView scroll = new ScrollView(this);
-        scroll.addView(content);
-        AlertDialog dialog =
-                new MaterialAlertDialogBuilder(this)
-                        .setTitle(R.string.templates_title)
-                        .setView(scroll)
-                        .setNegativeButton(R.string.back, null)
-                        .create();
         if (viewModel.templates.isEmpty()) {
             TextView empty = new TextView(this);
             empty.setText(R.string.templates_empty);
+            empty.setPadding(touchSize / 3, touchSize / 2, touchSize / 3, touchSize / 2);
             content.addView(empty);
         }
         for (ShoppingTemplate template : viewModel.templates) {
             LinearLayout row = new LinearLayout(this);
             row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setMinimumHeight(touchSize + touchSize / 3);
 
             TextView title = new TextView(this);
             title.setText(getString(R.string.template_details, template.name, template.itemCount));
@@ -305,27 +355,24 @@ public class ListsActivity extends AppCompatActivity {
                             ViewGroup.LayoutParams.MATCH_PARENT,
                             ViewGroup.LayoutParams.WRAP_CONTENT));
 
+            create.setEnabled(!viewModel.busy);
+            edit.setEnabled(!viewModel.busy);
+            delete.setEnabled(!viewModel.busy);
             create.setOnClickListener(view -> {
-                dialog.dismiss();
+                closeTemplates();
                 viewModel.createFromTemplate(template.id);
             });
-            edit.setOnClickListener(view -> {
-                dialog.dismiss();
-                editTemplate(template);
-            });
+            edit.setOnClickListener(view -> editTemplate(template));
             delete.setOnClickListener(view ->
                     new MaterialAlertDialogBuilder(this)
                             .setMessage(getString(R.string.template_delete_confirm, template.name))
                             .setNegativeButton(R.string.cancel, null)
                             .setPositiveButton(
                                     R.string.template_delete,
-                                    (confirmation, which) -> {
-                                        dialog.dismiss();
-                                        viewModel.deleteTemplate(template.id);
-                                    })
+                                    (confirmation, which) -> viewModel.deleteTemplate(template.id))
                             .show());
         }
-        dialog.show();
+        scroll.post(() -> scroll.scrollTo(0, scrollPosition));
     }
 
     private void editTemplate(ShoppingTemplate template) {
@@ -493,6 +540,9 @@ public class ListsActivity extends AppCompatActivity {
                             .putExtra(MainActivity.EXTRA_LIST_ID, created));
         }
         renderListState();
+        if (templatesOpen) {
+            renderTemplates();
+        }
         if (viewModel.consumeTemplateSaved()) {
             Toast.makeText(this, R.string.template_saved, Toast.LENGTH_SHORT).show();
         }
