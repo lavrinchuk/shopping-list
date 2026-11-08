@@ -295,13 +295,15 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         List<ReceiptAttachment> receipts = viewModel.receiptAttachments;
-        if (receipts.isEmpty()) {
-            openReceiptPicker();
-            return;
-        }
         LinearLayout gallery = new LinearLayout(this);
         gallery.setOrientation(LinearLayout.VERTICAL);
         gallery.setPadding(receiptPixels(16), receiptPixels(8), receiptPixels(16), 0);
+        if (receipts.isEmpty()) {
+            TextView empty = new TextView(this);
+            empty.setText(R.string.receipt_gallery_empty);
+            empty.setPadding(0, receiptPixels(24), 0, receiptPixels(24));
+            gallery.addView(empty);
+        }
         for (int i = 0; i < receipts.size(); i++) {
             ReceiptAttachment attachment = receipts.get(i);
             LinearLayout entry = new LinearLayout(this);
@@ -438,7 +440,7 @@ public class MainActivity extends AppCompatActivity {
             confirmReceiptRemoval(receipt, fromGallery);
         });
         more.setOnClickListener(view -> {
-            openGalleryOnDismiss[0] = fromGallery;
+            openGalleryOnDismiss[0] = false;
             dialog.dismiss();
             openReceiptPicker();
         });
@@ -995,7 +997,11 @@ public class MainActivity extends AppCompatActivity {
         if (viewModel.list == null || viewModel.receiptBusy) {
             return;
         }
-        showReceiptGallery();
+        if (viewModel.receiptAttachments.isEmpty()) {
+            openReceiptPicker();
+        } else {
+            showReceiptGallery();
+        }
     }
 
     private void onFinishClicked() {
@@ -1225,7 +1231,7 @@ public class MainActivity extends AppCompatActivity {
                 && !viewModel.receiptBusy
                 && !viewModel.receiptOfferPending) {
             boolean requested = viewModel.consumeReceiptGalleryRequest();
-            if ((requested || restoreReceiptGallery) && !viewModel.receiptAttachments.isEmpty()) {
+            if (requested || restoreReceiptGallery) {
                 restoreReceiptGallery = false;
                 showReceiptGallery();
             }
