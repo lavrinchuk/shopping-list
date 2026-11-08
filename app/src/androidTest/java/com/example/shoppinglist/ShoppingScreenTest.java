@@ -302,7 +302,8 @@ public class ShoppingScreenTest {
 
     @Test
     public void attachingReceiptsOpensGalleryAndThumbnailOpensPreview() throws Exception {
-        java.util.concurrent.atomic.AtomicLong archived = new java.util.concurrent.atomic.AtomicLong();
+        java.util.concurrent.atomic.AtomicLong archived =
+                new java.util.concurrent.atomic.AtomicLong();
         main(() ->
                 repository.execute(
                         () -> {
