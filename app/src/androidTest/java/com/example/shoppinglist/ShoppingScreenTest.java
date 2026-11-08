@@ -209,7 +209,8 @@ public class ShoppingScreenTest {
 
     @Test
     public void archivedShoppingListHidesSearchLinksAndShareWithoutLosingData() {
-        java.util.concurrent.atomic.AtomicLong isolatedId = new java.util.concurrent.atomic.AtomicLong();
+        java.util.concurrent.atomic.AtomicLong isolatedId =
+                new java.util.concurrent.atomic.AtomicLong();
         main(() ->
                 repository.execute(
                         () -> isolatedId.set(app.database.createList("Архівний тест")),
@@ -222,8 +223,7 @@ public class ShoppingScreenTest {
                                 .putExtra("listId", isolatedId.get()));
         screen.onActivity(activity -> idle.attach(activity));
         onView(withId(R.id.add)).check(matches(isEnabled()));
-        onView(withId(R.id.name))
-                .perform(replaceText("Молоко"), closeSoftKeyboard());
+        onView(withId(R.id.name)).perform(replaceText("Молоко"), closeSoftKeyboard());
         onView(withId(R.id.add)).perform(click());
         onView(withText("Молоко")).check(matches(isDisplayed()));
         onView(withId(R.id.search_item)).check(matches(isDisplayed()));
@@ -241,10 +241,8 @@ public class ShoppingScreenTest {
                         },
                         noResult()));
         screen.onActivity(activity -> activity.viewModel.reload());
-        onView(withId(R.id.barcode_value))
-                .check(matches(withText("Штрихкод: 012345678905")));
-        onView(withId(R.id.search_item))
-                .check(matches(withEffectiveVisibility(Visibility.GONE)));
+        onView(withId(R.id.barcode_value)).check(matches(withText("Штрихкод: 012345678905")));
+        onView(withId(R.id.search_item)).check(matches(withEffectiveVisibility(Visibility.GONE)));
         onView(withId(R.id.edit_item_link))
                 .check(matches(withEffectiveVisibility(Visibility.GONE)));
         onView(withId(R.id.open_item_link))
