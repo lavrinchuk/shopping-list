@@ -50,6 +50,45 @@ public class ShoppingRepository {
         this.receipts = new ReceiptStore(database.context());
     }
 
+    public interface BackupResult {
+        void completed();
+
+        void failed(String reason);
+    }
+
+    /** Share the same queue with every database mutation to obtain a consistent snapshot. */
+    public void exportBackup(Uri uri, BackupResult result) {
+        backup(() -> new LocalBackup(database.context(), database).exportTo(uri), result);
+    }
+
+    public void importBackup(Uri uri, BackupResult result) {
+        backup(() -> new LocalBackup(database.context(), database).importFrom(uri), result);
+    }
+
+    private interface BackupOperation {
+        void run() throws java.io.IOException;
+    }
+
+    private void backup(BackupOperation operation, BackupResult callback) {
+        pending++;
+        worker.execute(() -> {
+            try {
+                operation.run();
+                main.post(callback::completed);
+            } catch (java.io.IOException | RuntimeException error) {
+                Log.e("ShoppingRepository", "Backup operation failed", error);
+                main.post(() -> callback.failed(error.getMessage()));
+            } finally {
+                main.post(() -> {
+                    pending--;
+                    if (isIdle() && idleListener != null) {
+                        idleListener.run();
+                    }
+                });
+            }
+        });
+    }
+
     public void load(long listId, Result result) {
         run(null, () -> readItems(listId, result), result);
     }

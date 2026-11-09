@@ -144,4 +144,14 @@
     <string name="share_list">Поділитися</string>
     <string name="share_error">Не вдалося підготувати список для надсилання. Спробуйте ще раз.</string>
     <string name="share_unavailable">Немає застосунку для надсилання тексту.</string>
+    <string name="backup_menu">Резервне копіювання</string>
+    <string name="backup_export">Експортувати ZIP</string>
+    <string name="backup_unencrypted_warning">Резервна копія міститиме назви покупок, посилання та чеки у незашифрованому ZIP. Зберігай її у захищеному місці.</string>
+    <string name="backup_restore">Відновити з ZIP</string>
+    <string name="backup_restore_title">Відновлення даних</string>
+    <string name="backup_restore_confirmation">Усі поточні списки, товари, шаблони й чеки буде замінено даними з резервної копії. Перед продовженням збережи поточні дані в окремий ZIP. Продовжити?</string>
+    <string name="backup_working">Опрацьовую резервну копію…</string>
+    <string name="backup_restored">Дані успішно відновлено</string>
+    <string name="backup_exported">Резервну копію збережено</string>
+    <string name="backup_failed">Не вдалося виконати резервне копіювання: %1$s</string>
 </resources>
