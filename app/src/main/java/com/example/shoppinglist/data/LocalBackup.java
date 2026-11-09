@@ -258,8 +258,16 @@ public final class LocalBackup {
             }
 
             SQLiteDatabase db = helper.getWritableDatabase();
+            Set<String> previousFiles = new HashSet<>();
             db.beginTransaction();
             try {
+                try (Cursor cursor = db.rawQuery(
+                        "SELECT fileName FROM receipt_attachments UNION SELECT receiptFile "
+                                + "FROM shopping_lists WHERE receiptFile IS NOT NULL", null)) {
+                    while (cursor.moveToNext()) {
+                        previousFiles.add(cursor.getString(0));
+                    }
+                }
                 for (String table : DELETE_ORDER) {
                     db.delete(table, null, null);
                 }
@@ -306,16 +314,16 @@ public final class LocalBackup {
                     }
                 }
                 db.setTransactionSuccessful();
-                committed = true;
             } catch (JSONException error) {
                 throw new IOException("Invalid backup rows", error);
             } finally {
                 db.endTransaction();
             }
-            // Old attachments are no longer referenced; leave unknown files alone.
-            for (File old : directory.listFiles() == null ? new File[0] : directory.listFiles()) {
-                if (old.isFile() && !importedFiles.contains(old) && safeName(old.getName())) {
-                    old.delete();
+            committed = true;
+            // Only remove files referenced by the former database, never unrelated files.
+            for (String name : previousFiles) {
+                if (safeName(name)) {
+                    new File(directory, name).delete();
                 }
             }
         } catch (RuntimeException error) {
