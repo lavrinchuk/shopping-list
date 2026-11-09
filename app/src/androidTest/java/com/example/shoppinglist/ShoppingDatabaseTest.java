@@ -37,6 +37,74 @@ public class ShoppingDatabaseTest {
     }
 
     @Test
+    public void localBackupRestoresListsTemplatesLinksAndReceiptFiles() throws Exception {
+        long listId = db.createList("Крамниця");
+        db.add(listId, "Молоко", "2 л");
+        long itemId = db.getItems(listId).get(0).id;
+        db.addStoreLink(listId, itemId, "Сільпо", "https://silpo.ua/milk");
+        db.setItemBarcode(listId, itemId, "012345678905");
+        db.saveTemplate(listId, "Щотижневі");
+        db.archive(listId, true);
+        String name = java.util.UUID.randomUUID() + ".png";
+        java.io.File directory = new java.io.File(context.getFilesDir(), "receipts");
+        assertTrue(directory.isDirectory() || directory.mkdirs());
+        java.io.File receipt = new java.io.File(directory, name);
+        byte[] original = new byte[] {1, 2, 3, 4};
+        try (java.io.FileOutputStream output = new java.io.FileOutputStream(receipt)) {
+            output.write(original);
+        }
+        db.addReceipt(listId, name, "image/png");
+        java.io.File backup = new java.io.File(context.getCacheDir(), file + ".zip");
+        try {
+            com.example.shoppinglist.data.LocalBackup storage =
+                    new com.example.shoppinglist.data.LocalBackup(context, db);
+            storage.exportTo(android.net.Uri.fromFile(backup));
+            db.createList("Не повинно залишитися");
+            storage.importFrom(android.net.Uri.fromFile(backup));
+            assertEquals(0, db.getLists(false).size());
+            assertEquals(1, db.getLists(true).size());
+            assertEquals("Крамниця", db.getList(listId).name);
+            assertEquals("Молоко", db.getItems(listId).get(0).name);
+            assertEquals("012345678905", db.getItems(listId).get(0).barcode);
+            assertEquals(1, db.getStoreLinks(listId).size());
+            assertEquals("https://silpo.ua/milk", db.getStoreLinks(listId).get(0).url);
+            assertEquals("Щотижневі", db.getTemplates().get(0).name);
+            assertEquals(1, db.getReceipts(listId).size());
+            java.io.File restored = new java.io.File(
+                    directory, db.getReceipts(listId).get(0).fileName);
+            assertTrue(restored.isFile());
+            assertArrayEquals(
+                    original, java.nio.file.Files.readAllBytes(restored.toPath()));
+            assertFalse("Old attachment should be deleted after successful restore",
+                    receipt.exists());
+            restored.delete();
+        } finally {
+            backup.delete();
+            receipt.delete();
+        }
+    }
+
+    @Test
+    public void malformedBackupMustNotReplaceExistingLists() throws Exception {
+        long id = db.createList("Залишається");
+        java.io.File invalid = new java.io.File(context.getCacheDir(), file + "-invalid.zip");
+        try {
+            try (java.io.FileOutputStream output = new java.io.FileOutputStream(invalid)) {
+                output.write(new byte[] {1, 2, 3, 4});
+            }
+            try {
+                new com.example.shoppinglist.data.LocalBackup(context, db)
+                        .importFrom(android.net.Uri.fromFile(invalid));
+                fail("Invalid backup must be rejected");
+            } catch (java.io.IOException expected) {
+                assertEquals("Залишається", db.getList(id).name);
+            }
+        } finally {
+            invalid.delete();
+        }
+    }
+
+    @Test
     public void independentListsAllowDuplicateNamesAndPreserveOrder() {
         long a = db.createList(" Їжа "), b = db.createList("Їжа");
         assertNotEquals(a, b);
