@@ -111,7 +111,8 @@ public class ListsNavigationTest {
 
     @Test
     public void homeBottomBarOpensTemplatesAndArchiveAndSurvivesRotation() {
-        onView(withId(R.id.lists_toolbar)).check(matches(withEffectiveVisibility(Visibility.GONE)));
+        onView(withId(R.id.lists_toolbar)).check(matches(isDisplayed()));
+        onView(withText(R.string.backup_menu)).check(doesNotExist());
         onView(withId(R.id.lists_bottom_bar)).check(matches(isDisplayed()));
         onView(withId(R.id.open_templates))
                 .check(matches(isDisplayed()))
