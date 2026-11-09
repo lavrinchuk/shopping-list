@@ -1,0 +1,34 @@
+name: Format DATA-01 branch (temporary)
+on:
+  pull_request:
+    types: [synchronize]
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'feature/data-01-local-backup'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/data-01-local-backup
+          persist-credentials: true
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Apply Google Java Format
+        run: ./gradlew spotlessApply --no-daemon --no-configuration-cache
+      - name: Commit only formatting changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/src/main/java/com/example/shoppinglist/data/LocalBackup.java app/src/main/java/com/example/shoppinglist/data/ShoppingRepository.java app/src/main/java/com/example/shoppinglist/ListsActivity.java app/src/androidTest/java/com/example/shoppinglist/ShoppingDatabaseTest.java
+          if ! git diff --cached --quiet; then
+            git commit -m "style(DATA-01): apply Google Java Format"
+            git push origin HEAD:feature/data-01-local-backup
+          fi
