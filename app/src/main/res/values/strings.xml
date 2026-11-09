@@ -146,6 +146,7 @@
     <string name="share_unavailable">Немає застосунку для надсилання тексту.</string>
     <string name="backup_menu">Резервне копіювання</string>
     <string name="backup_export">Експортувати ZIP</string>
+    <string name="backup_unencrypted_warning">Резервна копія міститиме назви покупок, посилання та чеки у незашифрованому ZIP. Зберігай її у захищеному місці.</string>
     <string name="backup_restore">Відновити з ZIP</string>
     <string name="backup_restore_title">Відновлення даних</string>
     <string name="backup_restore_confirmation">Усі поточні списки, товари, шаблони й чеки буде замінено даними з резервної копії. Перед продовженням збережи поточні дані в окремий ZIP. Продовжити?</string>
