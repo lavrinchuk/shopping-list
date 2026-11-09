@@ -27,9 +27,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * Portable, offline ZIP backup of the known SQLite schema and private receipt files.
- * Imports replace current data, but write new receipt files before the SQLite transaction;
- * old files are only removed after commit. A failed validation leaves existing data intact.
+ * Portable, offline ZIP backup of the known SQLite schema and private receipt files. Imports
+ * replace current data, but write new receipt files before the SQLite transaction; old files are
+ * only removed after commit. A failed validation leaves existing data intact.
  */
 public final class LocalBackup {
     private static final int FORMAT_VERSION = 1;
@@ -51,8 +51,13 @@ public final class LocalBackup {
     };
     // Delete child tables before parents to respect ON DELETE RESTRICT.
     private static final String[] DELETE_ORDER = {
-        "template_links", "template_items", "shopping_templates", "item_links",
-        "receipt_attachments", "items", "shopping_lists"
+        "template_links",
+        "template_items",
+        "shopping_templates",
+        "item_links",
+        "receipt_attachments",
+        "items",
+        "shopping_lists"
     };
 
     private final Context context;
@@ -168,8 +173,9 @@ public final class LocalBackup {
                     }
                     String path = entry.getName();
                     boolean manifest = METADATA.equals(path);
-                    boolean receipt = path.startsWith(RECEIPTS)
-                            && safeName(path.substring(RECEIPTS.length()));
+                    boolean receipt =
+                            path.startsWith(RECEIPTS)
+                                    && safeName(path.substring(RECEIPTS.length()));
                     if (!manifest && !receipt) {
                         throw new IOException("Unexpected archive path");
                     }
@@ -261,9 +267,11 @@ public final class LocalBackup {
             Set<String> previousFiles = new HashSet<>();
             db.beginTransaction();
             try {
-                try (Cursor cursor = db.rawQuery(
-                        "SELECT fileName FROM receipt_attachments UNION SELECT receiptFile "
-                                + "FROM shopping_lists WHERE receiptFile IS NOT NULL", null)) {
+                try (Cursor cursor =
+                        db.rawQuery(
+                                "SELECT fileName FROM receipt_attachments UNION SELECT receiptFile "
+                                        + "FROM shopping_lists WHERE receiptFile IS NOT NULL",
+                                null)) {
                     while (cursor.moveToNext()) {
                         previousFiles.add(cursor.getString(0));
                     }
@@ -294,7 +302,8 @@ public final class LocalBackup {
                             } else if (value instanceof String) {
                                 String string = (String) value;
                                 if (("fileName".equals(key) && "receipt_attachments".equals(table))
-                                        || ("receiptFile".equals(key) && "shopping_lists".equals(table))) {
+                                        || ("receiptFile".equals(key)
+                                                && "shopping_lists".equals(table))) {
                                     string = renamed.get(string);
                                     if (string == null) {
                                         throw new IOException("Invalid receipt reference");

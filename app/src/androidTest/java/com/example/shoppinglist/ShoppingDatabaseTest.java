@@ -70,13 +70,12 @@ public class ShoppingDatabaseTest {
             assertEquals("https://silpo.ua/milk", db.getStoreLinks(listId).get(0).url);
             assertEquals("Щотижневі", db.getTemplates().get(0).name);
             assertEquals(1, db.getReceipts(listId).size());
-            java.io.File restored = new java.io.File(
-                    directory, db.getReceipts(listId).get(0).fileName);
+            java.io.File restored =
+                    new java.io.File(directory, db.getReceipts(listId).get(0).fileName);
             assertTrue(restored.isFile());
-            assertArrayEquals(
-                    original, java.nio.file.Files.readAllBytes(restored.toPath()));
-            assertFalse("Old attachment should be deleted after successful restore",
-                    receipt.exists());
+            assertArrayEquals(original, java.nio.file.Files.readAllBytes(restored.toPath()));
+            assertFalse(
+                    "Old attachment should be deleted after successful restore", receipt.exists());
             restored.delete();
         } finally {
             backup.delete();

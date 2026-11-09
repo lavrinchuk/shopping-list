@@ -1,8 +1,8 @@
 package com.example.shoppinglist;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.content.res.ColorStateList;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -144,9 +144,12 @@ public class ListsActivity extends AppCompatActivity {
     private void configureToolbar(boolean archived) {
         MaterialToolbar toolbar = findViewById(R.id.lists_toolbar);
         toolbar.setVisibility(View.VISIBLE);
-        toolbar.setTitle(archived ? getString(R.string.archive)
-                : templatesOpen ? getString(R.string.templates_title) : "");
-        toolbar.getMenu().add(R.string.backup_menu)
+        toolbar.setTitle(
+                archived
+                        ? getString(R.string.archive)
+                        : templatesOpen ? getString(R.string.templates_title) : "");
+        toolbar.getMenu()
+                .add(R.string.backup_menu)
                 .setOnMenuItemClickListener(item -> {
                     showBackupActions();
                     return true;
@@ -172,14 +175,16 @@ public class ListsActivity extends AppCompatActivity {
                 .setTitle(R.string.backup_menu)
                 .setItems(
                         new String[] {
-                            getString(R.string.backup_export),
-                            getString(R.string.backup_restore)
+                            getString(R.string.backup_export), getString(R.string.backup_restore)
                         },
                         (dialog, which) -> {
                             if (which == 0) {
                                 backupExport.launch("shopping-list-backup.zip");
                             } else {
-                                backupImport.launch(new String[] {"application/zip", "application/octet-stream"});
+                                backupImport.launch(
+                                        new String[] {
+                                            "application/zip", "application/octet-stream"
+                                        });
                             }
                         })
                 .show();
@@ -192,34 +197,38 @@ public class ListsActivity extends AppCompatActivity {
         backupBusy = true;
         Toast.makeText(this, R.string.backup_working, Toast.LENGTH_SHORT).show();
         ShoppingRepository repository = ((ShoppingApplication) getApplication()).repository();
-        ShoppingRepository.BackupResult callback = new ShoppingRepository.BackupResult() {
-            @Override
-            public void completed() {
-                if (isFinishing() || isDestroyed()) {
-                    return;
-                }
-                backupBusy = false;
-                Toast.makeText(
-                        ListsActivity.this,
-                        restore ? R.string.backup_restored : R.string.backup_exported,
-                        Toast.LENGTH_LONG).show();
-                if (restore) {
-                    viewModel.reload();
-                }
-            }
+        ShoppingRepository.BackupResult callback =
+                new ShoppingRepository.BackupResult() {
+                    @Override
+                    public void completed() {
+                        if (isFinishing() || isDestroyed()) {
+                            return;
+                        }
+                        backupBusy = false;
+                        Toast.makeText(
+                                        ListsActivity.this,
+                                        restore
+                                                ? R.string.backup_restored
+                                                : R.string.backup_exported,
+                                        Toast.LENGTH_LONG)
+                                .show();
+                        if (restore) {
+                            viewModel.reload();
+                        }
+                    }
 
-            @Override
-            public void failed(String reason) {
-                if (isFinishing() || isDestroyed()) {
-                    return;
-                }
-                backupBusy = false;
-                new MaterialAlertDialogBuilder(ListsActivity.this)
-                        .setMessage(getString(R.string.backup_failed, reason))
-                        .setPositiveButton(android.R.string.ok, null)
-                        .show();
-            }
-        };
+                    @Override
+                    public void failed(String reason) {
+                        if (isFinishing() || isDestroyed()) {
+                            return;
+                        }
+                        backupBusy = false;
+                        new MaterialAlertDialogBuilder(ListsActivity.this)
+                                .setMessage(getString(R.string.backup_failed, reason))
+                                .setPositiveButton(android.R.string.ok, null)
+                                .show();
+                    }
+                };
         if (restore) {
             repository.importBackup(uri, callback);
         } else {
@@ -383,8 +392,10 @@ public class ListsActivity extends AppCompatActivity {
         templatesBackCallback.setEnabled(templatesOpen);
         MaterialToolbar toolbar = findViewById(R.id.lists_toolbar);
         toolbar.setVisibility(View.VISIBLE);
-        toolbar.setTitle(viewModel.archived ? getString(R.string.archive)
-                : templatesOpen ? getString(R.string.templates_title) : "");
+        toolbar.setTitle(
+                viewModel.archived
+                        ? getString(R.string.archive)
+                        : templatesOpen ? getString(R.string.templates_title) : "");
         if (templatesOpen) {
             toolbar.setNavigationIcon(R.drawable.ic_back);
             toolbar.setNavigationContentDescription(R.string.back);

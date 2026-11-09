@@ -52,6 +52,7 @@ public class ShoppingRepository {
 
     public interface BackupResult {
         void completed();
+
         void failed(String reason);
     }
 
