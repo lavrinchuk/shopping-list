@@ -179,7 +179,15 @@ public class ListsActivity extends AppCompatActivity {
                         },
                         (dialog, which) -> {
                             if (which == 0) {
-                                backupExport.launch("shopping-list-backup.zip");
+                                new MaterialAlertDialogBuilder(this)
+                                        .setMessage(R.string.backup_unencrypted_warning)
+                                        .setNegativeButton(R.string.cancel, null)
+                                        .setPositiveButton(
+                                                R.string.backup_export,
+                                                (confirmation, choice) ->
+                                                        backupExport.launch(
+                                                                "shopping-list-backup.zip"))
+                                        .show();
                             } else {
                                 backupImport.launch(
                                         new String[] {
